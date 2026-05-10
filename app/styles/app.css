@@ -593,6 +593,190 @@ button.reset:hover:not(:has(> *)) {
 
 /*
 * --------------------------------------------------
+* components/shared.jsx
+* --------------------------------------------------
+*/
+.shared-topbar {
+  align-items: center;
+  background: #fff;
+  border-bottom: 1px solid #e8e3dc;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr auto 1fr;
+  min-height: 72px;
+  padding: 0.875rem clamp(1rem, 4vw, 3rem);
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+.shared-topbar-logo {
+  align-items: center;
+  color: #1f1a17;
+  display: inline-flex;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.25rem, 2.4vw, 1.875rem);
+  font-weight: 700;
+  gap: 0.75rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.shared-topbar-logo-image {
+  background: #050505;
+  border-radius: 4px;
+  display: block;
+  height: 3rem;
+  object-fit: contain;
+  width: 3rem;
+}
+
+.shared-topbar-nav {
+  align-items: center;
+  display: flex;
+  gap: clamp(0.75rem, 3vw, 2rem);
+  justify-content: center;
+}
+
+.shared-topbar-link {
+  color: #312923;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.shared-topbar-link:hover,
+.shared-topbar-link-active {
+  color: #008c8c;
+}
+
+.shared-topbar-link-active {
+  font-weight: 700;
+}
+
+.shared-topbar-actions {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.shared-language select {
+  background: #fff;
+  border: 1px solid #cfc7bd;
+  border-radius: 4px;
+  color: #1f1a17;
+  font: inherit;
+  min-height: 2.375rem;
+  padding: 0.375rem 0.625rem;
+}
+
+.shared-cart-button {
+  align-items: center;
+  background: #1f1a17;
+  border-radius: 4px;
+  color: #fff;
+  display: inline-flex;
+  gap: 0.5rem;
+  min-height: 2.375rem;
+  padding: 0.375rem 0.75rem;
+  text-decoration: none;
+}
+
+.shared-cart-button:hover {
+  background: #312923;
+}
+
+.shared-cart-badge {
+  align-items: center;
+  background: #d4148e;
+  border-radius: 999px;
+  color: #fff;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 1.375rem;
+  min-width: 1.375rem;
+  padding: 0 0.35rem;
+}
+
+.shared-footer {
+  background: #1f1a17;
+  color: #f8f3ed;
+  margin-top: 4rem;
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 1rem;
+}
+
+.shared-footer-grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+}
+
+.shared-footer-brand {
+  color: #fff;
+  display: inline-block;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 0.95;
+  max-width: 12ch;
+  text-decoration: none;
+}
+
+.shared-footer-column h2 {
+  color: #fff;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+}
+
+.shared-footer-links {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.shared-footer a,
+.shared-footer p {
+  color: #f8f3ed;
+  margin: 0;
+  text-decoration: none;
+}
+
+.shared-footer a:hover {
+  color: #21b8b8;
+}
+
+.shared-footer-copy {
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  color: rgba(248, 243, 237, 0.7);
+  font-size: 0.8rem;
+  margin: 2.5rem 0 0;
+  padding-top: 1rem;
+}
+
+@media (max-width: 760px) {
+  .shared-topbar {
+    grid-template-columns: 1fr;
+  }
+
+  .shared-topbar-nav,
+  .shared-topbar-actions {
+    justify-content: flex-start;
+  }
+
+  .shared-topbar-nav {
+    flex-wrap: wrap;
+  }
+
+  .shared-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/*
+* --------------------------------------------------
 * Order Search Form - Minimal & Responsive
 * --------------------------------------------------
 */
