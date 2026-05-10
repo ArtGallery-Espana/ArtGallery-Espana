@@ -43,7 +43,7 @@ type FooterColumnProps = {
 const DEFAULT_NAV_ITEMS = [
   {label: 'Home', to: '/'},
   {label: 'Artista', to: '/pages/artista'},
-  {label: 'Catalogo', to: '/collections'},
+  {label: 'Catalogo', to: '/pages/catalogo'},
   {label: 'Contacto', to: '/pages/contacto'},
 ];
 
