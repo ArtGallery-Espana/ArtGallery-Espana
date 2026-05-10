@@ -1,4 +1,44 @@
+import type {ReactNode} from 'react';
 import {Link, NavLink} from 'react-router';
+
+type NavItem = {
+  label: string;
+  to: string;
+};
+
+type LanguageItem = {
+  label: string;
+  value: string;
+};
+
+type ContactInfo = {
+  email: string;
+  whatsapp: string;
+  address: string;
+};
+
+type TopBarProps = {
+  logoText?: string;
+  logoSrc?: string;
+  navItems?: NavItem[];
+  languages?: LanguageItem[];
+  currentLanguage?: string;
+  cartCount?: number;
+  cartHref?: string;
+  onLanguageChange?: (language: string) => void;
+};
+
+type FooterProps = {
+  brandName?: string;
+  navItems?: NavItem[];
+  contact?: ContactInfo;
+  legalItems?: NavItem[];
+};
+
+type FooterColumnProps = {
+  title: string;
+  children: ReactNode;
+};
 
 const DEFAULT_NAV_ITEMS = [
   {label: 'Home', to: '/'},
@@ -27,7 +67,7 @@ export function TopBar({
   cartCount = 0,
   cartHref = '/cart',
   onLanguageChange,
-}) {
+}: TopBarProps) {
   return (
     <header className="shared-topbar">
       <Link className="shared-topbar-logo" to="/" aria-label={logoText}>
@@ -94,7 +134,7 @@ export function Footer({
     {label: 'Devoluciones', to: '/policies/refund-policy'},
     {label: 'Terminos', to: '/policies/terms-of-service'},
   ],
-}) {
+}: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
@@ -138,7 +178,7 @@ export function Footer({
   );
 }
 
-function FooterColumn({title, children}) {
+function FooterColumn({title, children}: FooterColumnProps) {
   return (
     <section className="shared-footer-column" aria-labelledby={`footer-${title}`}>
       <h2 id={`footer-${title}`}>{title}</h2>
@@ -147,6 +187,6 @@ function FooterColumn({title, children}) {
   );
 }
 
-function formatWhatsapp(value) {
+function formatWhatsapp(value: string) {
   return value.replace(/[^\d]/g, '');
 }
