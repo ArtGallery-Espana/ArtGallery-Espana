@@ -32,7 +32,7 @@ export function PageLayout({
       <CartAside cart={cart} />
       <SearchAside />
       <TopBarWithCart cart={cart} />
-      <main>{children}</main>
+      <main className="site-main bg-[#F6F1EA]">{children}</main>
       <Footer />
     </Aside.Provider>
   );
