@@ -377,68 +377,97 @@ export type FooterQuery = {
   >;
 };
 
-export type FeaturedCollectionFragment = Pick<
-  StorefrontAPI.Collection,
-  'id' | 'title' | 'handle'
-> & {
-  image?: StorefrontAPI.Maybe<
-    Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
-  >;
-};
-
-export type FeaturedCollectionQueryVariables = StorefrontAPI.Exact<{
-  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
-  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
-}>;
-
-export type FeaturedCollectionQuery = {
-  collections: {
-    nodes: Array<
-      Pick<StorefrontAPI.Collection, 'id' | 'title' | 'handle'> & {
-        image?: StorefrontAPI.Maybe<
-          Pick<
-            StorefrontAPI.Image,
-            'id' | 'url' | 'altText' | 'width' | 'height'
-          >
-        >;
-      }
-    >;
-  };
-};
-
-export type RecommendedProductFragment = Pick<
+export type HomepageProductFragment = Pick<
   StorefrontAPI.Product,
-  'id' | 'title' | 'handle'
+  | 'id'
+  | 'handle'
+  | 'title'
+  | 'description'
+  | 'publishedAt'
+  | 'totalInventory'
+  | 'tags'
 > & {
-  priceRange: {
-    minVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
-  };
+  seo: Pick<StorefrontAPI.Seo, 'title' | 'description'>;
   featuredImage?: StorefrontAPI.Maybe<
     Pick<StorefrontAPI.Image, 'id' | 'url' | 'altText' | 'width' | 'height'>
   >;
+  alto?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  ancho?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  profundidad?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  priceRange: {
+    minVariantPrice: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+  };
 };
 
-export type RecommendedProductsQueryVariables = StorefrontAPI.Exact<{
+export type HomepageProductsQueryVariables = StorefrontAPI.Exact<{
   country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
   language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
 }>;
 
-export type RecommendedProductsQuery = {
-  products: {
+export type HomepageProductsQuery = {
+  featuredProducts: {
     nodes: Array<
-      Pick<StorefrontAPI.Product, 'id' | 'title' | 'handle'> & {
-        priceRange: {
-          minVariantPrice: Pick<
-            StorefrontAPI.MoneyV2,
-            'amount' | 'currencyCode'
-          >;
-        };
+      Pick<
+        StorefrontAPI.Product,
+        | 'id'
+        | 'handle'
+        | 'title'
+        | 'description'
+        | 'publishedAt'
+        | 'totalInventory'
+        | 'tags'
+      > & {
+        seo: Pick<StorefrontAPI.Seo, 'title' | 'description'>;
         featuredImage?: StorefrontAPI.Maybe<
           Pick<
             StorefrontAPI.Image,
             'id' | 'url' | 'altText' | 'width' | 'height'
           >
         >;
+        alto?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        ancho?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        profundidad?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
+        >;
+        priceRange: {
+          minVariantPrice: Pick<
+            StorefrontAPI.MoneyV2,
+            'amount' | 'currencyCode'
+          >;
+        };
+      }
+    >;
+  };
+  recentProducts: {
+    nodes: Array<
+      Pick<
+        StorefrontAPI.Product,
+        | 'id'
+        | 'handle'
+        | 'title'
+        | 'description'
+        | 'publishedAt'
+        | 'totalInventory'
+        | 'tags'
+      > & {
+        seo: Pick<StorefrontAPI.Seo, 'title' | 'description'>;
+        featuredImage?: StorefrontAPI.Maybe<
+          Pick<
+            StorefrontAPI.Image,
+            'id' | 'url' | 'altText' | 'width' | 'height'
+          >
+        >;
+        alto?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        ancho?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+        profundidad?: StorefrontAPI.Maybe<
+          Pick<StorefrontAPI.Metafield, 'value'>
+        >;
+        priceRange: {
+          minVariantPrice: Pick<
+            StorefrontAPI.MoneyV2,
+            'amount' | 'currencyCode'
+          >;
+        };
       }
     >;
   };
@@ -1276,13 +1305,9 @@ interface GeneratedQueryTypes {
     return: FooterQuery;
     variables: FooterQueryVariables;
   };
-  '#graphql\n  fragment FeaturedCollection on Collection {\n    id\n    title\n    image {\n      id\n      url\n      altText\n      width\n      height\n    }\n    handle\n  }\n  query FeaturedCollection($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    collections(first: 1, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...FeaturedCollection\n      }\n    }\n  }\n': {
-    return: FeaturedCollectionQuery;
-    variables: FeaturedCollectionQueryVariables;
-  };
-  '#graphql\n  fragment RecommendedProduct on Product {\n    id\n    title\n    handle\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n  }\n  query RecommendedProducts ($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    products(first: 4, sortKey: UPDATED_AT, reverse: true) {\n      nodes {\n        ...RecommendedProduct\n      }\n    }\n  }\n': {
-    return: RecommendedProductsQuery;
-    variables: RecommendedProductsQueryVariables;
+  '#graphql\n  query HomepageProducts($country: CountryCode, $language: LanguageCode)\n    @inContext(country: $country, language: $language) {\n    featuredProducts: products(\n      first: 1\n      reverse: true\n      sortKey: CREATED_AT\n      query: "tag:destacado"\n    ) {\n      nodes {\n        ...HomepageProduct\n      }\n    }\n    recentProducts: products(first: 3, reverse: true, sortKey: CREATED_AT) {\n      nodes {\n        ...HomepageProduct\n      }\n    }\n  }\n  #graphql\n  fragment HomepageProduct on Product {\n    id\n    handle\n    title\n    description\n    publishedAt\n    totalInventory\n    tags\n    seo {\n      title\n      description\n    }\n    featuredImage {\n      id\n      url\n      altText\n      width\n      height\n    }\n    alto: metafield(namespace: "custom", key: "alto") {\n      value\n    }\n    ancho: metafield(namespace: "custom", key: "ancho") {\n      value\n    }\n    profundidad: metafield(namespace: "custom", key: "profundidad") {\n      value\n    }\n    priceRange {\n      minVariantPrice {\n        amount\n        currencyCode\n      }\n    }\n  }\n\n': {
+    return: HomepageProductsQuery;
+    variables: HomepageProductsQueryVariables;
   };
   '#graphql\n  query Article(\n    $articleHandle: String!\n    $blogHandle: String!\n    $country: CountryCode\n    $language: LanguageCode\n  ) @inContext(language: $language, country: $country) {\n    blog(handle: $blogHandle) {\n      handle\n      articleByHandle(handle: $articleHandle) {\n        handle\n        title\n        contentHtml\n        publishedAt\n        author: authorV2 {\n          name\n        }\n        image {\n          id\n          altText\n          url\n          width\n          height\n        }\n        seo {\n          description\n          title\n        }\n      }\n    }\n  }\n': {
     return: ArticleQuery;

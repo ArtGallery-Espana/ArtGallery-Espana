@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
 :root {
   --aside-width: 400px;
   --cart-aside-summary-height-with-discount: 300px;
@@ -6,6 +8,14 @@
   --header-height: 64px;
   --color-dark: #000;
   --color-light: #fff;
+  --ivory: #f6f1ea;
+  --char: #232327;
+  --ink: #111111;
+  --muted: rgba(35, 35, 39, 0.55);
+  --muted-2: rgba(35, 35, 39, 0.72);
+  --serif: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  --sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
 img {
@@ -826,4 +836,81 @@ button.reset:hover:not(:has(> *)) {
   display: flex;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+
+/*
+* --------------------------------------------------
+* Home / editorial overrides
+* --------------------------------------------------
+*/
+body {
+  background: var(--ivory);
+  color: var(--char);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body > main.site-main {
+  margin: 0.75rem;
+  background: #f6f1ea;
+}
+
+@media (min-width: 768px) {
+  body > main.site-main {
+    margin: 1rem;
+  }
+}
+
+.home-cta-primary,
+.home-cta-primary:visited,
+.home-cta-primary:hover,
+.home-cta-primary:active {
+  color: #fff !important;
+  text-decoration: none !important;
+}
+
+.home-cta-outline,
+.home-cta-outline:visited,
+.home-cta-outline:hover,
+.home-cta-outline:active,
+.home-cta-ghost,
+.home-cta-ghost:visited,
+.home-cta-ghost:hover,
+.home-cta-ghost:active,
+.home-cta-link,
+.home-cta-link:visited,
+.home-cta-link:hover,
+.home-cta-link:active {
+  text-decoration: none !important;
+}
+
+.home-cta-outline,
+.home-cta-outline:visited {
+  color: #232327 !important;
+}
+
+.home-cta-outline:hover,
+.home-cta-outline:active,
+.home-cta-link:hover,
+.home-cta-link:active {
+  color: #2f9ea0 !important;
+  border-color: #2f9ea0 !important;
+  text-decoration: none !important;
+}
+
+.home-cta-ghost,
+.home-cta-ghost:visited {
+  color: #2f9ea0 !important;
+}
+
+.home-cta-ghost:hover,
+.home-cta-ghost:active {
+  color: #fff !important;
+  background-color: #2f9ea0 !important;
 }
