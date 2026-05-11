@@ -57,7 +57,7 @@ export default function Homepage() {
                 {heroDescription ||
                   'Obra contemporánea de Jorge España, pintor ecuatoriano radicado en Cuenca. Galápagos, paisajes interiores y pequeñas iluminaciones, en óleo y técnica mixta.'}
               </p>
-              <div className="mb-14 mt-14 flex flex-wrap items-start gap-4">
+              <div className="mb-14 mt-4 flex flex-wrap items-start gap-4">
               <Link
                 className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#2F9EA0] hover:text-white hover:no-underline"
                 to="/collections/all"
