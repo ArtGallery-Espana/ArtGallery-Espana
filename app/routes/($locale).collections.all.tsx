@@ -35,37 +35,111 @@ function computeTamano(
   return 'XL';
 }
 
-function FilterGroup({
+function CheckboxRow({
   label,
-  value,
-  options,
+  checked,
   onChange,
 }: {
   label: string;
-  value: string;
-  options: string[];
-  onChange: (v: string) => void;
+  checked: boolean;
+  onChange: (v: boolean) => void;
 }) {
   return (
-    <div>
-      <div className="mb-[14px] [font-family:var(--mono)] text-[10px] uppercase tracking-[0.2em] text-[rgba(35,35,39,.55)]">
-        {label}
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {options.map((o) => (
-          <button
-            key={o}
-            type="button"
-            onClick={() => onChange(o)}
-            className={`inline-flex items-center rounded-full border px-[11px] py-[5px] [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.16em] transition ${
-              value === o
-                ? 'border-[#2F9EA0] bg-[rgba(47,158,160,.06)] text-[#2F9EA0]'
-                : 'border-[rgba(35,35,39,.15)] text-[rgba(35,35,39,.72)] hover:border-[#2F9EA0] hover:text-[#2F9EA0]'
-            }`}
+    <label className="flex cursor-pointer items-center gap-3 py-[6px]">
+      <span
+        className={`flex h-4 w-4 shrink-0 items-center justify-center border transition ${
+          checked
+            ? 'border-[#2F9EA0] bg-[#2F9EA0]'
+            : 'border-[rgba(35,35,39,.30)] bg-transparent'
+        }`}
+      >
+        {checked && (
+          <svg
+            className="h-2.5 w-2.5 text-white"
+            viewBox="0 0 10 8"
+            fill="none"
           >
-            {o}
-          </button>
-        ))}
+            <path
+              d="M1 4l3 3 5-6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
+      </span>
+      <span className="text-[13px] text-[rgba(35,35,39,.80)]">{label}</span>
+    </label>
+  );
+}
+
+function FilterGroup({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="border-b border-[rgba(35,35,39,.10)] pb-6">
+      <div className="mb-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
+        {title}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function PriceSlider({
+  min,
+  max,
+  floor,
+  ceiling,
+  onFloorChange,
+  onCeilingChange,
+}: {
+  min: number;
+  max: number;
+  floor: number;
+  ceiling: number;
+  onFloorChange: (v: number) => void;
+  onCeilingChange: (v: number) => void;
+}) {
+  if (min === max) return null;
+
+  const fmt = (v: number) =>
+    v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`;
+
+  return (
+    <div className="pt-1">
+      <div className="mb-4 flex justify-between [font-family:var(--mono)] text-[11px] tracking-[0.04em] text-[rgba(35,35,39,.72)]">
+        <span>{fmt(floor)}</span>
+        <span>{fmt(ceiling)}</span>
+      </div>
+      <div className="space-y-3">
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={floor}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (v <= ceiling) onFloorChange(v);
+          }}
+          className="w-full accent-[#2F9EA0]"
+        />
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={ceiling}
+          onChange={(e) => {
+            const v = Number(e.target.value);
+            if (v >= floor) onCeilingChange(v);
+          }}
+          className="w-full accent-[#2F9EA0]"
+        />
       </div>
     </div>
   );
@@ -91,37 +165,30 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
           <Image
             data={product.featuredImage}
             className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-            sizes="(min-width: 1200px) 380px, (min-width: 768px) 50vw, 100vw"
+            sizes="(min-width: 1200px) 320px, (min-width: 768px) 50vw, 100vw"
           />
         ) : null}
-        {consultar && (
-          <div className="absolute right-3 top-3">
-            <span className="inline-flex items-center rounded-full border border-[#C84D92] px-[11px] py-[5px] [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.16em] text-[#C84D92]">
-              En consulta
-            </span>
-          </div>
-        )}
-      </div>
-
-      <div className="pt-5">
-        <div className="mb-[6px] flex items-baseline justify-between">
-          <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
-            {product.handle.toUpperCase()}
-            {year ? ` · ${year}` : ''}
-          </span>
-          {product.productType ? (
-            <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+        {product.productType ? (
+          <div className="absolute left-3 top-3">
+            <span className="inline-flex items-center rounded-full bg-[#2F9EA0] px-[10px] py-[4px] [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white">
               {product.productType}
             </span>
-          ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="pt-4">
+        <div className="mb-[5px] [font-family:var(--mono)] text-[10px] uppercase tracking-[0.12em] text-[rgba(35,35,39,.50)]">
+          {year}
+          {product.tamano ? ` · ${product.tamano}` : ''}
         </div>
 
-        <h2 className="[font-family:var(--serif)] text-[24px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
+        <h2 className="[font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
           {product.title}
         </h2>
 
         {(product.ancho?.value || product.alto?.value) && (
-          <div className="mt-[6px] text-[13px] text-[rgba(35,35,39,.72)]">
+          <div className="mt-[4px] text-[12px] text-[rgba(35,35,39,.60)]">
             {[product.ancho?.value, product.alto?.value]
               .filter(Boolean)
               .join(' × ')}{' '}
@@ -130,7 +197,9 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
         )}
 
         <div
-          className={`mt-[10px] text-[14px] ${consultar ? 'text-[#C84D92]' : 'text-[#111111]'}`}
+          className={`mt-[8px] [font-family:var(--mono)] text-[13px] tracking-[0.02em] ${
+            consultar ? 'text-[#C84D92]' : 'text-[#111111]'
+          }`}
         >
           {consultar ? (
             'Consultar'
@@ -146,10 +215,9 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
 export default function CatalogPage() {
   const {products} = useLoaderData<typeof loader>();
 
-  const [cat, setCat] = useState('Todas');
-  const [precio, setPrecio] = useState('Todos');
-  const [tamano, setTamano] = useState('Todos');
-  const [sort, setSort] = useState('Recientes');
+  const [selectedCategorias, setSelectedCategorias] = useState<string[]>([]);
+  const [selectedTamanos, setSelectedTamanos] = useState<string[]>([]);
+  const [sort, setSort] = useState('Reciente');
 
   const enriched = useMemo<EnrichedProduct[]>(
     () =>
@@ -161,11 +229,25 @@ export default function CatalogPage() {
     [products],
   );
 
-  const cats = useMemo(() => {
+  const {minPrice, maxPrice} = useMemo(() => {
+    const vals = enriched.map((p) => p.priceVal).filter((v) => v > 0);
+    return {
+      minPrice: vals.length ? Math.floor(Math.min(...vals)) : 0,
+      maxPrice: vals.length ? Math.ceil(Math.max(...vals)) : 10000,
+    };
+  }, [enriched]);
+
+  const [priceFloor, setPriceFloor] = useState<number | null>(null);
+  const [priceCeiling, setPriceCeiling] = useState<number | null>(null);
+
+  const floor = priceFloor ?? minPrice;
+  const ceiling = priceCeiling ?? maxPrice;
+
+  const categorias = useMemo(() => {
     const unique = [
       ...new Set(enriched.map((p) => p.productType).filter(Boolean)),
     ];
-    return ['Todas', ...unique.sort()];
+    return unique.sort();
   }, [enriched]);
 
   const tamanos = useMemo(() => {
@@ -173,25 +255,35 @@ export default function CatalogPage() {
     const unique = [
       ...new Set(enriched.map((p) => p.tamano).filter(Boolean)),
     ];
-    return ['Todos', ...unique.sort((a, b) => order.indexOf(a) - order.indexOf(b))];
+    return unique.sort((a, b) => order.indexOf(a) - order.indexOf(b));
   }, [enriched]);
+
+  function toggleCategoria(cat: string) {
+    setSelectedCategorias((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  }
+
+  function toggleTamano(t: string) {
+    setSelectedTamanos((prev) =>
+      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
+    );
+  }
 
   const filtered = useMemo(() => {
     let result = enriched;
-    if (cat !== 'Todas') result = result.filter((p) => p.productType === cat);
-    if (tamano !== 'Todos') result = result.filter((p) => p.tamano === tamano);
-    if (precio === 'Hasta 5.000')
-      result = result.filter((p) => p.priceVal > 0 && p.priceVal <= 5000);
-    else if (precio === '5.000 — 15.000')
-      result = result.filter(
-        (p) => p.priceVal >= 5000 && p.priceVal <= 15000,
+    if (selectedCategorias.length > 0)
+      result = result.filter((p) =>
+        selectedCategorias.includes(p.productType),
       );
-    else if (precio === '+15.000')
-      result = result.filter((p) => p.priceVal > 15000);
-    else if (precio === 'Consultar')
-      result = result.filter((p) => p.priceVal === 0);
+    if (selectedTamanos.length > 0)
+      result = result.filter((p) => selectedTamanos.includes(p.tamano));
+    result = result.filter(
+      (p) =>
+        p.priceVal === 0 || (p.priceVal >= floor && p.priceVal <= ceiling),
+    );
     return result;
-  }, [enriched, cat, tamano, precio]);
+  }, [enriched, selectedCategorias, selectedTamanos, floor, ceiling]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -207,116 +299,139 @@ export default function CatalogPage() {
     }
   }, [filtered, sort]);
 
+  const hasFilters =
+    selectedCategorias.length > 0 ||
+    selectedTamanos.length > 0 ||
+    floor > minPrice ||
+    ceiling < maxPrice;
+
   function clearFilters() {
-    setCat('Todas');
-    setPrecio('Todos');
-    setTamano('Todos');
+    setSelectedCategorias([]);
+    setSelectedTamanos([]);
+    setPriceFloor(null);
+    setPriceCeiling(null);
   }
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
-      {/* HERO */}
+      {/* PAGE HEADER */}
       <section className="px-6 pb-0 pt-10 md:px-10 xl:px-14 xl:pt-14">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="pt-6">
-            <div className="mb-9 flex items-center gap-[14px] [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">
-              <span className="h-px w-6 bg-[#C84D92] opacity-80 inline-block" />
-              Catálogo · {products.length} obras disponibles
+        <div className="mx-auto max-w-[1400px]">
+          <div className="border-b border-[#232327] pb-7">
+            <div className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
+              Catálogo
             </div>
-            <div className="grid items-end gap-16 lg:grid-cols-[1.4fr_1fr] lg:gap-24">
-              <h1 className="[font-family:var(--serif)] text-[clamp(56px,6.5vw,96px)] leading-[.98] text-[#111111]">
-                Obras disponibles
-                <br />
-                <span className="italic text-[rgba(35,35,39,.55)]">
-                  Mayo 2026.
+            <h1 className="mt-3 [font-family:var(--serif)] text-[clamp(2.5rem,5vw,4rem)] leading-[1.02] tracking-[-0.015em] text-[#111111]">
+              Obras disponibles
+            </h1>
+          </div>
+        </div>
+      </section>
+
+      {/* CONTENT: SIDEBAR + MAIN */}
+      <section className="px-6 pb-24 pt-10 md:px-10 xl:px-14 xl:pb-32">
+        <div className="mx-auto max-w-[1400px]">
+          <div className="grid gap-10 lg:grid-cols-[240px_1fr] lg:gap-14 xl:grid-cols-[280px_1fr]">
+
+            {/* SIDEBAR — FILTERS */}
+            <aside className="lg:sticky lg:top-28 lg:self-start">
+              <div className="space-y-6">
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
+                  >
+                    Limpiar filtros
+                  </button>
+                )}
+
+                {categorias.length > 0 && (
+                  <FilterGroup title="Categoría">
+                    {categorias.map((cat) => (
+                      <CheckboxRow
+                        key={cat}
+                        label={cat}
+                        checked={selectedCategorias.includes(cat)}
+                        onChange={() => toggleCategoria(cat)}
+                      />
+                    ))}
+                  </FilterGroup>
+                )}
+
+                {tamanos.length > 0 && (
+                  <FilterGroup title="Tamaño">
+                    {tamanos.map((t) => (
+                      <CheckboxRow
+                        key={t}
+                        label={t}
+                        checked={selectedTamanos.includes(t)}
+                        onChange={() => toggleTamano(t)}
+                      />
+                    ))}
+                  </FilterGroup>
+                )}
+
+                <FilterGroup title="Precio">
+                  <PriceSlider
+                    min={minPrice}
+                    max={maxPrice}
+                    floor={floor}
+                    ceiling={ceiling}
+                    onFloorChange={setPriceFloor}
+                    onCeilingChange={setPriceCeiling}
+                  />
+                </FilterGroup>
+              </div>
+            </aside>
+
+            {/* MAIN CONTENT */}
+            <div>
+              {/* TOP BAR: counter + sort */}
+              <div className="mb-8 flex items-center justify-between border-b border-[rgba(35,35,39,.10)] pb-5">
+                <span className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#C84D92]">
+                  {sorted.length} obra{sorted.length !== 1 ? 's' : ''}
                 </span>
-              </h1>
-              <p className="max-w-[42ch] text-[15px] leading-[1.7] text-[rgba(35,35,39,.72)]">
-                El catálogo se actualiza el primer lunes de cada mes. Para obras
-                que ya no aparecen, escribir al estudio: en muchos casos
-                permanecen disponibles bajo consulta directa.
-              </p>
+                <div className="flex items-center gap-3">
+                  <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                    Orden
+                  </span>
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value)}
+                    className="cursor-pointer bg-transparent text-[13px] text-[#232327] tracking-[0.02em] outline-none"
+                  >
+                    <option>Reciente</option>
+                    <option>Precio ↑</option>
+                    <option>Precio ↓</option>
+                    <option>A–Z</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* GRID: 2 cols mobile → 3 md → 4 xl */}
+              {sorted.length > 0 ? (
+                <div className="grid grid-cols-2 gap-x-8 gap-y-14 md:grid-cols-3 xl:grid-cols-4">
+                  {sorted.map((product) => (
+                    <CatalogCard key={product.id} product={product} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-start gap-5 border border-dashed border-[rgba(35,35,39,.20)] p-10">
+                  <p className="[font-family:var(--serif)] text-[22px] leading-[1.3] text-[#111111]">
+                    Ninguna obra coincide con tu selección.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
+                  >
+                    Limpiar filtros
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* FILTER BAR */}
-      <section className="mt-[80px] px-6 md:px-10 xl:mt-[120px] xl:px-14">
-        <div className="mx-auto max-w-[1200px]">
-          <div className="flex flex-wrap items-end gap-8 border-b border-[rgba(35,35,39,.12)] border-t border-[#232327] py-7 lg:gap-12">
-            <FilterGroup
-              label="Categoría"
-              value={cat}
-              options={cats}
-              onChange={setCat}
-            />
-            {tamanos.length > 1 && (
-              <FilterGroup
-                label="Tamaño"
-                value={tamano}
-                options={tamanos}
-                onChange={setTamano}
-              />
-            )}
-            <FilterGroup
-              label="Precio"
-              value={precio}
-              options={[
-                'Todos',
-                'Hasta 5.000',
-                '5.000 — 15.000',
-                '+15.000',
-                'Consultar',
-              ]}
-              onChange={setPrecio}
-            />
-            <div className="flex-1" />
-            <div className="flex items-center gap-3">
-              <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.2em] text-[rgba(35,35,39,.55)]">
-                Orden
-              </span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                className="bg-transparent text-[13px] text-[#232327] tracking-[0.02em] outline-none cursor-pointer"
-              >
-                <option>Recientes</option>
-                <option>Precio ↑</option>
-                <option>Precio ↓</option>
-                <option>A–Z</option>
-              </select>
-            </div>
-            <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92]">
-              {sorted.length} resultado{sorted.length !== 1 ? 's' : ''}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRODUCT GRID */}
-      <section className="px-6 pb-24 pt-16 md:px-10 xl:px-14 xl:pb-32 xl:pt-20">
-        <div className="mx-auto max-w-[1200px]">
-          {sorted.length > 0 ? (
-            <div className="grid grid-cols-1 gap-x-12 gap-y-20 sm:grid-cols-2 lg:grid-cols-3">
-              {sorted.map((product) => (
-                <CatalogCard key={product.id} product={product} />
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-start gap-5 border border-dashed border-[rgba(35,35,39,.20)] p-10">
-              <p className="[font-family:var(--serif)] text-[22px] leading-[1.3] text-[#111111]">
-                Ninguna obra coincide con tu selección.
-              </p>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
-              >
-                Limpiar filtros
-              </button>
-            </div>
-          )}
         </div>
       </section>
     </div>
