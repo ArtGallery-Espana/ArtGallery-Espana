@@ -18,12 +18,17 @@ export async function loader({context}: Route.LoaderArgs) {
   const year = now.getFullYear();
   const monthLabel = month.charAt(0).toUpperCase() + month.slice(1);
   return {
-    products: products.nodes as CatalogProductFragment[],
+    products: products.nodes as RawProduct[],
     dateLabel: `${monthLabel} ${year}`,
   };
 }
 
-type EnrichedProduct = CatalogProductFragment & {
+type RawProduct = CatalogProductFragment & {
+  collections?: {nodes: {title: string; handle: string}[]};
+};
+
+type EnrichedProduct = RawProduct & {
+  categoria: string;
   tamano: string;
   priceVal: number;
 };
@@ -60,6 +65,11 @@ function computeTamano(
   if (max < 70) return 'M';
   if (max < 120) return 'L';
   return 'XL';
+}
+
+function getCategory(p: RawProduct): string {
+  if (p.productType) return p.productType;
+  return p.collections?.nodes?.[0]?.title ?? '';
 }
 
 function matchesPriceBucket(priceVal: number, bucket: PriceBucket): boolean {
@@ -138,10 +148,10 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
             sizes="(min-width: 1280px) 280px, (min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw"
           />
         ) : null}
-        {product.productType ? (
+        {product.categoria ? (
           <div className="absolute left-3 top-3">
             <span className="inline-flex items-center rounded-full bg-[#2F9EA0] px-[10px] py-[4px] [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white">
-              {product.productType}
+              {product.categoria}
             </span>
           </div>
         ) : null}
@@ -191,6 +201,7 @@ export default function CatalogPage() {
     () =>
       products.map((p) => ({
         ...p,
+        categoria: getCategory(p),
         tamano: computeTamano(p.alto?.value, p.ancho?.value),
         priceVal: parseFloat(p.priceRange.minVariantPrice.amount),
       })),
@@ -199,7 +210,7 @@ export default function CatalogPage() {
 
   const categorias = useMemo(() => {
     const unique = [
-      ...new Set(enriched.map((p) => p.productType).filter(Boolean)),
+      ...new Set(enriched.map((p) => p.categoria).filter(Boolean)),
     ];
     return unique.sort();
   }, [enriched]);
@@ -215,7 +226,7 @@ export default function CatalogPage() {
   const filtered = useMemo(() => {
     let result = enriched;
     if (selectedCategoria !== 'todas')
-      result = result.filter((p) => p.productType === selectedCategoria);
+      result = result.filter((p) => p.categoria === selectedCategoria);
     if (selectedTamano !== 'todas')
       result = result.filter((p) => p.tamano === selectedTamano);
     result = result.filter((p) =>
@@ -455,6 +466,12 @@ const CATALOG_PRODUCT_FRAGMENT = `#graphql
     }
     ancho: metafield(namespace: "custom", key: "ancho") {
       value
+    }
+    collections(first: 5) {
+      nodes {
+        title
+        handle
+      }
     }
   }
 ` as const;
