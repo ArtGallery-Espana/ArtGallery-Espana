@@ -193,16 +193,16 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
         ) : null}
       </div>
 
-      <div className="pt-4">
-        <div className="mb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.12em] text-[rgba(35,35,39,.50)]">
-          {year}
-          {product.tamano ? ` · ${product.tamano}` : ''}
+      <div className="pt-3">
+        <div className="mb-[6px] flex items-center justify-between [font-family:var(--mono)] text-[10px] uppercase tracking-[0.12em] text-[rgba(35,35,39,.45)]">
+          <span>{product.handle.toUpperCase()}</span>
+          <span>{year}{product.tamano ? ` · ${product.tamano}` : ''}</span>
         </div>
-        <h2 className="[font-family:var(--serif)] text-[20px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
+        <h2 className="[font-family:var(--serif)] text-[19px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
           {product.title}
         </h2>
         {(dimAncho || dimAlto) && (
-          <div className="mt-1 text-[12px] text-[rgba(35,35,39,.55)]">
+          <div className="mt-[5px] text-[12px] text-[rgba(35,35,39,.50)]">
             {[dimAncho, dimAlto].filter(Boolean).join(' × ')} cm
           </div>
         )}
@@ -313,13 +313,19 @@ export default function CatalogPage() {
       {/* HEADER */}
       <section className="px-6 pb-0 pt-10 md:px-10 xl:px-14 xl:pt-14">
         <div className="mx-auto max-w-[1400px]">
-          <div className="border-b border-[#232327] pb-7">
-            <div className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-              Catálogo
+          <div className="border-b border-[#232327] pb-8">
+            <div className="mb-4 flex items-center gap-4">
+              <span className="block h-px w-10 bg-[#C84D92]" aria-hidden="true" />
+              <span className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[#C84D92]">
+                Catálogo
+              </span>
             </div>
-            <h1 className="mt-3 [font-family:var(--serif)] text-[clamp(2.2rem,4vw,3.5rem)] leading-[1.02] tracking-[-0.015em] text-[#111111]">
+            <h1 className="[font-family:var(--serif)] text-[clamp(2.4rem,4.5vw,3.8rem)] leading-[1.02] tracking-[-0.015em] text-[#111111]">
               Obras disponibles
             </h1>
+            <p className="mt-4 max-w-[520px] text-[15px] leading-[1.6] text-[rgba(35,35,39,.65)]">
+              Pintura contemporánea de Jorge España — artista ecuatoriano. Selecciona una obra para conocer sus detalles.
+            </p>
           </div>
         </div>
       </section>
