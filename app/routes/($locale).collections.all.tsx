@@ -192,7 +192,6 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
 export default function CatalogPage() {
   const {products, dateLabel} = useLoaderData<typeof loader>();
 
-  const [selectedCategoria, setSelectedCategoria] = useState('todas');
   const [selectedTamano, setSelectedTamano] = useState('todas');
   const [selectedPrecio, setSelectedPrecio] = useState<PriceBucket>('todos');
   const [sort, setSort] = useState('Recientes');
@@ -208,13 +207,6 @@ export default function CatalogPage() {
     [products],
   );
 
-  const categorias = useMemo(() => {
-    const unique = [
-      ...new Set(enriched.map((p) => p.categoria).filter(Boolean)),
-    ];
-    return unique.sort();
-  }, [enriched]);
-
   const tamanos = useMemo(() => {
     const order = ['S', 'M', 'L', 'XL'];
     const unique = [
@@ -225,15 +217,13 @@ export default function CatalogPage() {
 
   const filtered = useMemo(() => {
     let result = enriched;
-    if (selectedCategoria !== 'todas')
-      result = result.filter((p) => p.categoria === selectedCategoria);
     if (selectedTamano !== 'todas')
       result = result.filter((p) => p.tamano === selectedTamano);
     result = result.filter((p) =>
       matchesPriceBucket(p.priceVal, selectedPrecio),
     );
     return result;
-  }, [enriched, selectedCategoria, selectedTamano, selectedPrecio]);
+  }, [enriched, selectedTamano, selectedPrecio]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -249,13 +239,9 @@ export default function CatalogPage() {
     }
   }, [filtered, sort]);
 
-  const hasFilters =
-    selectedCategoria !== 'todas' ||
-    selectedTamano !== 'todas' ||
-    selectedPrecio !== 'todos';
+  const hasFilters = selectedTamano !== 'todas' || selectedPrecio !== 'todos';
 
   function clearFilters() {
-    setSelectedCategoria('todas');
     setSelectedTamano('todas');
     setSelectedPrecio('todos');
   }
@@ -295,28 +281,6 @@ export default function CatalogPage() {
       <section className="border-y border-[rgba(35,35,39,.10)] px-6 py-5 md:px-10 xl:px-14">
         <div className="mx-auto max-w-[1400px]">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-
-            {categorias.length > 0 && (
-              <FilterGroup title="Categoría">
-                <FilterPill
-                  label="Todas"
-                  active={selectedCategoria === 'todas'}
-                  onClick={() => setSelectedCategoria('todas')}
-                />
-                {categorias.map((cat) => (
-                  <FilterPill
-                    key={cat}
-                    label={cat}
-                    active={selectedCategoria === cat}
-                    onClick={() =>
-                      setSelectedCategoria(
-                        selectedCategoria === cat ? 'todas' : cat,
-                      )
-                    }
-                  />
-                ))}
-              </FilterGroup>
-            )}
 
             {tamanos.length > 0 && (
               <FilterGroup title="Tamaño">
