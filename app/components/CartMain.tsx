@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef} from 'react';
+import {useState, useEffect, useRef, useMemo} from 'react';
 import {CartForm, Image, Money, useOptimisticCart} from '@shopify/hydrogen';
 import {Link} from 'react-router';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
@@ -98,43 +98,70 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 // ─── Page cart ────────────────────────────────────────────────────────────────
 
 function CartPage({cart}: {cart: OptCart}) {
-  const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
-  // Tracks merchandiseIds whose LinesRemove is in-flight (pending save).
-  // Prevents the cleanup effect from incorrectly evicting them while the
-  // optimistic remove hasn't settled yet.
+  // Dual-track: state drives renders; ref gives effects always-fresh access
+  // without adding savedItems to every effect's dependency array.
+  const [savedItems, setSavedItemsState] = useState<SavedItem[]>([]);
+  const savedRef = useRef<SavedItem[]>([]);
+
+  function setSavedItems(items: SavedItem[]) {
+    savedRef.current = items;
+    setSavedItemsState(items);
+  }
+
+  // LinesRemove in-flight: protects items from being evicted by the cleanup
+  // effect while the optimistic remove hasn't settled yet.
   const pendingSaves = useRef(new Set<string>());
 
-  // hydrate from localStorage (client only)
-  useEffect(() => { setSavedItems(readSaved()); }, []);
+  // Hydrate from localStorage once on mount (client only)
+  useEffect(() => {
+    const stored = readSaved();
+    savedRef.current = stored;
+    setSavedItemsState(stored);
+  }, []);
 
-  const activeLines = (cart?.lines?.nodes ?? []).filter(
-    (l) => !('parentRelationship' in l && l.parentRelationship?.parent),
-  ) as CartLine[];
+  // Memoise so identity only changes when cart CONTENTS change, not every render
+  const activeLines = useMemo(
+    () =>
+      (cart?.lines?.nodes ?? []).filter(
+        (l) => !('parentRelationship' in l && l.parentRelationship?.parent),
+      ) as CartLine[],
+    [cart?.lines?.nodes],
+  );
 
   const activeCount = cart?.totalQuantity ?? 0;
 
-  // ── Cleanup: remove from saved when item re-enters the active cart ────────────
-  // (handles "Agregar a la compra" confirmation)
-  // Pending-save items are never evicted here — they're protected by the ref.
+  // Stable string key — the cleanup effect fires only when cart IDs change,
+  // not on every render (activeLines would be a new array ref every render).
+  const activeCartKey = useMemo(
+    () => activeLines.map((l) => l.merchandise.id).sort().join(','),
+    [activeLines],
+  );
+
+  // ── Cleanup: remove a saved item once it's confirmed back in the active cart ──
+  // Uses savedRef (not the closure) so it always reads the freshest saved list.
   useEffect(() => {
-    if (savedItems.length === 0) return;
+    const current = savedRef.current;
+    if (current.length === 0) return;
+
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
-    const stillSaved = savedItems.filter((s) => {
+    const stillSaved = current.filter((s) => {
       if (pendingSaves.current.has(s.merchandiseId)) {
-        // Once gone from active cart, the save is confirmed — release the lock
+        // Save in-flight: once the item leaves activeLines, the remove confirmed
         if (!activeIds.has(s.merchandiseId)) {
           pendingSaves.current.delete(s.merchandiseId);
         }
         return true; // always keep while in-flight
       }
-      // For all others: remove only if the item is back in the active cart
+      // Normal path: keep items that are NOT in the active cart
       return !activeIds.has(s.merchandiseId);
     });
-    if (stillSaved.length !== savedItems.length) {
+
+    if (stillSaved.length !== current.length) {
       setSavedItems(stillSaved);
       writeSaved(stillSaved);
     }
-  }, [activeLines]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCartKey]);
 
   function handleSave(line: CartLine) {
     const {merchandise} = line;
@@ -146,14 +173,18 @@ function CartPage({cart}: {cart: OptCart}) {
       imageUrl: merchandise.image?.url ?? merchandise.product.featuredImage?.url,
       imageAlt: merchandise.image?.altText ?? undefined,
       variantTitle: merchandise.title !== 'Default Title' ? merchandise.title : undefined,
-      // cost.totalAmount is guaranteed by CartLineFragment; merchandise.price may not be
+      // cost.totalAmount is guaranteed by CartLineFragment
       priceAmount: line.cost.totalAmount.amount,
       priceCurrencyCode: line.cost.totalAmount.currencyCode,
     };
-    // Mark as pending BEFORE state update so the cleanup effect never sees a
-    // window where the item is in savedItems but still in activeLines
+    // Register as pending BEFORE setState so the effect never sees a window
+    // where the item is already in savedItems but still in activeLines
     pendingSaves.current.add(item.merchandiseId);
-    const updated = [...savedItems.filter((s) => s.merchandiseId !== item.merchandiseId), item];
+    // Use savedRef.current — avoids stale closure on the savedItems variable
+    const updated = [
+      ...savedRef.current.filter((s) => s.merchandiseId !== item.merchandiseId),
+      item,
+    ];
     setSavedItems(updated);
     writeSaved(updated);
   }
@@ -438,9 +469,11 @@ function DiscountForm() {
 function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number}) {
   const subtotal = cart?.cost?.subtotalAmount;
   const checkoutUrl = cart?.checkoutUrl;
+  const hasItems = activeCount > 0;
 
   const subtotalVal = parseFloat(subtotal?.amount ?? '0');
-  const totalEst = subtotalVal + SHIP + INS;
+  // Only add shipping & insurance when there are active (non-saved) items
+  const totalEst = subtotalVal + (hasItems ? SHIP + INS : 0);
 
   const currency = subtotal?.currencyCode ?? 'USD';
   const fmtAmt = (n: number) =>
@@ -462,18 +495,22 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
             {subtotal ? <Money data={subtotal} /> : '—'}
           </span>
         </div>
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="text-[rgba(35,35,39,.65)]">Envío DHL · Internacional</span>
-          <span className="shrink-0 text-[#232327]">USD {SHIP}</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="text-[rgba(35,35,39,.65)]">Seguro a valor declarado</span>
-          <span className="shrink-0 text-[#232327]">USD {INS}</span>
-        </div>
-        <div className="flex items-baseline justify-between gap-4">
-          <span className="text-[rgba(35,35,39,.65)]">Impuestos (exento · obra de arte)</span>
-          <span className="shrink-0 text-[#232327]">USD 0</span>
-        </div>
+        {hasItems && (
+          <>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-[rgba(35,35,39,.65)]">Envío DHL · Internacional</span>
+              <span className="shrink-0 text-[#232327]">USD {SHIP}</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-[rgba(35,35,39,.65)]">Seguro a valor declarado</span>
+              <span className="shrink-0 text-[#232327]">USD {INS}</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="text-[rgba(35,35,39,.65)]">Impuestos (exento · obra de arte)</span>
+              <span className="shrink-0 text-[#232327]">USD 0</span>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="my-6 border-t border-[rgba(35,35,39,.12)]" />
