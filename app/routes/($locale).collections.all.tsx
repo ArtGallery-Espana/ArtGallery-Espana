@@ -104,8 +104,8 @@ function FilterGroup({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <span className="shrink-0 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.40)]">
+    <div className="flex flex-col gap-2">
+      <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.40)]">
         {title}
       </span>
       <div className="flex flex-wrap gap-2">{children}</div>
