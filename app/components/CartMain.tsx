@@ -7,15 +7,10 @@ import {CartLineItem, type CartLine} from '~/components/CartLineItem';
 import {CartSummary} from './CartSummary';
 
 export type CartLayout = 'page' | 'aside';
-
-export type CartMainProps = {
-  cart: CartApiQueryFragment | null;
-  layout: CartLayout;
-};
-
+export type CartMainProps = {cart: CartApiQueryFragment | null; layout: CartLayout};
 export type LineItemChildrenMap = {[parentId: string]: CartLine[]};
 
-// ─── Save-for-later ───────────────────────────────────────────────────────────
+// ─── Save-for-later helpers ───────────────────────────────────────────────────
 
 type SavedItem = {
   merchandiseId: string;
@@ -30,52 +25,53 @@ type SavedItem = {
 };
 
 const SAVED_KEY = 'cart-saved-items';
-const SHIPPING_EST = 480;
-const INSURANCE_EST = 331;
+const SHIP = 480;
+const INS = 331;
 
 function readSaved(): SavedItem[] {
   try {
-    const s = localStorage.getItem(SAVED_KEY);
+    const s = typeof window !== 'undefined' ? localStorage.getItem(SAVED_KEY) : null;
     return s ? (JSON.parse(s) as SavedItem[]) : [];
   } catch {
     return [];
   }
 }
 function writeSaved(items: SavedItem[]) {
-  localStorage.setItem(SAVED_KEY, JSON.stringify(items));
+  try {
+    localStorage.setItem(SAVED_KEY, JSON.stringify(items));
+  } catch {}
 }
 
-// ─── Child-map helper ─────────────────────────────────────────────────────────
+// ─── Child-map ────────────────────────────────────────────────────────────────
 
 function getLineItemChildrenMap(lines: CartLine[]): LineItemChildrenMap {
-  const children: LineItemChildrenMap = {};
+  const result: LineItemChildrenMap = {};
   for (const line of lines) {
     if ('parentRelationship' in line && line.parentRelationship?.parent) {
-      const parentId = line.parentRelationship.parent.id;
-      if (!children[parentId]) children[parentId] = [];
-      children[parentId].push(line);
+      const pid = line.parentRelationship.parent.id;
+      if (!result[pid]) result[pid] = [];
+      result[pid].push(line);
     }
     if ('lineComponents' in line) {
       const nested = getLineItemChildrenMap(line.lineComponents);
-      for (const [parentId, childIds] of Object.entries(nested)) {
-        if (!children[parentId]) children[parentId] = [];
-        children[parentId].push(...childIds);
+      for (const [pid, kids] of Object.entries(nested)) {
+        if (!result[pid]) result[pid] = [];
+        result[pid].push(...kids);
       }
     }
   }
-  return children;
+  return result;
 }
 
-type OptimisticCart = ReturnType<typeof useOptimisticCart<CartApiQueryFragment | null>>;
+type OptCart = ReturnType<typeof useOptimisticCart<CartApiQueryFragment | null>>;
 
-// ─── Main export ──────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function CartMain({layout, cart: originalCart}: CartMainProps) {
   const cart = useOptimisticCart(originalCart);
-
   if (layout === 'page') return <CartPage cart={cart} />;
 
-  // aside / drawer
+  // aside drawer (unchanged)
   const linesCount = Boolean(cart?.lines?.nodes?.length || 0);
   const withDiscount =
     cart && Boolean(cart?.discountCodes?.filter((c) => c.applicable)?.length);
@@ -83,50 +79,46 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
   const childrenMap = getLineItemChildrenMap(cart?.lines?.nodes ?? []);
 
   return (
-    <section
-      className={`cart-main ${withDiscount ? 'with-discount' : ''}`}
-      aria-label="Cart drawer"
-    >
+    <section className={`cart-main ${withDiscount ? 'with-discount' : ''}`} aria-label="Cart drawer">
       <DrawerEmpty hidden={linesCount} />
       <div className="cart-details">
         <p id="cart-lines" className="sr-only">Line items</p>
-        <div>
-          <ul aria-labelledby="cart-lines">
-            {(cart?.lines?.nodes ?? []).map((line) => {
-              if ('parentRelationship' in line && line.parentRelationship?.parent)
-                return null;
-              return (
-                <CartLineItem
-                  key={line.id}
-                  line={line}
-                  layout={layout}
-                  childrenMap={childrenMap}
-                />
-              );
-            })}
-          </ul>
-        </div>
+        <ul aria-labelledby="cart-lines">
+          {(cart?.lines?.nodes ?? []).map((line) => {
+            if ('parentRelationship' in line && line.parentRelationship?.parent) return null;
+            return <CartLineItem key={line.id} line={line} layout={layout} childrenMap={childrenMap} />;
+          })}
+        </ul>
         {cartHasItems && <CartSummary cart={cart} layout={layout} />}
       </div>
     </section>
   );
 }
 
-// ─── Page layout ──────────────────────────────────────────────────────────────
+// ─── Page cart ────────────────────────────────────────────────────────────────
 
-function CartPage({cart}: {cart: OptimisticCart}) {
+function CartPage({cart}: {cart: OptCart}) {
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
 
-  useEffect(() => {
-    setSavedItems(readSaved());
-  }, []);
+  // hydrate from localStorage (client only)
+  useEffect(() => { setSavedItems(readSaved()); }, []);
 
   const activeLines = (cart?.lines?.nodes ?? []).filter(
-    (line) =>
-      !('parentRelationship' in line && line.parentRelationship?.parent),
+    (l) => !('parentRelationship' in l && l.parentRelationship?.parent),
   ) as CartLine[];
 
   const activeCount = cart?.totalQuantity ?? 0;
+
+  // ── When an item reappears in the active cart, remove it from saved ──────────
+  useEffect(() => {
+    if (savedItems.length === 0) return;
+    const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
+    const stillSaved = savedItems.filter((s) => !activeIds.has(s.merchandiseId));
+    if (stillSaved.length !== savedItems.length) {
+      setSavedItems(stillSaved);
+      writeSaved(stillSaved);
+    }
+  }, [activeLines]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSave(line: CartLine) {
     const {merchandise} = line;
@@ -135,40 +127,26 @@ function CartPage({cart}: {cart: OptimisticCart}) {
       quantity: line.quantity,
       productHandle: merchandise.product.handle,
       productTitle: merchandise.product.title,
-      imageUrl:
-        merchandise.image?.url ?? merchandise.product.featuredImage?.url,
+      imageUrl: merchandise.image?.url ?? merchandise.product.featuredImage?.url,
       imageAlt: merchandise.image?.altText ?? undefined,
-      variantTitle:
-        merchandise.title !== 'Default Title' ? merchandise.title : undefined,
+      variantTitle: merchandise.title !== 'Default Title' ? merchandise.title : undefined,
       priceAmount: merchandise.price.amount,
       priceCurrencyCode: merchandise.price.currencyCode,
     };
-    const updated = [
-      ...savedItems.filter((s) => s.merchandiseId !== item.merchandiseId),
-      item,
-    ];
+    const updated = [...savedItems.filter((s) => s.merchandiseId !== item.merchandiseId), item];
     setSavedItems(updated);
     writeSaved(updated);
   }
 
-  function handleAddBack(merchandiseId: string) {
-    const updated = savedItems.filter((s) => s.merchandiseId !== merchandiseId);
-    setSavedItems(updated);
-    writeSaved(updated);
-  }
-
+  // Empty state
   if (activeCount === 0 && savedItems.length === 0) {
     return (
       <div className="flex min-h-[65vh] flex-col items-center justify-center gap-8 bg-[#F6F1EA] px-6 text-center">
         <div className="flex items-center gap-4">
           <span className="block h-px w-10 bg-[#C84D92]" aria-hidden="true" />
-          <span className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-            Carrito
-          </span>
+          <span className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">Carrito</span>
         </div>
-        <p className="[font-family:var(--serif)] text-[clamp(2rem,4vw,3rem)] text-[#111111]">
-          Su carrito está vacío.
-        </p>
+        <p className="[font-family:var(--serif)] text-[clamp(2rem,4vw,3rem)] text-[#111111]">Su carrito está vacío.</p>
         <p className="max-w-[340px] text-[15px] leading-[1.6] text-[rgba(35,35,39,.60)]">
           Explore el catálogo y reserve una obra para su colección.
         </p>
@@ -191,42 +169,39 @@ function CartPage({cart}: {cart: OptimisticCart}) {
           <div className="mb-8 flex items-center gap-4">
             <span className="block h-px w-10 bg-[#C84D92]" aria-hidden="true" />
             <span className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-              Carrito&nbsp;·&nbsp;{activeCount}&nbsp;obra{activeCount !== 1 ? 's' : ''}&nbsp;reservada{activeCount !== 1 ? 's' : ''}
+              Carrito · {activeCount} obra{activeCount !== 1 ? 's' : ''} reservada{activeCount !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-20">
-            <h1 className="shrink-0 [font-family:var(--serif)] text-[clamp(3rem,7vw,5.5rem)] leading-[1.0] tracking-[-0.02em] text-[#111111]">
+            <h1 className="[font-family:var(--serif)] text-[clamp(3rem,7vw,5.5rem)] leading-[1.0] tracking-[-0.02em] text-[#111111]">
               Su selección.
             </h1>
-            <p className="max-w-[380px] pt-2 text-[15px] leading-[1.65] text-[rgba(35,35,39,.62)] lg:ml-auto lg:pt-5">
+            <p className="max-w-[380px] text-[15px] leading-[1.65] text-[rgba(35,35,39,.62)] lg:ml-auto lg:pt-4">
               Las obras quedan reservadas durante 48 horas mientras decide.
-              Puede continuar al checkout, guardar para más tarde o solicitar
-              una llamada con el estudio.
+              Puede continuar al checkout, guardar para más tarde o solicitar una llamada con el estudio.
             </p>
           </div>
         </div>
       </section>
 
-      {/* BODY */}
+      {/* BODY: two-column */}
       <section className="px-6 pb-28 md:px-10 xl:px-14">
         <div className="mx-auto max-w-[1400px]">
-          <div className="flex flex-col gap-14 lg:flex-row lg:items-start lg:gap-14">
+          <div className="flex flex-col gap-14 lg:flex-row lg:items-start lg:gap-12">
 
-            {/* LEFT — items */}
+            {/* LEFT — items list */}
             <div className="min-w-0 flex-1">
 
+              {/* active items */}
               {activeLines.length > 0 && (
                 <div className="border-t border-[rgba(35,35,39,.12)]">
                   {activeLines.map((line) => (
-                    <ActiveLine
-                      key={line.id}
-                      line={line}
-                      onSave={() => handleSave(line)}
-                    />
+                    <ActiveLine key={line.id} line={line} onSave={() => handleSave(line)} />
                   ))}
                 </div>
               )}
 
+              {/* saved for later */}
               {savedItems.length > 0 && (
                 <div className="mt-12">
                   <p className="mb-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.38)]">
@@ -234,17 +209,14 @@ function CartPage({cart}: {cart: OptimisticCart}) {
                   </p>
                   <div className="border-t border-[rgba(35,35,39,.08)]">
                     {savedItems.map((item) => (
-                      <SavedLine
-                        key={item.merchandiseId}
-                        item={item}
-                        onAddBack={() => handleAddBack(item.merchandiseId)}
-                      />
+                      <SavedLine key={item.merchandiseId} item={item} />
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="mt-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              {/* bottom bar */}
+              <div className="mt-10 flex flex-col gap-6 border-t border-[rgba(35,35,39,.10)] pt-8 sm:flex-row sm:items-center sm:justify-between">
                 <Link
                   to="/collections/all"
                   className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#232327] underline underline-offset-4"
@@ -255,10 +227,10 @@ function CartPage({cart}: {cart: OptimisticCart}) {
               </div>
             </div>
 
-            {/* RIGHT — order summary */}
-            <aside className="w-full shrink-0 lg:sticky lg:top-28 lg:w-[360px] xl:w-[400px]">
+            {/* RIGHT — order summary (sticky) */}
+            <div className="w-full shrink-0 lg:sticky lg:top-8 lg:w-[340px] xl:w-[380px]">
               <OrderSummary cart={cart} activeCount={activeCount} />
-            </aside>
+            </div>
 
           </div>
         </div>
@@ -269,16 +241,9 @@ function CartPage({cart}: {cart: OptimisticCart}) {
 
 // ─── Active line item ─────────────────────────────────────────────────────────
 
-function ActiveLine({
-  line,
-  onSave,
-}: {
-  line: CartLine;
-  onSave: () => void;
-}) {
+function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
   const {id, merchandise, isOptimistic} = line;
   const {product, title: variantTitle, image} = merchandise;
-  const handle = product.handle;
   const thumb = image ?? product.featuredImage;
 
   return (
@@ -287,24 +252,22 @@ function ActiveLine({
 
         {/* thumbnail */}
         <div className="relative h-[160px] w-[160px] shrink-0 overflow-hidden bg-[#EEE8E1] md:h-[190px] md:w-[190px]">
-          {thumb && (
-            <Image data={thumb} className="h-full w-full object-cover" sizes="190px" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.48)] to-transparent" />
-          <span className="absolute bottom-2 left-2 max-w-[58%] [font-family:var(--mono)] text-[8px] uppercase leading-tight tracking-[0.10em] text-white">
+          {thumb && <Image data={thumb} className="h-full w-full object-cover" sizes="190px" />}
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.50)] to-transparent" />
+          <span className="absolute bottom-2 left-2 max-w-[55%] [font-family:var(--mono)] text-[8px] uppercase leading-tight tracking-[0.10em] text-white">
             {product.title}
           </span>
           <span className="absolute bottom-2 right-2 [font-family:var(--mono)] text-[8px] uppercase tracking-[0.10em] text-white">
-            {handle.toUpperCase()}
+            {product.handle.toUpperCase()}
           </span>
         </div>
 
-        {/* details */}
+        {/* info */}
         <div className="flex min-w-0 flex-1 flex-col justify-between">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="mb-1 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.50)]">
-                {handle.toUpperCase()}
+                {product.handle.toUpperCase()}
               </p>
               <h2 className="[font-family:var(--serif)] text-[clamp(1.4rem,2.5vw,2rem)] leading-[1.1] text-[#111111]">
                 {product.title}
@@ -329,19 +292,15 @@ function ActiveLine({
           {/* actions */}
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
             <Link
-              to={`/products/${handle}`}
+              to={`/products/${product.handle}`}
               prefetch="intent"
               className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#232327] underline underline-offset-4"
             >
               Ver ficha
             </Link>
-            <span className="text-[rgba(35,35,39,.22)]" aria-hidden="true">|</span>
-
-            <CartForm
-              route="/cart"
-              action={CartForm.ACTIONS.LinesRemove}
-              inputs={{lineIds: [id]}}
-            >
+            <span className="text-[rgba(35,35,39,.22)]">|</span>
+            {/* Save: updates localStorage first, then removes from cart */}
+            <CartForm route="/cart" action={CartForm.ACTIONS.LinesRemove} inputs={{lineIds: [id]}}>
               <button
                 type="submit"
                 disabled={!!isOptimistic}
@@ -351,14 +310,9 @@ function ActiveLine({
                 Guardar para más tarde
               </button>
             </CartForm>
-
-            <span className="text-[rgba(35,35,39,.22)]" aria-hidden="true">|</span>
-
-            <CartForm
-              route="/cart"
-              action={CartForm.ACTIONS.LinesRemove}
-              inputs={{lineIds: [id]}}
-            >
+            <span className="text-[rgba(35,35,39,.22)]">|</span>
+            {/* Remove entirely */}
+            <CartForm route="/cart" action={CartForm.ACTIONS.LinesRemove} inputs={{lineIds: [id]}}>
               <button
                 type="submit"
                 disabled={!!isOptimistic}
@@ -375,27 +329,25 @@ function ActiveLine({
 }
 
 // ─── Saved line item ──────────────────────────────────────────────────────────
+// NOTE: onAddBack is NOT called onClick — the useEffect in CartPage handles
+// cleanup once the item is confirmed back in the active cart. This prevents
+// the component from unmounting before the CartForm can submit.
 
-function SavedLine({item, onAddBack}: {item: SavedItem; onAddBack: () => void}) {
+function SavedLine({item}: {item: SavedItem}) {
   const priceData = {amount: item.priceAmount, currencyCode: item.priceCurrencyCode};
 
   return (
-    <div className="border-b border-[rgba(35,35,39,.08)] py-8 opacity-65">
+    <div className="border-b border-[rgba(35,35,39,.08)] py-8 opacity-60">
       <div className="flex gap-6">
         <div className="relative h-[110px] w-[110px] shrink-0 overflow-hidden bg-[#EEE8E1]">
           {item.imageUrl && (
-            <img
-              src={item.imageUrl}
-              alt={item.imageAlt ?? item.productTitle}
-              className="h-full w-full object-cover"
-            />
+            <img src={item.imageUrl} alt={item.imageAlt ?? item.productTitle} className="h-full w-full object-cover" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.38)] to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.40)] to-transparent" />
           <span className="absolute bottom-2 right-2 [font-family:var(--mono)] text-[7px] uppercase tracking-[0.10em] text-white">
             {item.productHandle.toUpperCase()}
           </span>
         </div>
-
         <div className="flex min-w-0 flex-1 flex-col justify-between">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -409,11 +361,11 @@ function SavedLine({item, onAddBack}: {item: SavedItem; onAddBack: () => void}) 
                 <p className="mt-1 text-[13px] text-[rgba(35,35,39,.40)]">{item.variantTitle}</p>
               )}
             </div>
-            <div className="[font-family:var(--serif)] text-[1.25rem] leading-none text-[rgba(35,35,39,.50)]">
+            <div className="[font-family:var(--serif)] text-[1.2rem] leading-none text-[rgba(35,35,39,.50)]">
               <Money data={priceData} />
             </div>
           </div>
-
+          {/* Add back: submits LinesAdd, useEffect removes from saved once confirmed */}
           <CartForm
             route="/cart"
             action={CartForm.ACTIONS.LinesAdd}
@@ -421,7 +373,6 @@ function SavedLine({item, onAddBack}: {item: SavedItem; onAddBack: () => void}) 
           >
             <button
               type="submit"
-              onClick={onAddBack}
               className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
             >
               Agregar a la compra
@@ -464,49 +415,59 @@ function DiscountForm() {
 
 // ─── Order summary sidebar ────────────────────────────────────────────────────
 
-function OrderSummary({cart, activeCount}: {cart: OptimisticCart; activeCount: number}) {
+function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number}) {
   const subtotal = cart?.cost?.subtotalAmount;
   const checkoutUrl = cart?.checkoutUrl;
 
   const subtotalVal = parseFloat(subtotal?.amount ?? '0');
-  const totalEst = subtotalVal + SHIPPING_EST + INSURANCE_EST;
-  const totalMoneyData = {
-    amount: totalEst.toFixed(2),
-    currencyCode: subtotal?.currencyCode ?? 'USD',
-  };
+  const totalEst = subtotalVal + SHIP + INS;
+
+  const currency = subtotal?.currencyCode ?? 'USD';
+  const fmtAmt = (n: number) =>
+    new Intl.NumberFormat('en-US', {style: 'currency', currency, minimumFractionDigits: 0}).format(n);
 
   return (
-    <div className="border border-[rgba(35,35,39,.10)] bg-[#EFE9E1] p-8">
+    <div className="border border-[rgba(35,35,39,.12)] bg-white p-8">
+
       <p className="mb-6 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[#C84D92]">
         Resumen del pedido
       </p>
 
-      <div className="space-y-[14px]">
-        <SummaryRow
-          label={`Subtotal · ${activeCount} obra${activeCount !== 1 ? 's' : ''}`}
-          value={subtotal ? <Money data={subtotal} /> : <span>—</span>}
-        />
-        <SummaryRow label="Envío DHL · Internacional" value={<span>USD {SHIPPING_EST}</span>} />
-        <SummaryRow label="Seguro a valor declarado" value={<span>USD {INSURANCE_EST}</span>} />
-        <SummaryRow
-          label="Impuestos (exento · obra de arte)"
-          value={<span>USD 0</span>}
-        />
+      <div className="space-y-[14px] text-[14px]">
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="text-[rgba(35,35,39,.65)]">
+            Subtotal · {activeCount} obra{activeCount !== 1 ? 's' : ''}
+          </span>
+          <span className="shrink-0 text-[#232327]">
+            {subtotal ? <Money data={subtotal} /> : '—'}
+          </span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="text-[rgba(35,35,39,.65)]">Envío DHL · Internacional</span>
+          <span className="shrink-0 text-[#232327]">USD {SHIP}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="text-[rgba(35,35,39,.65)]">Seguro a valor declarado</span>
+          <span className="shrink-0 text-[#232327]">USD {INS}</span>
+        </div>
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="text-[rgba(35,35,39,.65)]">Impuestos (exento · obra de arte)</span>
+          <span className="shrink-0 text-[#232327]">USD 0</span>
+        </div>
       </div>
 
-      <div className="my-6 border-t border-[rgba(35,35,39,.14)]" />
+      <div className="my-6 border-t border-[rgba(35,35,39,.12)]" />
 
       <div className="flex items-end justify-between">
         <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
           Total estimado
         </span>
-        <Money
-          data={totalMoneyData}
-          className="[font-family:var(--serif)] text-[2.5rem] leading-none text-[#111111]"
-        />
+        <span className="[font-family:var(--serif)] text-[2.4rem] leading-none text-[#111111]">
+          {fmtAmt(totalEst)}
+        </span>
       </div>
 
-      <div className="my-6 border-t border-[rgba(35,35,39,.14)]" />
+      <div className="my-6 border-t border-[rgba(35,35,39,.12)]" />
 
       <a
         href={checkoutUrl ?? '#'}
@@ -535,12 +496,8 @@ function OrderSummary({cart, activeCount}: {cart: OptimisticCart; activeCount: n
           <li key={title} className="flex items-start gap-3">
             <span className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#2F9EA0]" />
             <div>
-              <p className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.12em] text-[#232327]">
-                {title}
-              </p>
-              <p className="mt-[3px] text-[13px] leading-[1.5] text-[rgba(35,35,39,.58)]">
-                {desc}
-              </p>
+              <p className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.12em] text-[#232327]">{title}</p>
+              <p className="mt-[3px] text-[13px] leading-[1.5] text-[rgba(35,35,39,.58)]">{desc}</p>
             </div>
           </li>
         ))}
@@ -549,16 +506,7 @@ function OrderSummary({cart, activeCount}: {cart: OptimisticCart; activeCount: n
   );
 }
 
-function SummaryRow({label, value}: {label: string; value: React.ReactNode}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 text-[14px]">
-      <span className="text-[rgba(35,35,39,.65)]">{label}</span>
-      <span className="shrink-0 text-[#232327]">{value}</span>
-    </div>
-  );
-}
-
-// ─── Aside empty state ────────────────────────────────────────────────────────
+// ─── Aside empty ──────────────────────────────────────────────────────────────
 
 function DrawerEmpty({hidden = false}: {hidden: boolean}) {
   const {close} = useAside();
