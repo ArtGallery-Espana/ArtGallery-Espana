@@ -1,4 +1,4 @@
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import {CartForm, Image, Money, useOptimisticCart} from '@shopify/hydrogen';
 import {Link} from 'react-router';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
@@ -99,6 +99,10 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 
 function CartPage({cart}: {cart: OptCart}) {
   const [savedItems, setSavedItems] = useState<SavedItem[]>([]);
+  // Tracks merchandiseIds whose LinesRemove is in-flight (pending save).
+  // Prevents the cleanup effect from incorrectly evicting them while the
+  // optimistic remove hasn't settled yet.
+  const pendingSaves = useRef(new Set<string>());
 
   // hydrate from localStorage (client only)
   useEffect(() => { setSavedItems(readSaved()); }, []);
@@ -109,11 +113,23 @@ function CartPage({cart}: {cart: OptCart}) {
 
   const activeCount = cart?.totalQuantity ?? 0;
 
-  // ── When an item reappears in the active cart, remove it from saved ──────────
+  // ── Cleanup: remove from saved when item re-enters the active cart ────────────
+  // (handles "Agregar a la compra" confirmation)
+  // Pending-save items are never evicted here — they're protected by the ref.
   useEffect(() => {
     if (savedItems.length === 0) return;
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
-    const stillSaved = savedItems.filter((s) => !activeIds.has(s.merchandiseId));
+    const stillSaved = savedItems.filter((s) => {
+      if (pendingSaves.current.has(s.merchandiseId)) {
+        // Once gone from active cart, the save is confirmed — release the lock
+        if (!activeIds.has(s.merchandiseId)) {
+          pendingSaves.current.delete(s.merchandiseId);
+        }
+        return true; // always keep while in-flight
+      }
+      // For all others: remove only if the item is back in the active cart
+      return !activeIds.has(s.merchandiseId);
+    });
     if (stillSaved.length !== savedItems.length) {
       setSavedItems(stillSaved);
       writeSaved(stillSaved);
@@ -130,9 +146,13 @@ function CartPage({cart}: {cart: OptCart}) {
       imageUrl: merchandise.image?.url ?? merchandise.product.featuredImage?.url,
       imageAlt: merchandise.image?.altText ?? undefined,
       variantTitle: merchandise.title !== 'Default Title' ? merchandise.title : undefined,
-      priceAmount: merchandise.price.amount,
-      priceCurrencyCode: merchandise.price.currencyCode,
+      // cost.totalAmount is guaranteed by CartLineFragment; merchandise.price may not be
+      priceAmount: line.cost.totalAmount.amount,
+      priceCurrencyCode: line.cost.totalAmount.currencyCode,
     };
+    // Mark as pending BEFORE state update so the cleanup effect never sees a
+    // window where the item is in savedItems but still in activeLines
+    pendingSaves.current.add(item.merchandiseId);
     const updated = [...savedItems.filter((s) => s.merchandiseId !== item.merchandiseId), item];
     setSavedItems(updated);
     writeSaved(updated);
@@ -471,7 +491,7 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
 
       <a
         href={checkoutUrl ?? '#'}
-        className="block w-full bg-[#232327] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white transition hover:bg-[#111111]"
+        className="block w-full bg-[#C84D92] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white transition hover:bg-[#a83c7a]"
       >
         Continuar al checkout
       </a>
