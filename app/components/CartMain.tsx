@@ -1,5 +1,6 @@
 import {useState, useEffect, useLayoutEffect, useRef, useMemo} from 'react';
 import {CartForm, Image, Money, useOptimisticCart} from '@shopify/hydrogen';
+import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {Link, useFetcher} from 'react-router';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
@@ -78,7 +79,10 @@ type OptCart = ReturnType<typeof useOptimisticCart<CartApiQueryFragment | null>>
 
 export function CartMain({layout, cart: originalCart}: CartMainProps) {
   const cart = useOptimisticCart(originalCart);
-  if (layout === 'page') return <CartPage cart={cart} />;
+  // `originalCart` (pre-optimistic, server-confirmed) is forwarded so CartPage
+  // can distinguish "what Shopify actually has" from "what optimistic UI shows".
+  // Critical for save-for-later sync — see the comments inside CartPage.
+  if (layout === 'page') return <CartPage cart={cart} originalCart={originalCart} />;
 
   // aside drawer (unchanged)
   const linesCount = Boolean(cart?.lines?.nodes?.length || 0);
@@ -106,54 +110,76 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 
 // ─── Page cart ────────────────────────────────────────────────────────────────
 
-function CartPage({cart}: {cart: OptCart}) {
-  // ── State: saved items (dual-track) ──────────────────────────────────────────
-  // `savedItemsState` drives renders; `savedRef` gives effects always-fresh data
-  // without causing stale closures.
+function CartPage({
+  cart,
+  originalCart,
+}: {
+  cart: OptCart;
+  originalCart: CartApiQueryFragment | null;
+}) {
+  // ──────────────────────────────────────────────────────────────────────────
+  // ARCHITECTURE
+  // ──────────────────────────────────────────────────────────────────────────
+  // The cart page composes TWO sources of truth:
+  //
+  //   1. Shopify cart       → `cart` (optimistic) and `originalCart` (server-confirmed)
+  //   2. Local "saved" list → `savedItems` (mirrored to localStorage)
+  //
+  // Rule: an item belongs to EXACTLY ONE section at any time.
+  //   - In active cart  → render in active section (no matter what localStorage says)
+  //   - In localStorage only → render in saved section
+  //
+  // We DERIVE `visibleSavedItems` from this rule rather than filtering activeLines.
+  // That avoids all the previous race conditions where an item could vanish
+  // from view between an optimistic update and a server confirmation.
+  //
+  // Optimistic vs confirmed cart:
+  //   - `cart` (optimistic) is used to derive visible UI state (instant feedback).
+  //   - `originalCart` (server-confirmed) drives persistence: we only mutate
+  //     localStorage based on what Shopify actually has, so a failed LinesAdd
+  //     never wipes a saved item from disk.
+  // ──────────────────────────────────────────────────────────────────────────
+
+  // ── State: saved items (dual-track) ──────────────────────────────────────
+  // `savedItems` triggers re-renders; `savedRef` gives effects fresh data
+  // without stale closures.
   const [savedItems, setSavedItemsState] = useState<SavedItem[]>([]);
   const savedRef = useRef<SavedItem[]>([]);
-
-  function setSavedItems(items: SavedItem[]) {
+  const setSavedItems = (items: SavedItem[]) => {
     savedRef.current = items;
     setSavedItemsState(items);
-  }
+  };
 
-  // ── Hydration flag ───────────────────────────────────────────────────────────
+  // ── Hydration flag ───────────────────────────────────────────────────────
   // localStorage is only available client-side. On SSR and during the first
-  // client render, `savedItems` is []. The `hydrated` flag stays false until the
-  // mount effect runs, which prevents the active-line filter from applying before
-  // the saved state is ready. Without this, items "flicker" in/out when the user
-  // comes back from the Shopify checkout page (SSR renders all lines, then the
-  // effect moves some to the saved section → perceived as random add/remove).
+  // client render, `savedItems` is []. The flag becomes true synchronously
+  // before the first browser paint (see useIsomorphicLayoutEffect below).
   const [hydrated, setHydrated] = useState(false);
 
-  // ── In-flight operation lock ─────────────────────────────────────────────────
-  // pendingSaves: LinesRemove in-flight — keeps item in saved while remove settles.
-  const pendingSaves = useRef(new Set<string>());
-
-  // ── Cart-ID tracker ──────────────────────────────────────────────────────────
-  // Shopify creates a NEW cart after a completed or abandoned checkout. When the
-  // cart ID changes, saved items from the previous session are stale and must be
-  // cleared so the UI does not show ghost items that no longer belong to the cart.
+  // ── Cart-ID tracker ──────────────────────────────────────────────────────
+  // Shopify mints a new cart ID after a completed checkout. When that happens
+  // we wipe the saved list — those entries belonged to the previous cart.
   const prevCartId = useRef<string | undefined>(undefined);
 
-  // ── Save-pending flag ────────────────────────────────────────────────────────
-  // True while a "Guardar para más tarde" LinesRemove is still in-flight.
-  // Used to disable the checkout button so the user cannot navigate to Shopify
-  // checkout before the line is actually removed from the Shopify cart.
+  // ── Save-pending flag ────────────────────────────────────────────────────
+  // True while at least one "Guardar para más tarde" LinesRemove is still
+  // awaiting server confirmation. Disables the checkout button so the user
+  // cannot navigate to Shopify before the line is actually removed.
   const [savePending, setSavePending] = useState(false);
+  const pendingSaves = useRef(new Set<string>());
 
-  // ── Note fetcher ─────────────────────────────────────────────────────────────
-  // Keeps the Shopify cart note in sync with the shipping+insurance estimate so
-  // the studio can read it in the order admin after checkout completes.
+  // ── Note fetcher ─────────────────────────────────────────────────────────
+  // Mirrors the computed shipping + insurance estimate into the Shopify cart
+  // note (visible to the studio in the order admin).
   const noteFetcher = useFetcher({key: 'cart-shipping-note'});
   const prevShippingNoteRef = useRef('');
 
-  // ── Mount effect: hydrate localStorage + set hydrated flag ───────────────────
-  // useIsomorphicLayoutEffect runs before the first browser paint on the client,
-  // so savedItems is populated and hydrated=true before the user sees anything.
-  // This eliminates the one-frame flash where all Shopify lines are visible before
-  // the saved-items filter applies (most noticeable when navigating back from checkout).
+  // ── Mount effect: hydrate localStorage + set hydrated flag ───────────────
+  // useIsomorphicLayoutEffect runs before the first browser paint on the
+  // client, so savedItems is populated and hydrated=true before the user
+  // sees anything. Combined with the opacity gate on the root container,
+  // this eliminates the flash of unfiltered content when navigating back
+  // from the Shopify checkout page.
   useIsomorphicLayoutEffect(() => {
     const stored = readSaved();
     savedRef.current = stored;
@@ -161,9 +187,9 @@ function CartPage({cart}: {cart: OptCart}) {
     setHydrated(true);
   }, []);
 
-  // ── Cart-ID change effect ────────────────────────────────────────────────────
-  // Fires whenever Shopify changes the cart ID (new cart created post-checkout).
-  // Clears stale saved items so they don't bleed into a fresh cart session.
+  // ── Cart-ID change effect ────────────────────────────────────────────────
+  // Fires when Shopify mints a new cart (post-checkout). Clears stale saved
+  // items so they don't bleed into a fresh session.
   useEffect(() => {
     const currentId = cart?.id;
     if (prevCartId.current !== undefined && currentId !== prevCartId.current) {
@@ -171,10 +197,12 @@ function CartPage({cart}: {cart: OptCart}) {
       writeSaved([]);
     }
     prevCartId.current = currentId;
-  }, [cart?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart?.id]);
 
-  // ── Derived: active lines ────────────────────────────────────────────────────
-  // All non-child cart lines. Memoised — re-computes only when cart nodes change.
+  // ── Derived: active lines (optimistic, drives UI) ────────────────────────
+  // All non-child cart lines from the optimistic cart. Used for everything
+  // the user actually SEES — section content, counts, totals.
   const activeLines = useMemo(
     () =>
       (cart?.lines?.nodes ?? []).filter(
@@ -182,88 +210,85 @@ function CartPage({cart}: {cart: OptCart}) {
       ) as CartLine[],
     [cart?.lines?.nodes],
   );
-
-  // Set of merchandise IDs in the active Shopify cart — used to:
-  //  (a) hide active lines that the user moved to "saved for later"
-  //  (b) skip LinesAdd when "Agregar a la compra" targets a variant already in
-  //      the cart (e.g. abandoned-checkout restoration brought it back).
   const activeMerchIds = useMemo(
     () => new Set(activeLines.map((l) => l.merchandise.id)),
     [activeLines],
   );
 
-  // Lines visible in the active section. The saved-items filter is only applied
-  // after hydration to avoid the SSR mismatch flash (server has savedItems = [],
-  // client reads localStorage — without the gate, items disappear on mount).
-  const displayedActiveLines = useMemo(() => {
-    if (!hydrated) return activeLines;
-    const savedIds = new Set(savedItems.map((s) => s.merchandiseId));
-    return activeLines.filter((l) => !savedIds.has(l.merchandise.id));
-  }, [activeLines, savedItems, hydrated]);
+  // ── Derived: server-confirmed merchandise IDs ────────────────────────────
+  // Items Shopify ACTUALLY has in the cart (not optimistic). We mutate
+  // localStorage based on this so a failed LinesAdd never deletes a saved
+  // item from disk, and pendingSaves only clears when removal is confirmed.
+  const confirmedMerchIds = useMemo(
+    () =>
+      new Set(
+        (originalCart?.lines?.nodes ?? [])
+          .filter((l) => !('parentRelationship' in l && l.parentRelationship?.parent))
+          .map((l) => l.merchandise.id),
+      ),
+    [originalCart?.lines?.nodes],
+  );
+  const confirmedCartKey = useMemo(
+    () => Array.from(confirmedMerchIds).sort().join(','),
+    [confirmedMerchIds],
+  );
 
-  // Saved items are only rendered after hydration to keep SSR and first-client
-  // render identical (prevents React hydration warnings and layout shifts).
-  const visibleSavedItems = hydrated ? savedItems : [];
+  // ── Derived: visible saved items ─────────────────────────────────────────
+  // Saved items that are NOT currently in the (optimistic) active cart.
+  // This single rule solves both:
+  //   - "Agregar a la compra" → as soon as the item appears in activeLines
+  //     (optimistically or confirmed), it disappears from this list.
+  //   - Stale localStorage entries that happen to match a freshly-added cart
+  //     item from the PDP → automatically hidden here, then pruned from disk
+  //     by the auto-prune effect below.
+  const visibleSavedItems = useMemo(() => {
+    if (!hydrated) return [];
+    return savedItems.filter((s) => !activeMerchIds.has(s.merchandiseId));
+  }, [hydrated, savedItems, activeMerchIds]);
 
-  // Total quantity of displayed active items (hero counter + shipping calculation)
-  const activeCount = displayedActiveLines.reduce((sum, l) => sum + l.quantity, 0);
-
-  // Subtotal derived exclusively from visible active lines so the order summary
-  // never reflects lines that are hidden in "guardado para más tarde" — even if
-  // Shopify still has those variants in the cart (e.g. after cart restoration).
-  const displayedSubtotal = displayedActiveLines.reduce(
+  // Hero/summary use the optimistic active cart directly.
+  const activeCount = activeLines.reduce((sum, l) => sum + l.quantity, 0);
+  const displayedSubtotal = activeLines.reduce(
     (sum, l) => sum + parseFloat(l.cost.totalAmount.amount),
     0,
   );
   const displayedCurrency =
-    displayedActiveLines[0]?.cost.totalAmount.currencyCode ??
+    activeLines[0]?.cost.totalAmount.currencyCode ??
     cart?.cost?.subtotalAmount?.currencyCode ??
     'USD';
 
-  // Stable string key — cleanup effect only fires when cart CONTENTS change.
-  const activeCartKey = useMemo(
-    () => activeLines.map((l) => l.merchandise.id).sort().join(','),
-    [activeLines],
-  );
-
-  // ── Cleanup + restore-confirmation effect ──────────────────────────────────
-  // Fires whenever the Shopify cart contents change (activeCartKey). Does two jobs:
+  // ── Sync effect: localStorage ↔ server-confirmed cart ────────────────────
+  // Runs only when the SERVER-CONFIRMED line set changes (not the optimistic
+  // one). Two jobs:
   //
-  // (1) Clears pendingSaves locks for lines Shopify confirmed removed. When all
-  //     saves are settled, re-enables the checkout button (savePending → false).
+  // (1) Clear pendingSaves entries whose removal Shopify has confirmed, and
+  //     re-enable the checkout button when none remain.
   //
-  // (2) Auto-removes from savedItems any item that now appears in activeLines
-  //     and is NOT in pendingSaves. That means Shopify just confirmed a LinesAdd
-  //     (either from "Agregar a la compra" or a fresh add from the PDP). We do
-  //     this here — not in the button onClick — so the item only leaves the saved
-  //     section after the server confirms the add. If the add fails, the item
-  //     stays safely in the saved section and the user can retry.
+  // (2) Prune savedItems entries that are now in the confirmed cart (the
+  //     user successfully restored them, or added them fresh from the PDP).
+  //     We rely on the confirmed cart — not the optimistic one — so a
+  //     LinesAdd that fails on the server never deletes the saved snapshot.
   useEffect(() => {
-    const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
-
     // (1) Settle pending saves
     if (pendingSaves.current.size > 0) {
       for (const id of pendingSaves.current) {
-        if (!activeIds.has(id)) pendingSaves.current.delete(id);
+        if (!confirmedMerchIds.has(id)) pendingSaves.current.delete(id);
       }
       if (pendingSaves.current.size === 0) setSavePending(false);
     }
 
-    // (2) Confirm pending adds: move item from saved → active section
+    // (2) Prune savedItems for confirmed adds
     if (hydrated && savedRef.current.length > 0) {
-      const confirmed = new Set(
-        savedRef.current
-          .filter((s) => activeIds.has(s.merchandiseId) && !pendingSaves.current.has(s.merchandiseId))
-          .map((s) => s.merchandiseId),
+      const stillSaved = savedRef.current.filter(
+        (s) => !confirmedMerchIds.has(s.merchandiseId),
       );
-      if (confirmed.size > 0) {
-        const updated = savedRef.current.filter((s) => !confirmed.has(s.merchandiseId));
-        setSavedItems(updated);
-        writeSaved(updated);
+      if (stillSaved.length !== savedRef.current.length) {
+        setSavedItems(stillSaved);
+        writeSaved(stillSaved);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCartKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirmedCartKey]);
 
   // ── Shipping-note sync effect ────────────────────────────────────────────────
   // Keeps the Shopify cart note up-to-date with the shipping + insurance estimate.
@@ -296,7 +321,7 @@ function CartPage({cart}: {cart: OptCart}) {
       quantity: line.quantity,
       productHandle: merchandise.product.handle,
       productTitle: merchandise.product.title,
-      imageUrl: merchandise.image?.url ?? merchandise.product.featuredImage?.url,
+      imageUrl: merchandise.image?.url,
       imageAlt: merchandise.image?.altText ?? undefined,
       variantTitle: merchandise.title !== 'Default Title' ? merchandise.title : undefined,
       priceAmount: line.cost.totalAmount.amount,
@@ -312,25 +337,11 @@ function CartPage({cart}: {cart: OptCart}) {
     writeSaved(updated);
   }
 
-  // Synchronously drop an item from the saved list. Called on click — the
-  // CartForm submit still runs (when needed) because we don't intercept the
-  // event; we just update React state.
-  function handleRestore(merchandiseId: string) {
-    const filtered = savedRef.current.filter(
-      (s) => s.merchandiseId !== merchandiseId,
-    );
-    if (filtered.length !== savedRef.current.length) {
-      setSavedItems(filtered);
-      writeSaved(filtered);
-    }
-  }
-
-  // ── Empty state ──────────────────────────────────────────────────────────────
-  // Only evaluated after hydration so localStorage items are accounted for.
-  // Before hydration both lists are [], which would incorrectly show the empty
-  // state even when the user has saved items.
-
-  if (hydrated && displayedActiveLines.length === 0 && visibleSavedItems.length === 0) {
+  // ── Empty state ──────────────────────────────────────────────────────────
+  // Only evaluated after hydration so localStorage entries are accounted for.
+  // Before hydration both lists are [], which would incorrectly trigger the
+  // empty state when the user actually has saved items.
+  if (hydrated && activeLines.length === 0 && visibleSavedItems.length === 0) {
     return (
       <div className="flex min-h-[65vh] flex-col items-center justify-center gap-8 bg-[#F6F1EA] px-6 text-center">
         <div className="flex items-center gap-4">
@@ -354,7 +365,16 @@ function CartPage({cart}: {cart: OptCart}) {
   // ── Full page layout ─────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
+    // The opacity gate prevents the one-frame flash when the user navigates
+    // back from the Shopify checkout: SSR renders all cart lines visible
+    // (no localStorage on server), so on a fresh page load the browser would
+    // briefly show items in the active section before the saved-section filter
+    // applies. Holding opacity at 0 until `hydrated` flips ensures the user
+    // only ever sees the final, post-filter UI.
+    <div
+      className="min-h-screen bg-[#F6F1EA] text-[#232327] transition-opacity duration-100"
+      style={{opacity: hydrated ? 1 : 0}}
+    >
 
       {/* HERO */}
       <section className="px-6 pb-14 pt-12 md:px-10 xl:px-14 xl:pt-16">
@@ -385,16 +405,21 @@ function CartPage({cart}: {cart: OptCart}) {
             {/* LEFT — items list */}
             <div className="min-w-0 flex-1">
 
-              {/* active items */}
-              {displayedActiveLines.length > 0 && (
+              {/* Active items — sourced directly from the optimistic cart. */}
+              {activeLines.length > 0 && (
                 <div className="border-t border-[rgba(35,35,39,.12)]">
-                  {displayedActiveLines.map((line) => (
-                    <ActiveLine key={line.id} line={line} onSave={() => handleSave(line)} />
+                  {activeLines.map((line) => (
+                    <ActiveLine
+                      key={line.id}
+                      line={line}
+                      onSave={() => handleSave(line)}
+                    />
                   ))}
                 </div>
               )}
 
-              {/* saved for later — only rendered after localStorage hydration */}
+              {/* Saved for later — items in localStorage that are NOT currently
+                  in the active cart. Gated on hydration to prevent SSR mismatch. */}
               {visibleSavedItems.length > 0 && (
                 <div className="mt-12">
                   <p className="mb-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.38)]">
@@ -402,12 +427,7 @@ function CartPage({cart}: {cart: OptCart}) {
                   </p>
                   <div className="border-t border-[rgba(35,35,39,.08)]">
                     {visibleSavedItems.map((item) => (
-                      <SavedLine
-                        key={item.merchandiseId}
-                        item={item}
-                        alreadyInCart={activeMerchIds.has(item.merchandiseId)}
-                        onRestore={() => handleRestore(item.merchandiseId)}
-                      />
+                      <SavedLine key={item.merchandiseId} item={item} />
                     ))}
                   </div>
                 </div>
@@ -448,7 +468,9 @@ function CartPage({cart}: {cart: OptCart}) {
 function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
   const {id, merchandise, isOptimistic} = line;
   const {product, title: variantTitle, image} = merchandise;
-  const thumb = image ?? product.featuredImage;
+  // The cart fragment only exposes `image` on the variant — no fallback to product
+  // featuredImage. If image is missing we render a plain bg as the thumbnail.
+  const thumb = image;
 
   return (
     <div className="border-b border-[rgba(35,35,39,.12)] py-10">
@@ -540,20 +562,17 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
 
 // ─── Saved line item ──────────────────────────────────────────────────────────
 
-function SavedLine({
-  item,
-  alreadyInCart,
-  onRestore,
-}: {
-  item: SavedItem;
-  alreadyInCart: boolean;
-  onRestore: () => void;
-}) {
-  const priceData = {amount: item.priceAmount, currencyCode: item.priceCurrencyCode};
+function SavedLine({item}: {item: SavedItem}) {
+  // `currencyCode` is stored in localStorage as a plain string; cast to the
+  // CurrencyCode enum so the Money component accepts it without a TS error.
+  const priceData = {
+    amount: item.priceAmount,
+    currencyCode: item.priceCurrencyCode as CurrencyCode,
+  };
 
   // Synthetic selectedVariant rebuilt from the localStorage snapshot. Hydrogen
-  // needs this to drive the optimistic line in useOptimisticCart (without it,
-  // the click feels dead until the server round-trips).
+  // reads this to render the optimistic line in useOptimisticCart while the
+  // LinesAdd round-trips to the server.
   const selectedVariant = useMemo(
     () => ({
       id: item.merchandiseId,
@@ -567,12 +586,9 @@ function SavedLine({
       product: {
         handle: item.productHandle,
         title: item.productTitle,
-        featuredImage: item.imageUrl
-          ? {url: item.imageUrl, altText: item.imageAlt ?? null}
-          : null,
       },
     }),
-    // priceData is built from primitives on `item`; depending on `item` is enough
+    // priceData is built from primitives on `item`; depending on `item` is enough.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [item],
   );
@@ -605,42 +621,36 @@ function SavedLine({
             <Money data={priceData} />
           </div>
         </div>
-        {alreadyInCart ? (
-          // Variant is still in the Shopify cart (e.g. restored after an
-          // abandoned checkout). LinesAdd would no-op against the inventory
-          // cap — just drop it from "guardado" locally.
-          <button
-            type="button"
-            onClick={onRestore}
-            className="mt-4 self-start [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
-          >
-            Agregar a la compra
-          </button>
-        ) : (
-          // No onClick here — removal from savedItems is deferred to the cleanup
-          // effect so the item stays visible in the saved section until Shopify
-          // confirms the LinesAdd. If the add fails, the item remains safely saved.
-          <CartForm
-            route="/cart"
-            action={CartForm.ACTIONS.LinesAdd}
-            inputs={{
-              lines: [
-                {
-                  merchandiseId: item.merchandiseId,
-                  quantity: item.quantity || 1,
-                  selectedVariant,
-                },
-              ],
-            }}
-          >
+        {/*
+          Single path: always submit LinesAdd. The item only disappears from the
+          saved section when Shopify confirms the add (handled by the auto-prune
+          effect in CartPage). If the add fails, the item stays safely saved so
+          the user can retry. No synchronous onClick — that's what previously
+          caused items to disappear from view between click and server response.
+        */}
+        <CartForm
+          route="/cart"
+          action={CartForm.ACTIONS.LinesAdd}
+          inputs={{
+            lines: [
+              {
+                merchandiseId: item.merchandiseId,
+                quantity: item.quantity || 1,
+                selectedVariant,
+              },
+            ],
+          }}
+        >
+          {(fetcher: {state: string}) => (
             <button
               type="submit"
-              className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
+              disabled={fetcher.state !== 'idle'}
+              className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4 disabled:opacity-50"
             >
-              Agregar a la compra
+              {fetcher.state === 'idle' ? 'Agregar a la compra' : 'Agregando…'}
             </button>
-          </CartForm>
-        )}
+          )}
+        </CartForm>
       </div>
     </>
   );
