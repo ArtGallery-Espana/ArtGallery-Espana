@@ -100,7 +100,9 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 // ─── Page cart ────────────────────────────────────────────────────────────────
 
 function CartPage({cart}: {cart: OptCart}) {
-  // Dual-track: state drives renders; ref gives effects always-fresh data
+  // ── State: saved items (dual-track) ──────────────────────────────────────────
+  // `savedItemsState` drives renders; `savedRef` gives effects always-fresh data
+  // without causing stale closures.
   const [savedItems, setSavedItemsState] = useState<SavedItem[]>([]);
   const savedRef = useRef<SavedItem[]>([]);
 
@@ -109,18 +111,47 @@ function CartPage({cart}: {cart: OptCart}) {
     setSavedItemsState(items);
   }
 
+  // ── Hydration flag ───────────────────────────────────────────────────────────
+  // localStorage is only available client-side. On SSR and during the first
+  // client render, `savedItems` is []. The `hydrated` flag stays false until the
+  // mount effect runs, which prevents the active-line filter from applying before
+  // the saved state is ready. Without this, items "flicker" in/out when the user
+  // comes back from the Shopify checkout page (SSR renders all lines, then the
+  // effect moves some to the saved section → perceived as random add/remove).
+  const [hydrated, setHydrated] = useState(false);
+
   // ── In-flight operation lock ─────────────────────────────────────────────────
-  // pendingSaves: LinesRemove in-flight — keeps item in saved while remove settles
+  // pendingSaves: LinesRemove in-flight — keeps item in saved while remove settles.
   const pendingSaves = useRef(new Set<string>());
 
-  // Hydrate from localStorage once on mount (client only)
+  // ── Cart-ID tracker ──────────────────────────────────────────────────────────
+  // Shopify creates a NEW cart after a completed or abandoned checkout. When the
+  // cart ID changes, saved items from the previous session are stale and must be
+  // cleared so the UI does not show ghost items that no longer belong to the cart.
+  const prevCartId = useRef<string | undefined>(undefined);
+
+  // ── Mount effect: hydrate localStorage + set hydrated flag ───────────────────
   useEffect(() => {
     const stored = readSaved();
     savedRef.current = stored;
     setSavedItemsState(stored);
+    setHydrated(true);
   }, []);
 
-  // All non-child cart lines (memoised — only changes when cart IDs change)
+  // ── Cart-ID change effect ────────────────────────────────────────────────────
+  // Fires whenever Shopify changes the cart ID (new cart created post-checkout).
+  // Clears stale saved items so they don't bleed into a fresh cart session.
+  useEffect(() => {
+    const currentId = cart?.id;
+    if (prevCartId.current !== undefined && currentId !== prevCartId.current) {
+      setSavedItems([]);
+      writeSaved([]);
+    }
+    prevCartId.current = currentId;
+  }, [cart?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Derived: active lines ────────────────────────────────────────────────────
+  // All non-child cart lines. Memoised — re-computes only when cart nodes change.
   const activeLines = useMemo(
     () =>
       (cart?.lines?.nodes ?? []).filter(
@@ -129,21 +160,27 @@ function CartPage({cart}: {cart: OptCart}) {
     [cart?.lines?.nodes],
   );
 
-  // Set of merchandise IDs currently in the active cart — used to:
+  // Set of merchandise IDs in the active Shopify cart — used to:
   //  (a) hide active lines that the user moved to "saved for later"
-  //  (b) skip LinesAdd when "Agregar a la compra" targets a variant Shopify
-  //      already has (e.g. abandoned-checkout restoration brought it back).
+  //  (b) skip LinesAdd when "Agregar a la compra" targets a variant already in
+  //      the cart (e.g. abandoned-checkout restoration brought it back).
   const activeMerchIds = useMemo(
     () => new Set(activeLines.map((l) => l.merchandise.id)),
     [activeLines],
   );
 
-  // Lines shown in the active section. Items in "saved for later" are hidden
-  // here even if Shopify still has them in the cart.
+  // Lines visible in the active section. The saved-items filter is only applied
+  // after hydration to avoid the SSR mismatch flash (server has savedItems = [],
+  // client reads localStorage — without the gate, items disappear on mount).
   const displayedActiveLines = useMemo(() => {
+    if (!hydrated) return activeLines;
     const savedIds = new Set(savedItems.map((s) => s.merchandiseId));
     return activeLines.filter((l) => !savedIds.has(l.merchandise.id));
-  }, [activeLines, savedItems]);
+  }, [activeLines, savedItems, hydrated]);
+
+  // Saved items are only rendered after hydration to keep SSR and first-client
+  // render identical (prevents React hydration warnings and layout shifts).
+  const visibleSavedItems = hydrated ? savedItems : [];
 
   // Total quantity of displayed active items (hero counter + shipping calculation)
   const activeCount = displayedActiveLines.reduce((sum, l) => sum + l.quantity, 0);
@@ -160,16 +197,16 @@ function CartPage({cart}: {cart: OptCart}) {
     cart?.cost?.subtotalAmount?.currencyCode ??
     'USD';
 
-  // Stable string key — cleanup effect only fires when cart CONTENTS change
+  // Stable string key — cleanup effect only fires when cart CONTENTS change.
   const activeCartKey = useMemo(
     () => activeLines.map((l) => l.merchandise.id).sort().join(','),
     [activeLines],
   );
 
   // ── Cleanup effect ──────────────────────────────────────────────────────────
-  // Clears `pendingSaves` locks once Shopify confirms the LinesRemove. Items
-  // are never auto-evicted here: removal from "guardado" happens synchronously
-  // in handleRestore when the user clicks "Agregar a la compra".
+  // Clears `pendingSaves` locks once Shopify confirms the LinesRemove.
+  // Items are never auto-evicted here: removal from "guardado" happens
+  // synchronously in handleRestore when the user clicks "Agregar a la compra".
   useEffect(() => {
     if (pendingSaves.current.size === 0) return;
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
@@ -217,8 +254,11 @@ function CartPage({cart}: {cart: OptCart}) {
   }
 
   // ── Empty state ──────────────────────────────────────────────────────────────
+  // Only evaluated after hydration so localStorage items are accounted for.
+  // Before hydration both lists are [], which would incorrectly show the empty
+  // state even when the user has saved items.
 
-  if (displayedActiveLines.length === 0 && savedItems.length === 0) {
+  if (hydrated && displayedActiveLines.length === 0 && visibleSavedItems.length === 0) {
     return (
       <div className="flex min-h-[65vh] flex-col items-center justify-center gap-8 bg-[#F6F1EA] px-6 text-center">
         <div className="flex items-center gap-4">
@@ -282,14 +322,14 @@ function CartPage({cart}: {cart: OptCart}) {
                 </div>
               )}
 
-              {/* saved for later */}
-              {savedItems.length > 0 && (
+              {/* saved for later — only rendered after localStorage hydration */}
+              {visibleSavedItems.length > 0 && (
                 <div className="mt-12">
                   <p className="mb-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.38)]">
                     Guardado para más tarde
                   </p>
                   <div className="border-t border-[rgba(35,35,39,.08)]">
-                    {savedItems.map((item) => (
+                    {visibleSavedItems.map((item) => (
                       <SavedLine
                         key={item.merchandiseId}
                         item={item}
