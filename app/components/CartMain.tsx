@@ -130,13 +130,15 @@ function CartPage({cart}: {cart: OptCart}) {
   // cleared so the UI does not show ghost items that no longer belong to the cart.
   const prevCartId = useRef<string | undefined>(undefined);
 
-  // ── Fetchers for programmatic cart mutations ─────────────────────────────────
-  // removalFetcher: auto-removes lines that Shopify silently restored to the cart
-  //   after an abandoned checkout (so they do not appear in the Shopify checkout
-  //   as extra items alongside the user's "saved for later" list).
-  // noteFetcher: keeps the cart note in sync with the computed shipping+insurance
-  //   estimate so the studio can see it in the Shopify order admin.
-  const removalFetcher = useFetcher({key: 'restored-items-removal'});
+  // ── Save-pending flag ────────────────────────────────────────────────────────
+  // True while a "Guardar para más tarde" LinesRemove is still in-flight.
+  // Used to disable the checkout button so the user cannot navigate to Shopify
+  // checkout before the line is actually removed from the Shopify cart.
+  const [savePending, setSavePending] = useState(false);
+
+  // ── Note fetcher ─────────────────────────────────────────────────────────────
+  // Keeps the Shopify cart note in sync with the shipping+insurance estimate so
+  // the studio can read it in the order admin after checkout completes.
   const noteFetcher = useFetcher({key: 'cart-shipping-note'});
   const prevShippingNoteRef = useRef('');
 
@@ -213,43 +215,20 @@ function CartPage({cart}: {cart: OptCart}) {
     [activeLines],
   );
 
-  // Lines that Shopify silently restored to the cart (abandoned checkout). These
-  // are items whose merchandiseId is still in `savedItems` (user moved them to
-  // "saved for later") but which have re-appeared in `activeLines`. We must
-  // remove them again so they don't get charged in the Shopify checkout.
-  const restoredLineIds = useMemo(() => {
-    if (!hydrated || savedItems.length === 0) return [];
-    const savedIds = new Set(savedItems.map((s) => s.merchandiseId));
-    return activeLines.filter((l) => savedIds.has(l.merchandise.id)).map((l) => l.id);
-  }, [hydrated, savedItems, activeLines]);
-
   // ── Cleanup effect ──────────────────────────────────────────────────────────
-  // Clears `pendingSaves` locks once Shopify confirms the LinesRemove.
-  // Items are never auto-evicted here: removal from "guardado" happens
-  // synchronously in handleRestore when the user clicks "Agregar a la compra".
+  // Fires when cart contents change (activeCartKey). Clears pendingSaves locks
+  // for any line that Shopify has now confirmed removed (no longer in activeLines).
+  // When all pending saves are settled, clears the savePending flag so the
+  // checkout button re-enables.
   useEffect(() => {
     if (pendingSaves.current.size === 0) return;
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
     for (const id of pendingSaves.current) {
       if (!activeIds.has(id)) pendingSaves.current.delete(id);
     }
+    if (pendingSaves.current.size === 0) setSavePending(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCartKey]);
-
-  // ── Restoration-removal effect ───────────────────────────────────────────────
-  // When Shopify re-adds saved lines after an abandoned checkout, automatically
-  // re-submit LinesRemove so those items stay out of the Shopify checkout total.
-  // The dep array uses a stable join() string to avoid re-running on every render.
-  useEffect(() => {
-    if (restoredLineIds.length === 0 || removalFetcher.state !== 'idle') return;
-    const fd = new FormData();
-    fd.append(
-      CartForm.INPUT_NAME,
-      JSON.stringify({action: CartForm.ACTIONS.LinesRemove, inputs: {lineIds: restoredLineIds}}),
-    );
-    removalFetcher.submit(fd, {method: 'POST', action: '/cart'});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [restoredLineIds.join(',')]);
 
   // ── Shipping-note sync effect ────────────────────────────────────────────────
   // Keeps the Shopify cart note up-to-date with the shipping + insurance estimate.
@@ -289,6 +268,7 @@ function CartPage({cart}: {cart: OptCart}) {
       priceCurrencyCode: line.cost.totalAmount.currencyCode,
     };
     pendingSaves.current.add(item.merchandiseId);
+    setSavePending(true);
     const updated = [
       ...savedRef.current.filter((s) => s.merchandiseId !== item.merchandiseId),
       item,
@@ -417,6 +397,7 @@ function CartPage({cart}: {cart: OptCart}) {
                 activeCount={activeCount}
                 subtotalVal={displayedSubtotal}
                 currency={displayedCurrency}
+                savePending={savePending}
               />
             </div>
 
@@ -675,14 +656,19 @@ function OrderSummary({
   activeCount,
   subtotalVal,
   currency,
+  savePending,
 }: {
   cart: OptCart;
   activeCount: number;
   subtotalVal: number;   // sum of displayedActiveLines costs
   currency: string;      // currency code from first displayed line
+  savePending: boolean;  // true while a "guardar" LinesRemove is in-flight
 }) {
   const checkoutUrl = cart?.checkoutUrl;
   const hasItems = activeCount > 0;
+  // Checkout is blocked while a save operation is in-flight — the item is
+  // still in the Shopify cart until the LinesRemove response settles.
+  const checkoutReady = hasItems && !savePending;
 
   // Shipping: flat $150 per piece (DHL international, artwork rate)
   const shipCost = hasItems ? activeCount * SHIP_PER_PIECE : 0;
@@ -752,8 +738,8 @@ function OrderSummary({
 
       <div className="my-6 border-t border-[rgba(35,35,39,.12)]" />
 
-      {/* Checkout CTA — disabled when nothing is in the active cart */}
-      {hasItems ? (
+      {/* Checkout CTA — disabled while cart is empty or a save is in-flight */}
+      {checkoutReady ? (
         <a
           href={checkoutUrl ?? '#'}
           className="block w-full bg-[#C84D92] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white transition hover:bg-[#a83c7a]"
@@ -762,7 +748,7 @@ function OrderSummary({
         </a>
       ) : (
         <span className="block w-full cursor-not-allowed bg-[rgba(200,77,146,.35)] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white">
-          Continuar al checkout
+          {savePending ? 'Guardando cambios…' : 'Continuar al checkout'}
         </span>
       )}
 
