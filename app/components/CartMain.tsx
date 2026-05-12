@@ -246,14 +246,16 @@ function CartPage({
     return savedItems.filter((s) => !activeMerchIds.has(s.merchandiseId));
   }, [hydrated, savedItems, activeMerchIds]);
 
-  // Hero/summary use the optimistic active cart directly.
+  // Hero/summary use the optimistic active cart directly. Defensive `?.`
+  // accesses guard against optimistic lines created by useOptimisticCart that
+  // may not yet have `cost.totalAmount` populated.
   const activeCount = activeLines.reduce((sum, l) => sum + l.quantity, 0);
   const displayedSubtotal = activeLines.reduce(
-    (sum, l) => sum + parseFloat(l.cost.totalAmount.amount),
+    (sum, l) => sum + parseFloat(l.cost?.totalAmount?.amount ?? '0'),
     0,
   );
   const displayedCurrency =
-    activeLines[0]?.cost.totalAmount.currencyCode ??
+    activeLines[0]?.cost?.totalAmount?.currencyCode ??
     cart?.cost?.subtotalAmount?.currencyCode ??
     'USD';
 
@@ -337,11 +339,21 @@ function CartPage({
     writeSaved(updated);
   }
 
+  // ── Hydration gate ───────────────────────────────────────────────────────
+  // Until localStorage has been read on the client, the saved-section filter
+  // cannot apply correctly. Render a blank background container that matches
+  // the page's overall shape, so the SSR HTML and the first client render are
+  // identical (no hydration mismatch) AND the user never sees an intermediate
+  // state where saved items appear in the active section.
+  //
+  // After the mount layout-effect flips `hydrated` to true, the real cart UI
+  // renders below this guard with the correct active/saved partitioning.
+  if (!hydrated) {
+    return <div className="min-h-screen bg-[#F6F1EA]" />;
+  }
+
   // ── Empty state ──────────────────────────────────────────────────────────
-  // Only evaluated after hydration so localStorage entries are accounted for.
-  // Before hydration both lists are [], which would incorrectly trigger the
-  // empty state when the user actually has saved items.
-  if (hydrated && activeLines.length === 0 && visibleSavedItems.length === 0) {
+  if (activeLines.length === 0 && visibleSavedItems.length === 0) {
     return (
       <div className="flex min-h-[65vh] flex-col items-center justify-center gap-8 bg-[#F6F1EA] px-6 text-center">
         <div className="flex items-center gap-4">
@@ -365,16 +377,7 @@ function CartPage({
   // ── Full page layout ─────────────────────────────────────────────────────────
 
   return (
-    // The opacity gate prevents the one-frame flash when the user navigates
-    // back from the Shopify checkout: SSR renders all cart lines visible
-    // (no localStorage on server), so on a fresh page load the browser would
-    // briefly show items in the active section before the saved-section filter
-    // applies. Holding opacity at 0 until `hydrated` flips ensures the user
-    // only ever sees the final, post-filter UI.
-    <div
-      className="min-h-screen bg-[#F6F1EA] text-[#232327] transition-opacity duration-100"
-      style={{opacity: hydrated ? 1 : 0}}
-    >
+    <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
 
       {/* HERO */}
       <section className="px-6 pb-14 pt-12 md:px-10 xl:px-14 xl:pt-16">
@@ -507,7 +510,9 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
                 Precio
               </p>
               <div className="[font-family:var(--serif)] text-[clamp(1.4rem,2.2vw,1.9rem)] leading-none text-[#111111]">
-                <Money data={line.cost.totalAmount} />
+                {/* `cost?.totalAmount` may be missing on optimistic lines until
+                    Shopify confirms — fall back to a dash so render never crashes. */}
+                {line.cost?.totalAmount ? <Money data={line.cost.totalAmount} /> : '—'}
               </div>
               <p className="mt-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.40)]">
                 Pieza única
@@ -570,28 +575,14 @@ function SavedLine({item}: {item: SavedItem}) {
     currencyCode: item.priceCurrencyCode as CurrencyCode,
   };
 
-  // Synthetic selectedVariant rebuilt from the localStorage snapshot. Hydrogen
-  // reads this to render the optimistic line in useOptimisticCart while the
-  // LinesAdd round-trips to the server.
-  const selectedVariant = useMemo(
-    () => ({
-      id: item.merchandiseId,
-      availableForSale: true,
-      title: item.variantTitle ?? 'Default Title',
-      selectedOptions: [],
-      price: priceData,
-      image: item.imageUrl
-        ? {url: item.imageUrl, altText: item.imageAlt ?? null}
-        : null,
-      product: {
-        handle: item.productHandle,
-        title: item.productTitle,
-      },
-    }),
-    // priceData is built from primitives on `item`; depending on `item` is enough.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [item],
-  );
+  // NOTE: we intentionally do NOT pass `selectedVariant` to the LinesAdd input.
+  // Hydrogen's useOptimisticCart builds an optimistic line from selectedVariant
+  // and computes its `cost` from `variant.price`. When the shape doesn't match
+  // hydrogen's expected ProductVariant type exactly, the optimistic line is
+  // created without a `cost.totalAmount`, which crashes the page render. By
+  // omitting selectedVariant the item simply stays in the saved section until
+  // Shopify confirms the LinesAdd — then the auto-prune effect moves it to
+  // the active section. This is the safe, deterministic path.
 
   const body = (
     <>
@@ -636,7 +627,6 @@ function SavedLine({item}: {item: SavedItem}) {
               {
                 merchandiseId: item.merchandiseId,
                 quantity: item.quantity || 1,
-                selectedVariant,
               },
             ],
           }}
