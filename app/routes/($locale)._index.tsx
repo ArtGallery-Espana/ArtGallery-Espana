@@ -5,7 +5,7 @@ import type {Route} from './+types/_index';
 import {MockShopNotice} from '~/components/MockShopNotice';
 
 export const meta: Route.MetaFunction = () => {
-  return [{title: 'Galeria Taller J Espana | Home'}];
+  return [{title: 'Galeria Taller J España | Home'}];
 };
 
 export async function loader({context}: Route.LoaderArgs) {

@@ -914,3 +914,565 @@ body > main.site-main {
   color: #fff !important;
   background-color: #2f9ea0 !important;
 }
+
+/*
+* --------------------------------------------------
+* Editorial pages
+* --------------------------------------------------
+*/
+.editorial-page {
+  color: #232327;
+  display: grid;
+  gap: clamp(3rem, 7vw, 6rem);
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem)
+    clamp(4rem, 8vw, 7rem);
+}
+
+.editorial-page h1,
+.editorial-page h2,
+.editorial-page h3 {
+  color: #111111;
+  font-family: var(--serif);
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.editorial-page h1 {
+  font-size: clamp(3rem, 6vw, 5.5rem);
+  line-height: 0.98;
+}
+
+.editorial-page h2 {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  line-height: 1.08;
+}
+
+.editorial-page h3 {
+  font-size: clamp(1.4rem, 2vw, 1.8rem);
+  line-height: 1.2;
+}
+
+.editorial-page p {
+  margin: 0;
+}
+
+.editorial-kicker {
+  color: #c84d92;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  margin-bottom: 1rem !important;
+  text-transform: uppercase;
+}
+
+.editorial-lede {
+  color: rgba(35, 35, 39, 0.72);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin-top: 1.75rem !important;
+  max-width: 48ch;
+}
+
+.artist-origin {
+  color: rgba(35, 35, 39, 0.62);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  letter-spacing: 0.18em;
+  margin-top: 1.25rem !important;
+  text-transform: uppercase;
+}
+
+.editorial-section,
+.editorial-page-header,
+.editorial-hero,
+.contact-layout {
+  margin-inline: auto;
+  max-width: 1440px;
+  width: 100%;
+}
+
+.editorial-hero {
+  align-items: center;
+  display: grid;
+  gap: clamp(2rem, 6vw, 6rem);
+}
+
+.artist-placeholder {
+  margin: 0;
+  max-width: 34rem;
+  width: 100%;
+}
+
+.artist-hero-image {
+  aspect-ratio: 4 / 5;
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.artist-placeholder-frame {
+  align-items: stretch;
+  aspect-ratio: 4 / 5;
+  background:
+    repeating-linear-gradient(
+      135deg,
+      rgba(35, 35, 39, 0.04) 0 1px,
+      transparent 1px 10px
+    ),
+    #e1d5c6;
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+}
+
+.artist-placeholder-frame span,
+.artist-placeholder-frame strong {
+  color: rgba(35, 35, 39, 0.6);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.artist-statement,
+.artist-biography,
+.artist-facts-section,
+.artist-trajectory,
+.galapagos-section,
+.returns-section,
+.payments-section,
+.shipping-table-section {
+  display: grid;
+  gap: 2rem;
+}
+
+.artist-statement,
+.artist-biography,
+.artist-facts-section,
+.artist-trajectory,
+.galapagos-section {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.34)),
+    #f2ece3;
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  padding: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.artist-statement > div:first-child,
+.artist-biography > div:first-child,
+.artist-facts-section > div:first-child,
+.artist-trajectory > div:first-child,
+.galapagos-section > div:first-child {
+  align-content: start;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.editorial-two-column-copy {
+  color: rgba(35, 35, 39, 0.72);
+  display: grid;
+  gap: 1rem;
+  font-size: 1rem;
+  line-height: 1.85;
+}
+
+.editorial-two-column-copy p + p {
+  margin-top: 0;
+}
+
+.artist-statement .editorial-two-column-copy p,
+.artist-biography .editorial-two-column-copy p,
+.editorial-single-copy p {
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid rgba(35, 35, 39, 0.06);
+  padding: 1.1rem 1.2rem;
+}
+
+.editorial-single-copy {
+  color: rgba(35, 35, 39, 0.72);
+  display: grid;
+  gap: 1.5rem;
+  font-size: 1rem;
+  line-height: 1.85;
+  max-width: 70ch;
+}
+
+.artist-facts-grid {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.artist-facts-grid div {
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: grid;
+  gap: 0.5rem;
+  padding: 1.15rem 1.2rem;
+}
+
+.artist-facts-grid dt {
+  color: #c84d92;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.artist-facts-grid dd {
+  color: #111111;
+  font-family: var(--serif);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.timeline-section {
+  display: grid;
+  gap: 2rem;
+}
+
+.artist-timeline {
+  border-left: 2px solid #2f9ea0;
+  display: grid;
+  gap: 1.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 2rem;
+}
+
+.artist-timeline li {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(5rem, 6rem) 1fr;
+  position: relative;
+}
+
+.artist-timeline li::before {
+  background: #2f9ea0;
+  border-radius: 999px;
+  content: '';
+  height: 0.9rem;
+  left: -2.5rem;
+  position: absolute;
+  top: 0.35rem;
+  width: 0.9rem;
+}
+
+.timeline-year {
+  color: #2f9ea0;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.artist-timeline p,
+.process-copy p,
+.returns-section > p,
+.payment-card p,
+.contact-details p {
+  color: rgba(35, 35, 39, 0.72);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.process-section {
+  align-items: center;
+  display: grid;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.process-media {
+  overflow: hidden;
+}
+
+.process-media img {
+  aspect-ratio: 16 / 10;
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.process-copy {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.creative-process-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.creative-process-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: grid;
+  gap: 0.85rem;
+  padding: 1.1rem 1.2rem;
+}
+
+.creative-process-card span {
+  color: #2f9ea0;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.creative-process-card p {
+  color: rgba(35, 35, 39, 0.72);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.shipping-table-wrap {
+  border: 1px solid rgba(35, 35, 39, 0.1);
+  overflow-x: auto;
+}
+
+.shipping-table {
+  border-collapse: collapse;
+  min-width: 42rem;
+  width: 100%;
+}
+
+.shipping-table th,
+.shipping-table td {
+  border-bottom: 1px solid rgba(35, 35, 39, 0.1);
+  padding: 1rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.shipping-table thead th {
+  background: rgba(47, 158, 160, 0.08);
+  color: #111111;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.shipping-table tbody th {
+  color: #111111;
+  font-family: var(--serif);
+  font-size: 1.35rem;
+}
+
+.shipping-table tbody td {
+  color: rgba(35, 35, 39, 0.72);
+  line-height: 1.7;
+}
+
+.payment-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.payment-card {
+  border: 1px solid rgba(35, 35, 39, 0.1);
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+}
+
+.payment-note {
+  border-left: 4px solid #c84d92;
+  color: #111111;
+  font-weight: 600;
+  margin-top: 1rem !important;
+  padding-left: 1rem;
+}
+
+.contact-layout {
+  display: grid;
+  gap: clamp(2rem, 5vw, 5rem);
+}
+
+.contact-form,
+.contact-details {
+  border: 1px solid rgba(35, 35, 39, 0.1);
+  background: rgba(255, 255, 255, 0.46);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.contact-form {
+  display: grid;
+  gap: 1.25rem;
+  min-height: 100%;
+}
+
+.contact-form-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.contact-form label {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.contact-form label span {
+  color: #111111;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.contact-form input,
+.contact-form textarea {
+  background: #fff;
+  border: 1px solid rgba(35, 35, 39, 0.18);
+  border-radius: 2px;
+  color: #232327;
+  font: inherit;
+  padding: 0.9rem 1rem;
+  resize: vertical;
+  width: 100%;
+}
+
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-color: #2f9ea0;
+  outline: 2px solid rgba(47, 158, 160, 0.16);
+}
+
+.contact-submit {
+  align-items: center;
+  background: #111111;
+  border: 0;
+  border-radius: 2px;
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  justify-content: center;
+  letter-spacing: 0.18em;
+  min-height: 3rem;
+  padding: 0 1.5rem;
+  text-transform: uppercase;
+  width: fit-content;
+}
+
+.contact-submit:hover {
+  background: #2f9ea0;
+}
+
+.contact-details {
+  display: grid;
+  gap: 1.75rem;
+  align-content: start;
+}
+
+.contact-details a {
+  color: #111111;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+.contact-details a:hover {
+  color: #2f9ea0;
+}
+
+.floating-whatsapp {
+  align-items: center;
+  background: #111111;
+  border-radius: 999px;
+  bottom: 1.5rem;
+  color: #fff;
+  display: inline-flex;
+  gap: 0.75rem;
+  padding: 0.85rem 1.15rem;
+  position: fixed;
+  right: 1.5rem;
+  text-decoration: none;
+  z-index: 20;
+}
+
+.floating-whatsapp span {
+  align-items: center;
+  background: #2f9ea0;
+  border-radius: 999px;
+  display: inline-flex;
+  height: 1.8rem;
+  justify-content: center;
+  width: 1.8rem;
+}
+
+.floating-whatsapp-icon svg {
+  color: #fff;
+  display: block;
+  height: 1.05rem;
+  width: 1.05rem;
+}
+
+.floating-whatsapp strong {
+  color: #fff;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 900px) {
+  .editorial-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 34rem);
+  }
+
+  .process-section,
+  .contact-layout {
+    grid-template-columns: minmax(32rem, 1.6fr) minmax(20rem, 0.8fr);
+  }
+
+  .artist-biography,
+  .artist-statement,
+  .artist-facts-section,
+  .artist-trajectory,
+  .galapagos-section,
+  .returns-section,
+  .payments-section,
+  .shipping-table-section {
+    grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
+    align-items: start;
+  }
+
+  .artist-statement .editorial-two-column-copy,
+  .artist-biography .editorial-two-column-copy {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .artist-statement .editorial-two-column-copy p:last-child,
+  .artist-biography .editorial-two-column-copy p:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .artist-facts-grid,
+  .creative-process-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .payment-grid,
+  .contact-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 899px) {
+  .artist-timeline li {
+    grid-template-columns: 1fr;
+  }
+
+  .floating-whatsapp {
+    bottom: 1rem;
+    right: 1rem;
+  }
+}
