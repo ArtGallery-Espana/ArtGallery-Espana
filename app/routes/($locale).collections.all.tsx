@@ -21,12 +21,30 @@ type EnrichedProduct = CatalogProductFragment & {
   priceVal: number;
 };
 
+function parseMetaVal(value: string | null | undefined): number {
+  if (!value) return 0;
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parseFloat(String(parsed[0])) || 0;
+    if (typeof parsed === 'object' && parsed !== null && 'value' in parsed)
+      return parseFloat(String((parsed as {value: unknown}).value)) || 0;
+    return parseFloat(String(parsed)) || 0;
+  } catch {
+    return parseFloat(value) || 0;
+  }
+}
+
+function formatDim(value: string | null | undefined): string | null {
+  const n = parseMetaVal(value);
+  return n > 0 ? String(n) : null;
+}
+
 function computeTamano(
   alto: string | null | undefined,
   ancho: string | null | undefined,
 ): string {
-  const a = parseFloat(alto ?? '0');
-  const b = parseFloat(ancho ?? '0');
+  const a = parseMetaVal(alto);
+  const b = parseMetaVal(ancho);
   const max = Math.max(a, b);
   if (max <= 0) return '';
   if (max < 40) return 'S';
@@ -42,26 +60,22 @@ function CheckboxRow({
 }: {
   label: string;
   checked: boolean;
-  onChange: (v: boolean) => void;
+  onChange: () => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 py-[6px]">
+    <label className="flex cursor-pointer items-center gap-3 py-[5px]">
       <span
-        className={`flex h-4 w-4 shrink-0 items-center justify-center border transition ${
+        className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center border transition ${
           checked
             ? 'border-[#2F9EA0] bg-[#2F9EA0]'
-            : 'border-[rgba(35,35,39,.30)] bg-transparent'
+            : 'border-[rgba(35,35,39,.30)]'
         }`}
       >
         {checked && (
-          <svg
-            className="h-2.5 w-2.5 text-white"
-            viewBox="0 0 10 8"
-            fill="none"
-          >
+          <svg viewBox="0 0 10 8" fill="none" className="h-[9px] w-[9px]">
             <path
               d="M1 4l3 3 5-6"
-              stroke="currentColor"
+              stroke="white"
               strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -69,12 +83,14 @@ function CheckboxRow({
           </svg>
         )}
       </span>
-      <span className="text-[13px] text-[rgba(35,35,39,.80)]">{label}</span>
+      <span className="text-[13px] leading-snug text-[rgba(35,35,39,.80)]">
+        {label}
+      </span>
     </label>
   );
 }
 
-function FilterGroup({
+function SidebarSection({
   title,
   children,
 }: {
@@ -83,9 +99,9 @@ function FilterGroup({
 }) {
   return (
     <div className="border-b border-[rgba(35,35,39,.10)] pb-6">
-      <div className="mb-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
+      <p className="mb-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
         {title}
-      </div>
+      </p>
       {children}
     </div>
   );
@@ -106,18 +122,16 @@ function PriceSlider({
   onFloorChange: (v: number) => void;
   onCeilingChange: (v: number) => void;
 }) {
-  if (min === max) return null;
-
+  if (min >= max) return null;
   const fmt = (v: number) =>
     v >= 1000 ? `$${(v / 1000).toFixed(0)}k` : `$${v}`;
-
   return (
-    <div className="pt-1">
-      <div className="mb-4 flex justify-between [font-family:var(--mono)] text-[11px] tracking-[0.04em] text-[rgba(35,35,39,.72)]">
+    <div>
+      <div className="mb-3 flex justify-between [font-family:var(--mono)] text-[11px] tracking-[0.04em] text-[rgba(35,35,39,.72)]">
         <span>{fmt(floor)}</span>
         <span>{fmt(ceiling)}</span>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-2">
         <input
           type="range"
           min={min}
@@ -150,6 +164,8 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
   const year = product.createdAt
     ? new Date(product.createdAt).getFullYear()
     : '';
+  const dimAlto = formatDim(product.alto?.value);
+  const dimAncho = formatDim(product.ancho?.value);
 
   return (
     <Link
@@ -158,14 +174,14 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
       className="group block"
     >
       <div
-        className="relative overflow-hidden bg-[#EEE8E1]"
-        style={{aspectRatio: '4 / 5'}}
+        className="relative w-full overflow-hidden bg-[#EEE8E1]"
+        style={{aspectRatio: '4/5'}}
       >
         {product.featuredImage ? (
           <Image
             data={product.featuredImage}
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-            sizes="(min-width: 1200px) 320px, (min-width: 768px) 50vw, 100vw"
+            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
+            sizes="(min-width: 1280px) 280px, (min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw"
           />
         ) : null}
         {product.productType ? (
@@ -178,26 +194,20 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
       </div>
 
       <div className="pt-4">
-        <div className="mb-[5px] [font-family:var(--mono)] text-[10px] uppercase tracking-[0.12em] text-[rgba(35,35,39,.50)]">
+        <div className="mb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.12em] text-[rgba(35,35,39,.50)]">
           {year}
           {product.tamano ? ` · ${product.tamano}` : ''}
         </div>
-
-        <h2 className="[font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
+        <h2 className="[font-family:var(--serif)] text-[20px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
           {product.title}
         </h2>
-
-        {(product.ancho?.value || product.alto?.value) && (
-          <div className="mt-[4px] text-[12px] text-[rgba(35,35,39,.60)]">
-            {[product.ancho?.value, product.alto?.value]
-              .filter(Boolean)
-              .join(' × ')}{' '}
-            cm
+        {(dimAncho || dimAlto) && (
+          <div className="mt-1 text-[12px] text-[rgba(35,35,39,.55)]">
+            {[dimAncho, dimAlto].filter(Boolean).join(' × ')} cm
           </div>
         )}
-
         <div
-          className={`mt-[8px] [font-family:var(--mono)] text-[13px] tracking-[0.02em] ${
+          className={`mt-2 [font-family:var(--mono)] text-[13px] tracking-[0.02em] ${
             consultar ? 'text-[#C84D92]' : 'text-[#111111]'
           }`}
         >
@@ -233,13 +243,12 @@ export default function CatalogPage() {
     const vals = enriched.map((p) => p.priceVal).filter((v) => v > 0);
     return {
       minPrice: vals.length ? Math.floor(Math.min(...vals)) : 0,
-      maxPrice: vals.length ? Math.ceil(Math.max(...vals)) : 10000,
+      maxPrice: vals.length ? Math.ceil(Math.max(...vals)) : 0,
     };
   }, [enriched]);
 
   const [priceFloor, setPriceFloor] = useState<number | null>(null);
   const [priceCeiling, setPriceCeiling] = useState<number | null>(null);
-
   const floor = priceFloor ?? minPrice;
   const ceiling = priceCeiling ?? maxPrice;
 
@@ -258,18 +267,6 @@ export default function CatalogPage() {
     return unique.sort((a, b) => order.indexOf(a) - order.indexOf(b));
   }, [enriched]);
 
-  function toggleCategoria(cat: string) {
-    setSelectedCategorias((prev) =>
-      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
-    );
-  }
-
-  function toggleTamano(t: string) {
-    setSelectedTamanos((prev) =>
-      prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
-    );
-  }
-
   const filtered = useMemo(() => {
     let result = enriched;
     if (selectedCategorias.length > 0)
@@ -279,8 +276,7 @@ export default function CatalogPage() {
     if (selectedTamanos.length > 0)
       result = result.filter((p) => selectedTamanos.includes(p.tamano));
     result = result.filter(
-      (p) =>
-        p.priceVal === 0 || (p.priceVal >= floor && p.priceVal <= ceiling),
+      (p) => p.priceVal === 0 || (p.priceVal >= floor && p.priceVal <= ceiling),
     );
     return result;
   }, [enriched, selectedCategorias, selectedTamanos, floor, ceiling]);
@@ -314,27 +310,27 @@ export default function CatalogPage() {
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
-      {/* PAGE HEADER */}
+      {/* HEADER */}
       <section className="px-6 pb-0 pt-10 md:px-10 xl:px-14 xl:pt-14">
         <div className="mx-auto max-w-[1400px]">
           <div className="border-b border-[#232327] pb-7">
             <div className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
               Catálogo
             </div>
-            <h1 className="mt-3 [font-family:var(--serif)] text-[clamp(2.5rem,5vw,4rem)] leading-[1.02] tracking-[-0.015em] text-[#111111]">
+            <h1 className="mt-3 [font-family:var(--serif)] text-[clamp(2.2rem,4vw,3.5rem)] leading-[1.02] tracking-[-0.015em] text-[#111111]">
               Obras disponibles
             </h1>
           </div>
         </div>
       </section>
 
-      {/* CONTENT: SIDEBAR + MAIN */}
+      {/* BODY */}
       <section className="px-6 pb-24 pt-10 md:px-10 xl:px-14 xl:pb-32">
         <div className="mx-auto max-w-[1400px]">
-          <div className="grid gap-10 lg:grid-cols-[240px_1fr] lg:gap-14 xl:grid-cols-[280px_1fr]">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-14">
 
-            {/* SIDEBAR — FILTERS */}
-            <aside className="lg:sticky lg:top-28 lg:self-start">
+            {/* SIDEBAR */}
+            <aside className="w-full shrink-0 lg:sticky lg:top-28 lg:w-[240px] xl:w-[280px]">
               <div className="space-y-6">
                 {hasFilters && (
                   <button
@@ -347,59 +343,73 @@ export default function CatalogPage() {
                 )}
 
                 {categorias.length > 0 && (
-                  <FilterGroup title="Categoría">
+                  <SidebarSection title="Categoría">
                     {categorias.map((cat) => (
                       <CheckboxRow
                         key={cat}
                         label={cat}
                         checked={selectedCategorias.includes(cat)}
-                        onChange={() => toggleCategoria(cat)}
+                        onChange={() =>
+                          setSelectedCategorias((prev) =>
+                            prev.includes(cat)
+                              ? prev.filter((c) => c !== cat)
+                              : [...prev, cat],
+                          )
+                        }
                       />
                     ))}
-                  </FilterGroup>
+                  </SidebarSection>
                 )}
 
                 {tamanos.length > 0 && (
-                  <FilterGroup title="Tamaño">
+                  <SidebarSection title="Tamaño">
                     {tamanos.map((t) => (
                       <CheckboxRow
                         key={t}
                         label={t}
                         checked={selectedTamanos.includes(t)}
-                        onChange={() => toggleTamano(t)}
+                        onChange={() =>
+                          setSelectedTamanos((prev) =>
+                            prev.includes(t)
+                              ? prev.filter((x) => x !== t)
+                              : [...prev, t],
+                          )
+                        }
                       />
                     ))}
-                  </FilterGroup>
+                  </SidebarSection>
                 )}
 
-                <FilterGroup title="Precio">
-                  <PriceSlider
-                    min={minPrice}
-                    max={maxPrice}
-                    floor={floor}
-                    ceiling={ceiling}
-                    onFloorChange={setPriceFloor}
-                    onCeilingChange={setPriceCeiling}
-                  />
-                </FilterGroup>
+                {minPrice < maxPrice && (
+                  <SidebarSection title="Precio">
+                    <PriceSlider
+                      min={minPrice}
+                      max={maxPrice}
+                      floor={floor}
+                      ceiling={ceiling}
+                      onFloorChange={setPriceFloor}
+                      onCeilingChange={setPriceCeiling}
+                    />
+                  </SidebarSection>
+                )}
               </div>
             </aside>
 
-            {/* MAIN CONTENT */}
-            <div>
-              {/* TOP BAR: counter + sort */}
+            {/* MAIN */}
+            <div className="min-w-0 flex-1">
+              {/* top bar */}
               <div className="mb-8 flex items-center justify-between border-b border-[rgba(35,35,39,.10)] pb-5">
                 <span className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#C84D92]">
                   {sorted.length} obra{sorted.length !== 1 ? 's' : ''}
                 </span>
                 <div className="flex items-center gap-3">
-                  <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                  <span className="hidden [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)] sm:inline">
                     Orden
                   </span>
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value)}
-                    className="cursor-pointer bg-transparent text-[13px] text-[#232327] tracking-[0.02em] outline-none"
+                    className="cursor-pointer bg-transparent text-[13px] text-[#232327] outline-none"
                   >
                     <option>Reciente</option>
                     <option>Precio ↑</option>
@@ -409,9 +419,9 @@ export default function CatalogPage() {
                 </div>
               </div>
 
-              {/* GRID: 2 cols mobile → 3 md → 4 xl */}
+              {/* grid */}
               {sorted.length > 0 ? (
-                <div className="grid grid-cols-2 gap-x-8 gap-y-14 md:grid-cols-3 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-3 xl:grid-cols-4">
                   {sorted.map((product) => (
                     <CatalogCard key={product.id} product={product} />
                   ))}
@@ -431,6 +441,7 @@ export default function CatalogPage() {
                 </div>
               )}
             </div>
+
           </div>
         </div>
       </section>
