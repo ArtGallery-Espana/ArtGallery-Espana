@@ -1085,12 +1085,49 @@ body > main.site-main {
   margin-top: 0;
 }
 
+.artist-statement-content {
+  display: grid;
+  gap: 1.5rem;
+}
+
 .artist-statement .editorial-two-column-copy p,
 .artist-biography .editorial-two-column-copy p,
 .editorial-single-copy p {
   background: rgba(255, 255, 255, 0.64);
   border: 1px solid rgba(35, 35, 39, 0.06);
   padding: 1.1rem 1.2rem;
+}
+
+.statement-works-gallery {
+  display: grid;
+  gap: 1rem;
+}
+
+.statement-works-gallery figure {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: grid;
+  grid-template-rows: auto auto;
+  margin: 0;
+  overflow: hidden;
+}
+
+.statement-works-gallery img {
+  aspect-ratio: 4 / 5;
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.statement-works-gallery figcaption {
+  color: rgba(35, 35, 39, 0.72);
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  line-height: 1.65;
+  padding: 0.72rem 0.8rem 0.84rem;
+  width: 100%;
 }
 
 .editorial-single-copy {
@@ -1102,18 +1139,239 @@ body > main.site-main {
   max-width: 70ch;
 }
 
+.galapagos-header {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.galapagos-intro {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 70ch;
+}
+
+.galapagos-intro p {
+  color: rgba(35, 35, 39, 0.76);
+  font-size: 1.02rem;
+  line-height: 1.9;
+  margin: 0;
+}
+
+.galapagos-intro p + p {
+  padding-top: 0.15rem;
+}
+
+.galapagos-gallery {
+  display: grid;
+  gap: 1rem;
+}
+
+.galapagos-gallery figure {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: grid;
+  grid-template-rows: auto auto;
+  margin: 0;
+  overflow: hidden;
+}
+
+.galapagos-gallery img {
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.galapagos-gallery figure:first-child img {
+  aspect-ratio: 4 / 3;
+}
+
+.galapagos-gallery figure:not(:first-child) img {
+  aspect-ratio: 4 / 3;
+}
+
+.galapagos-gallery figcaption {
+  color: rgba(35, 35, 39, 0.72);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  line-height: 1.65;
+  padding: 0.68rem 0.78rem 0.8rem;
+  text-transform: none;
+  width: 100%;
+}
+
+.trajectory-timeline {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trajectory-timeline li {
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+  min-height: 11.5rem;
+  padding: 1rem 1.05rem;
+  position: relative;
+}
+
+.trajectory-timeline li::before {
+  background: #2f9ea0;
+  content: '';
+  height: 100%;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 4px;
+}
+
+.trajectory-timeline li::after {
+  content: none;
+}
+
+.trajectory-timeline span {
+  color: #c84d92;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.trajectory-timeline p {
+  color: rgba(35, 35, 39, 0.76);
+  font-size: 0.93rem;
+  line-height: 1.7;
+}
+
+.trajectory-gallery {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.trajectory-gallery figure {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  margin: 0;
+  overflow: hidden;
+}
+
+.trajectory-gallery img {
+  aspect-ratio: 4 / 3;
+  display: block;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.trajectory-gallery figcaption {
+  color: #c84d92;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  line-height: 1.7;
+  padding: 0.9rem 1rem 1rem;
+  text-transform: uppercase;
+}
+
 .artist-facts-grid {
   display: grid;
   gap: 1rem;
   margin: 0;
 }
 
+.artist-profile-story {
+  align-content: stretch;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.76), rgba(255, 255, 255, 0.42));
+  border: 1px solid rgba(35, 35, 39, 0.08);
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+}
+
+.artist-profile-intro {
+  align-content: start;
+  display: grid;
+  gap: 0.85rem;
+  justify-items: start;
+  padding: 1.35rem 1.4rem 1.45rem;
+  position: relative;
+  text-align: left;
+}
+
+.artist-profile-intro h2 {
+  line-height: 1.08;
+  margin: 0;
+}
+
+.artist-profile-intro::before {
+  background: linear-gradient(90deg, #2f9ea0, #c84d92);
+  content: '';
+  height: 3px;
+  left: 1.4rem;
+  position: absolute;
+  top: 0;
+  width: 5rem;
+}
+
+.artist-profile-summary {
+  color: rgba(35, 35, 39, 0.72);
+  font-size: 1.02rem;
+  line-height: 1.8;
+  margin: 0;
+  max-width: 30ch;
+}
+
+.artist-profile-media {
+  margin: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+.artist-profile-media img {
+  aspect-ratio: 4 / 4.25;
+  display: block;
+  height: auto;
+  object-fit: cover;
+  object-position: center center;
+  width: 100%;
+}
+
+.artist-profile-details {
+  align-content: stretch;
+  display: grid;
+}
+
 .artist-facts-grid div {
-  background: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(35, 35, 39, 0.08);
   display: grid;
   gap: 0.5rem;
-  padding: 1.15rem 1.2rem;
+  min-height: 9.25rem;
+  overflow: hidden;
+  padding: 1.25rem 1.35rem 1.4rem;
+  position: relative;
+}
+
+.artist-facts-grid div::before {
+  background: #2f9ea0;
+  content: '';
+  height: 3px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.artist-facts-grid div:nth-child(even)::before {
+  background: #c84d92;
 }
 
 .artist-facts-grid dt {
@@ -1205,20 +1463,50 @@ body > main.site-main {
   gap: 1.25rem;
 }
 
-.creative-process-grid {
+.creative-process-flow {
   display: grid;
-  gap: 1rem;
+  gap: 1.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
-.creative-process-card {
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(35, 35, 39, 0.08);
+.creative-process-step {
   display: grid;
-  gap: 0.85rem;
-  padding: 1.1rem 1.2rem;
+  gap: 0.8rem;
+  padding-left: 2.2rem;
+  position: relative;
 }
 
-.creative-process-card span {
+.creative-process-step::before {
+  background: #2f9ea0;
+  border-radius: 999px;
+  content: '';
+  height: 0.8rem;
+  left: 0.15rem;
+  position: absolute;
+  top: 0.3rem;
+  width: 0.8rem;
+}
+
+.creative-process-step::after {
+  background:
+    linear-gradient(#2f9ea0, #2f9ea0) center / 2px 100% no-repeat,
+    linear-gradient(135deg, transparent 48%, #2f9ea0 49% 58%, transparent 59%)
+      center bottom 0.2rem / 0.7rem 0.7rem no-repeat;
+  content: '';
+  height: calc(100% + 1.4rem);
+  left: 0.53rem;
+  position: absolute;
+  top: 1.1rem;
+  width: 0.9rem;
+}
+
+.creative-process-step:last-child::after {
+  content: none;
+}
+
+.creative-process-step span {
   color: #2f9ea0;
   font-family: var(--mono);
   font-size: 0.75rem;
@@ -1226,7 +1514,13 @@ body > main.site-main {
   text-transform: uppercase;
 }
 
-.creative-process-card p {
+.creative-process-step h3 {
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.creative-process-step p {
   color: rgba(35, 35, 39, 0.72);
   font-size: 1rem;
   line-height: 1.75;
@@ -1445,9 +1739,29 @@ body > main.site-main {
     align-items: start;
   }
 
+  .artist-facts-section {
+    align-items: stretch;
+    gap: clamp(2.5rem, 4vw, 4rem);
+    grid-template-columns: minmax(20rem, 0.86fr) minmax(0, 1.14fr);
+  }
+
+  .artist-profile-story {
+    grid-template-columns: minmax(10rem, 0.9fr) minmax(11rem, 1.1fr);
+  }
+
+  .artist-profile-media img {
+    aspect-ratio: auto;
+    height: 100%;
+    object-position: center center;
+  }
+
   .artist-statement .editorial-two-column-copy,
   .artist-biography .editorial-two-column-copy {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statement-works-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .artist-statement .editorial-two-column-copy p:last-child,
@@ -1455,8 +1769,38 @@ body > main.site-main {
     grid-column: 1 / -1;
   }
 
-  .artist-facts-grid,
-  .creative-process-grid {
+  .artist-facts-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .artist-facts-grid div:last-child {
+    grid-column: 1 / -1;
+    min-height: 7.5rem;
+  }
+
+  .galapagos-section {
+    grid-template-columns: 1fr;
+  }
+
+  .galapagos-header {
+    align-items: start;
+    gap: clamp(2rem, 4vw, 4rem);
+    grid-template-columns: minmax(18rem, 0.95fr) minmax(0, 1.05fr);
+  }
+
+  .galapagos-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .galapagos-gallery figure {
+    min-height: 0;
+  }
+
+  .trajectory-gallery {
+    grid-template-columns: 1fr;
+  }
+
+  .trajectory-timeline {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1474,5 +1818,17 @@ body > main.site-main {
   .floating-whatsapp {
     bottom: 1rem;
     right: 1rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .trajectory-timeline {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1279px) {
+  .trajectory-timeline li {
+    min-height: auto;
   }
 }
