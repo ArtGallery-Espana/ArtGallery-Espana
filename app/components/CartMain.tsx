@@ -25,8 +25,10 @@ type SavedItem = {
 };
 
 const SAVED_KEY = 'cart-saved-items';
-const SHIP = 480;
-const INS = 331;
+// Shipping: $150 per piece (DHL international for artwork)
+const SHIP_PER_PIECE = 150;
+// Insurance: 1.5% of declared value (ad-valorem)
+const INS_RATE = 0.015;
 
 function readSaved(): SavedItem[] {
   try {
@@ -98,8 +100,7 @@ export function CartMain({layout, cart: originalCart}: CartMainProps) {
 // ─── Page cart ────────────────────────────────────────────────────────────────
 
 function CartPage({cart}: {cart: OptCart}) {
-  // Dual-track: state drives renders; ref gives effects always-fresh access
-  // without adding savedItems to every effect's dependency array.
+  // Dual-track: state drives renders; ref gives effects always-fresh data
   const [savedItems, setSavedItemsState] = useState<SavedItem[]>([]);
   const savedRef = useRef<SavedItem[]>([]);
 
@@ -108,9 +109,12 @@ function CartPage({cart}: {cart: OptCart}) {
     setSavedItemsState(items);
   }
 
-  // LinesRemove in-flight: protects items from being evicted by the cleanup
-  // effect while the optimistic remove hasn't settled yet.
+  // ── In-flight operation locks ────────────────────────────────────────────────
+  // pendingSaves: LinesRemove in-flight — keeps item in saved while remove settles
   const pendingSaves = useRef(new Set<string>());
+  // pendingAdds: user explicitly clicked "Agregar a la compra".
+  // Updating a ref (not state) avoids re-render so the CartForm can still submit.
+  const pendingAdds = useRef(new Set<string>());
 
   // Hydrate from localStorage once on mount (client only)
   useEffect(() => {
@@ -119,7 +123,7 @@ function CartPage({cart}: {cart: OptCart}) {
     setSavedItemsState(stored);
   }, []);
 
-  // Memoise so identity only changes when cart CONTENTS change, not every render
+  // All non-child cart lines (memoised — only changes when cart IDs change)
   const activeLines = useMemo(
     () =>
       (cart?.lines?.nodes ?? []).filter(
@@ -128,32 +132,53 @@ function CartPage({cart}: {cart: OptCart}) {
     [cart?.lines?.nodes],
   );
 
-  const activeCount = cart?.totalQuantity ?? 0;
+  // Lines shown in the active section.
+  // Items in "saved for later" are hidden here even if Shopify still has them
+  // in the cart (e.g. cart restoration after an abandoned checkout).
+  const displayedActiveLines = useMemo(() => {
+    const savedIds = new Set(savedRef.current.map((s) => s.merchandiseId));
+    return activeLines.filter((l) => !savedIds.has(l.merchandise.id));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLines, savedItems]); // savedItems (state) re-triggers when saved changes
 
-  // Stable string key — the cleanup effect fires only when cart IDs change,
-  // not on every render (activeLines would be a new array ref every render).
+  // Total quantity of displayed active items (used for hero counter and shipping)
+  const activeCount = displayedActiveLines.reduce((sum, l) => sum + l.quantity, 0);
+
+  // Stable string key — cleanup effect only fires when cart CONTENTS change
   const activeCartKey = useMemo(
     () => activeLines.map((l) => l.merchandise.id).sort().join(','),
     [activeLines],
   );
 
-  // ── Cleanup: remove a saved item once it's confirmed back in the active cart ──
-  // Uses savedRef (not the closure) so it always reads the freshest saved list.
+  // ── Cleanup effect ──────────────────────────────────────────────────────────
+  // Removes a saved item ONLY when the user explicitly clicked "Agregar a la
+  // compra" (pendingAdds) AND the item is confirmed in the active cart.
+  // Items without an explicit add-back intent are NEVER evicted — this prevents
+  // Shopify cart restoration after checkout from clearing the saved section.
   useEffect(() => {
     const current = savedRef.current;
     if (current.length === 0) return;
 
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
+
     const stillSaved = current.filter((s) => {
+      // Pending save (LinesRemove in-flight): keep until remove is confirmed
       if (pendingSaves.current.has(s.merchandiseId)) {
-        // Save in-flight: once the item leaves activeLines, the remove confirmed
         if (!activeIds.has(s.merchandiseId)) {
-          pendingSaves.current.delete(s.merchandiseId);
+          pendingSaves.current.delete(s.merchandiseId); // confirmed removed
         }
-        return true; // always keep while in-flight
+        return true;
       }
-      // Normal path: keep items that are NOT in the active cart
-      return !activeIds.has(s.merchandiseId);
+      // Explicit add-back (LinesAdd in-flight): remove from saved once confirmed
+      if (pendingAdds.current.has(s.merchandiseId)) {
+        if (activeIds.has(s.merchandiseId)) {
+          pendingAdds.current.delete(s.merchandiseId); // confirmed added
+          return false; // ← move to active ✓
+        }
+        return true; // still in-flight
+      }
+      // No explicit intent → always keep in saved
+      return true;
     });
 
     if (stillSaved.length !== current.length) {
@@ -162,6 +187,8 @@ function CartPage({cart}: {cart: OptCart}) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCartKey]);
+
+  // ── Handlers ────────────────────────────────────────────────────────────────
 
   function handleSave(line: CartLine) {
     const {merchandise} = line;
@@ -173,14 +200,10 @@ function CartPage({cart}: {cart: OptCart}) {
       imageUrl: merchandise.image?.url ?? merchandise.product.featuredImage?.url,
       imageAlt: merchandise.image?.altText ?? undefined,
       variantTitle: merchandise.title !== 'Default Title' ? merchandise.title : undefined,
-      // cost.totalAmount is guaranteed by CartLineFragment
       priceAmount: line.cost.totalAmount.amount,
       priceCurrencyCode: line.cost.totalAmount.currencyCode,
     };
-    // Register as pending BEFORE setState so the effect never sees a window
-    // where the item is already in savedItems but still in activeLines
     pendingSaves.current.add(item.merchandiseId);
-    // Use savedRef.current — avoids stale closure on the savedItems variable
     const updated = [
       ...savedRef.current.filter((s) => s.merchandiseId !== item.merchandiseId),
       item,
@@ -189,8 +212,14 @@ function CartPage({cart}: {cart: OptCart}) {
     writeSaved(updated);
   }
 
-  // Empty state
-  if (activeCount === 0 && savedItems.length === 0) {
+  function handleAddBack(merchandiseId: string) {
+    // Only updates a ref → no re-render → CartForm in SavedLine can still submit
+    pendingAdds.current.add(merchandiseId);
+  }
+
+  // ── Empty state ──────────────────────────────────────────────────────────────
+
+  if (displayedActiveLines.length === 0 && savedItems.length === 0) {
     return (
       <div className="flex min-h-[65vh] flex-col items-center justify-center gap-8 bg-[#F6F1EA] px-6 text-center">
         <div className="flex items-center gap-4">
@@ -210,6 +239,8 @@ function CartPage({cart}: {cart: OptCart}) {
       </div>
     );
   }
+
+  // ── Full page layout ─────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
@@ -244,9 +275,9 @@ function CartPage({cart}: {cart: OptCart}) {
             <div className="min-w-0 flex-1">
 
               {/* active items */}
-              {activeLines.length > 0 && (
+              {displayedActiveLines.length > 0 && (
                 <div className="border-t border-[rgba(35,35,39,.12)]">
-                  {activeLines.map((line) => (
+                  {displayedActiveLines.map((line) => (
                     <ActiveLine key={line.id} line={line} onSave={() => handleSave(line)} />
                   ))}
                 </div>
@@ -260,7 +291,11 @@ function CartPage({cart}: {cart: OptCart}) {
                   </p>
                   <div className="border-t border-[rgba(35,35,39,.08)]">
                     {savedItems.map((item) => (
-                      <SavedLine key={item.merchandiseId} item={item} />
+                      <SavedLine
+                        key={item.merchandiseId}
+                        item={item}
+                        onAddBack={() => handleAddBack(item.merchandiseId)}
+                      />
                     ))}
                   </div>
                 </div>
@@ -340,8 +375,13 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
             </div>
           </div>
 
-          {/* actions */}
-          <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
+          {/* quantity + action buttons */}
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+
+            <QuantityControl line={line} />
+
+            <span className="text-[rgba(35,35,39,.18)]">|</span>
+
             <Link
               to={`/products/${product.handle}`}
               prefetch="intent"
@@ -349,8 +389,8 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
             >
               Ver ficha
             </Link>
-            <span className="text-[rgba(35,35,39,.22)]">|</span>
-            {/* Save: updates localStorage first, then removes from cart */}
+            <span className="text-[rgba(35,35,39,.18)]">|</span>
+
             <CartForm route="/cart" action={CartForm.ACTIONS.LinesRemove} inputs={{lineIds: [id]}}>
               <button
                 type="submit"
@@ -361,8 +401,8 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
                 Guardar para más tarde
               </button>
             </CartForm>
-            <span className="text-[rgba(35,35,39,.22)]">|</span>
-            {/* Remove entirely */}
+            <span className="text-[rgba(35,35,39,.18)]">|</span>
+
             <CartForm route="/cart" action={CartForm.ACTIONS.LinesRemove} inputs={{lineIds: [id]}}>
               <button
                 type="submit"
@@ -379,12 +419,64 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
   );
 }
 
-// ─── Saved line item ──────────────────────────────────────────────────────────
-// NOTE: onAddBack is NOT called onClick — the useEffect in CartPage handles
-// cleanup once the item is confirmed back in the active cart. This prevents
-// the component from unmounting before the CartForm can submit.
+// ─── Quantity +/− controls ────────────────────────────────────────────────────
 
-function SavedLine({item}: {item: SavedItem}) {
+function QuantityControl({line}: {line: CartLine}) {
+  const {id, quantity, isOptimistic} = line;
+  const decQty = Math.max(0, quantity - 1);
+  const incQty = quantity + 1;
+  // Same fetcherKey for both buttons: rapid clicks cancel each other
+  const fetchKey = `LinesUpdate-${id}`;
+
+  const btnCls =
+    'flex h-7 w-7 items-center justify-center border border-[rgba(35,35,39,.28)] ' +
+    '[font-family:var(--mono)] text-[13px] text-[#232327] transition ' +
+    'hover:border-[#232327] disabled:cursor-not-allowed disabled:opacity-30';
+
+  return (
+    <div className="flex items-center gap-2">
+      <CartForm
+        fetcherKey={fetchKey}
+        route="/cart"
+        action={CartForm.ACTIONS.LinesUpdate}
+        inputs={{lines: [{id, quantity: decQty}]}}
+      >
+        <button
+          type="submit"
+          disabled={quantity <= 1 || !!isOptimistic}
+          aria-label="Disminuir cantidad"
+          className={btnCls}
+        >
+          &#8722;
+        </button>
+      </CartForm>
+
+      <span className="min-w-[1.5rem] text-center [font-family:var(--mono)] text-[12px] text-[#232327]">
+        {quantity}
+      </span>
+
+      <CartForm
+        fetcherKey={fetchKey}
+        route="/cart"
+        action={CartForm.ACTIONS.LinesUpdate}
+        inputs={{lines: [{id, quantity: incQty}]}}
+      >
+        <button
+          type="submit"
+          disabled={!!isOptimistic}
+          aria-label="Aumentar cantidad"
+          className={btnCls}
+        >
+          &#43;
+        </button>
+      </CartForm>
+    </div>
+  );
+}
+
+// ─── Saved line item ──────────────────────────────────────────────────────────
+
+function SavedLine({item, onAddBack}: {item: SavedItem; onAddBack: () => void}) {
   const priceData = {amount: item.priceAmount, currencyCode: item.priceCurrencyCode};
 
   return (
@@ -416,7 +508,10 @@ function SavedLine({item}: {item: SavedItem}) {
               <Money data={priceData} />
             </div>
           </div>
-          {/* Add back: submits LinesAdd, useEffect removes from saved once confirmed */}
+          {/*
+           * onAddBack updates pendingAdds ref only — no state → no re-render →
+           * CartForm can still submit after onClick fires.
+           */}
           <CartForm
             route="/cart"
             action={CartForm.ACTIONS.LinesAdd}
@@ -424,6 +519,7 @@ function SavedLine({item}: {item: SavedItem}) {
           >
             <button
               type="submit"
+              onClick={onAddBack}
               className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
             >
               Agregar a la compra
@@ -472,8 +568,11 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
   const hasItems = activeCount > 0;
 
   const subtotalVal = parseFloat(subtotal?.amount ?? '0');
-  // Only add shipping & insurance when there are active (non-saved) items
-  const totalEst = subtotalVal + (hasItems ? SHIP + INS : 0);
+
+  // Dynamic: $150 × piezas  +  1.5% del valor declarado
+  const shipCost = hasItems ? activeCount * SHIP_PER_PIECE : 0;
+  const insCost = hasItems ? Math.ceil(subtotalVal * INS_RATE) : 0;
+  const totalEst = subtotalVal + shipCost + insCost;
 
   const currency = subtotal?.currencyCode ?? 'USD';
   const fmtAmt = (n: number) =>
@@ -498,12 +597,14 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
         {hasItems && (
           <>
             <div className="flex items-baseline justify-between gap-4">
-              <span className="text-[rgba(35,35,39,.65)]">Envío DHL · Internacional</span>
-              <span className="shrink-0 text-[#232327]">USD {SHIP}</span>
+              <span className="text-[rgba(35,35,39,.65)]">
+                Envío DHL · {activeCount} {activeCount !== 1 ? 'piezas' : 'pieza'}
+              </span>
+              <span className="shrink-0 text-[#232327]">USD {shipCost}</span>
             </div>
             <div className="flex items-baseline justify-between gap-4">
-              <span className="text-[rgba(35,35,39,.65)]">Seguro a valor declarado</span>
-              <span className="shrink-0 text-[#232327]">USD {INS}</span>
+              <span className="text-[rgba(35,35,39,.65)]">Seguro 1.5% · valor declarado</span>
+              <span className="shrink-0 text-[#232327]">USD {insCost}</span>
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <span className="text-[rgba(35,35,39,.65)]">Impuestos (exento · obra de arte)</span>
