@@ -145,8 +145,20 @@ function CartPage({cart}: {cart: OptCart}) {
     return activeLines.filter((l) => !savedIds.has(l.merchandise.id));
   }, [activeLines, savedItems]);
 
-  // Total quantity of displayed active items (used for hero counter and shipping)
+  // Total quantity of displayed active items (hero counter + shipping calculation)
   const activeCount = displayedActiveLines.reduce((sum, l) => sum + l.quantity, 0);
+
+  // Subtotal derived exclusively from visible active lines so the order summary
+  // never reflects lines that are hidden in "guardado para más tarde" — even if
+  // Shopify still has those variants in the cart (e.g. after cart restoration).
+  const displayedSubtotal = displayedActiveLines.reduce(
+    (sum, l) => sum + parseFloat(l.cost.totalAmount.amount),
+    0,
+  );
+  const displayedCurrency =
+    displayedActiveLines[0]?.cost.totalAmount.currencyCode ??
+    cart?.cost?.subtotalAmount?.currencyCode ??
+    'USD';
 
   // Stable string key — cleanup effect only fires when cart CONTENTS change
   const activeCartKey = useMemo(
@@ -303,7 +315,12 @@ function CartPage({cart}: {cart: OptCart}) {
 
             {/* RIGHT — order summary (sticky) */}
             <div className="w-full shrink-0 lg:sticky lg:top-8 lg:w-[340px] xl:w-[380px]">
-              <OrderSummary cart={cart} activeCount={activeCount} />
+              <OrderSummary
+                cart={cart}
+                activeCount={activeCount}
+                subtotalVal={displayedSubtotal}
+                currency={displayedCurrency}
+              />
             </div>
 
           </div>
@@ -550,22 +567,38 @@ function DiscountForm() {
 }
 
 // ─── Order summary sidebar ────────────────────────────────────────────────────
+//
+// `subtotalVal` and `currency` must come from the DISPLAYED active lines, not
+// from cart.cost.subtotalAmount. Shopify's subtotal includes ALL cart lines —
+// even those hidden in "guardado para más tarde" due to cart restoration —
+// which would cause the summary to show stale values when activeCount = 0.
 
-function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number}) {
-  const subtotal = cart?.cost?.subtotalAmount;
+function OrderSummary({
+  cart,
+  activeCount,
+  subtotalVal,
+  currency,
+}: {
+  cart: OptCart;
+  activeCount: number;
+  subtotalVal: number;   // sum of displayedActiveLines costs
+  currency: string;      // currency code from first displayed line
+}) {
   const checkoutUrl = cart?.checkoutUrl;
   const hasItems = activeCount > 0;
 
-  const subtotalVal = parseFloat(subtotal?.amount ?? '0');
-
-  // Dynamic: $150 × piezas  +  1.5% del valor declarado
+  // Shipping: flat $150 per piece (DHL international, artwork rate)
   const shipCost = hasItems ? activeCount * SHIP_PER_PIECE : 0;
+  // Insurance: 1.5% of declared value (ad-valorem), rounded up
   const insCost = hasItems ? Math.ceil(subtotalVal * INS_RATE) : 0;
   const totalEst = subtotalVal + shipCost + insCost;
 
-  const currency = subtotal?.currencyCode ?? 'USD';
   const fmtAmt = (n: number) =>
-    new Intl.NumberFormat('en-US', {style: 'currency', currency, minimumFractionDigits: 0}).format(n);
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+    }).format(n);
 
   return (
     <div className="border border-[rgba(35,35,39,.12)] bg-white p-8">
@@ -574,30 +607,35 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
         Resumen del pedido
       </p>
 
+      {/* Line items */}
       <div className="space-y-[14px] text-[14px]">
+
+        {/* Subtotal row — shows "—" when no active items */}
         <div className="flex items-baseline justify-between gap-4">
           <span className="text-[rgba(35,35,39,.65)]">
             Subtotal · {activeCount} obra{activeCount !== 1 ? 's' : ''}
           </span>
           <span className="shrink-0 text-[#232327]">
-            {subtotal ? <Money data={subtotal} /> : '—'}
+            {hasItems ? fmtAmt(subtotalVal) : '—'}
           </span>
         </div>
+
+        {/* Shipping, insurance and tax rows — only when there are active items */}
         {hasItems && (
           <>
             <div className="flex items-baseline justify-between gap-4">
               <span className="text-[rgba(35,35,39,.65)]">
                 Envío DHL · {activeCount} {activeCount !== 1 ? 'piezas' : 'pieza'}
               </span>
-              <span className="shrink-0 text-[#232327]">USD {shipCost}</span>
+              <span className="shrink-0 text-[#232327]">{fmtAmt(shipCost)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <span className="text-[rgba(35,35,39,.65)]">Seguro 1.5% · valor declarado</span>
-              <span className="shrink-0 text-[#232327]">USD {insCost}</span>
+              <span className="shrink-0 text-[#232327]">{fmtAmt(insCost)}</span>
             </div>
             <div className="flex items-baseline justify-between gap-4">
               <span className="text-[rgba(35,35,39,.65)]">Impuestos (exento · obra de arte)</span>
-              <span className="shrink-0 text-[#232327]">USD 0</span>
+              <span className="shrink-0 text-[#232327]">{fmtAmt(0)}</span>
             </div>
           </>
         )}
@@ -605,23 +643,31 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
 
       <div className="my-6 border-t border-[rgba(35,35,39,.12)]" />
 
+      {/* Total estimado */}
       <div className="flex items-end justify-between">
         <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
           Total estimado
         </span>
         <span className="[font-family:var(--serif)] text-[2.4rem] leading-none text-[#111111]">
-          {fmtAmt(totalEst)}
+          {hasItems ? fmtAmt(totalEst) : '—'}
         </span>
       </div>
 
       <div className="my-6 border-t border-[rgba(35,35,39,.12)]" />
 
-      <a
-        href={checkoutUrl ?? '#'}
-        className="block w-full bg-[#C84D92] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white transition hover:bg-[#a83c7a]"
-      >
-        Continuar al checkout
-      </a>
+      {/* Checkout CTA — disabled when nothing is in the active cart */}
+      {hasItems ? (
+        <a
+          href={checkoutUrl ?? '#'}
+          className="block w-full bg-[#C84D92] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white transition hover:bg-[#a83c7a]"
+        >
+          Continuar al checkout
+        </a>
+      ) : (
+        <span className="block w-full cursor-not-allowed bg-[rgba(200,77,146,.35)] py-[18px] text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-white">
+          Continuar al checkout
+        </span>
+      )}
 
       <div className="my-5 border-t border-[rgba(35,35,39,.08)]" />
 
@@ -634,9 +680,10 @@ function OrderSummary({cart, activeCount}: {cart: OptCart; activeCount: number})
 
       <div className="my-6 border-t border-[rgba(35,35,39,.08)]" />
 
+      {/* Trust badges */}
       <ul className="space-y-5">
         {[
-          {title: 'Reserva por 48h', desc: 'Sus obras se mantienen apartadas mientras decide.'},
+          {title: 'Reserva por 48h',    desc: 'Sus obras se mantienen apartadas mientras decide.'},
           {title: 'Pago seguro Shopify', desc: '3D Secure, encriptación punto a punto.'},
           {title: 'Devolución 14 días', desc: 'Reembolso completo desde la entrega.'},
         ].map(({title, desc}) => (
