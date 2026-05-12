@@ -69,6 +69,11 @@ export async function action({request, context}: Route.ActionArgs) {
       });
       break;
     }
+    // Writes the cart note. Used to persist shipping/insurance estimates so
+    // the studio can see them in the Shopify order admin after checkout.
+    case CartForm.ACTIONS.NoteUpdate:
+      result = await cart.updateNote(inputs.note as string);
+      break;
     default:
       throw new Error(`${action} cart action is not defined`);
   }

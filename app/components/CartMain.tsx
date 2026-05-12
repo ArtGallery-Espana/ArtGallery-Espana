@@ -1,6 +1,6 @@
 import {useState, useEffect, useRef, useMemo} from 'react';
 import {CartForm, Image, Money, useOptimisticCart} from '@shopify/hydrogen';
-import {Link} from 'react-router';
+import {Link, useFetcher} from 'react-router';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
 import {CartLineItem, type CartLine} from '~/components/CartLineItem';
@@ -130,6 +130,16 @@ function CartPage({cart}: {cart: OptCart}) {
   // cleared so the UI does not show ghost items that no longer belong to the cart.
   const prevCartId = useRef<string | undefined>(undefined);
 
+  // ── Fetchers for programmatic cart mutations ─────────────────────────────────
+  // removalFetcher: auto-removes lines that Shopify silently restored to the cart
+  //   after an abandoned checkout (so they do not appear in the Shopify checkout
+  //   as extra items alongside the user's "saved for later" list).
+  // noteFetcher: keeps the cart note in sync with the computed shipping+insurance
+  //   estimate so the studio can see it in the Shopify order admin.
+  const removalFetcher = useFetcher({key: 'restored-items-removal'});
+  const noteFetcher = useFetcher({key: 'cart-shipping-note'});
+  const prevShippingNoteRef = useRef('');
+
   // ── Mount effect: hydrate localStorage + set hydrated flag ───────────────────
   useEffect(() => {
     const stored = readSaved();
@@ -203,6 +213,16 @@ function CartPage({cart}: {cart: OptCart}) {
     [activeLines],
   );
 
+  // Lines that Shopify silently restored to the cart (abandoned checkout). These
+  // are items whose merchandiseId is still in `savedItems` (user moved them to
+  // "saved for later") but which have re-appeared in `activeLines`. We must
+  // remove them again so they don't get charged in the Shopify checkout.
+  const restoredLineIds = useMemo(() => {
+    if (!hydrated || savedItems.length === 0) return [];
+    const savedIds = new Set(savedItems.map((s) => s.merchandiseId));
+    return activeLines.filter((l) => savedIds.has(l.merchandise.id)).map((l) => l.id);
+  }, [hydrated, savedItems, activeLines]);
+
   // ── Cleanup effect ──────────────────────────────────────────────────────────
   // Clears `pendingSaves` locks once Shopify confirms the LinesRemove.
   // Items are never auto-evicted here: removal from "guardado" happens
@@ -215,6 +235,43 @@ function CartPage({cart}: {cart: OptCart}) {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCartKey]);
+
+  // ── Restoration-removal effect ───────────────────────────────────────────────
+  // When Shopify re-adds saved lines after an abandoned checkout, automatically
+  // re-submit LinesRemove so those items stay out of the Shopify checkout total.
+  // The dep array uses a stable join() string to avoid re-running on every render.
+  useEffect(() => {
+    if (restoredLineIds.length === 0 || removalFetcher.state !== 'idle') return;
+    const fd = new FormData();
+    fd.append(
+      CartForm.INPUT_NAME,
+      JSON.stringify({action: CartForm.ACTIONS.LinesRemove, inputs: {lineIds: restoredLineIds}}),
+    );
+    removalFetcher.submit(fd, {method: 'POST', action: '/cart'});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [restoredLineIds.join(',')]);
+
+  // ── Shipping-note sync effect ────────────────────────────────────────────────
+  // Keeps the Shopify cart note up-to-date with the shipping + insurance estimate.
+  // The studio can read this in the order admin even after checkout completes.
+  // Skips the submit when the note hasn't changed to avoid infinite loops.
+  useEffect(() => {
+    if (!hydrated || activeCount === 0 || noteFetcher.state !== 'idle') return;
+    const shipCost = activeCount * SHIP_PER_PIECE;
+    const insCost = Math.ceil(displayedSubtotal * INS_RATE);
+    const note =
+      `Envío DHL: ${shipCost} USD (${activeCount} ${activeCount !== 1 ? 'piezas' : 'pieza'})` +
+      ` | Seguro ad-valorem: ${insCost} USD`;
+    if (note === prevShippingNoteRef.current) return;
+    prevShippingNoteRef.current = note;
+    const fd = new FormData();
+    fd.append(
+      CartForm.INPUT_NAME,
+      JSON.stringify({action: CartForm.ACTIONS.NoteUpdate, inputs: {note}}),
+    );
+    noteFetcher.submit(fd, {method: 'POST', action: '/cart'});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, activeCount, displayedSubtotal]);
 
   // ── Handlers ────────────────────────────────────────────────────────────────
 
