@@ -56,11 +56,11 @@ const DEFAULT_LANGUAGES = [
 const DEFAULT_CONTACT = {
   email: 'contacto@galeriatallerjespana.com',
   whatsapp: '+593 000 000 000',
-  address: 'Taller Galeria J Espana',
+  address: 'Taller Galeria J España',
 };
 
 export function TopBar({
-  logoText = 'Galeria Taller J Espana',
+  logoText = 'Galeria Taller J España',
   logoSrc = '/logo-j-esparza.svg',
   navItems = DEFAULT_NAV_ITEMS,
   languages = DEFAULT_LANGUAGES,
@@ -127,7 +127,7 @@ export function TopBar({
 }
 
 export function Footer({
-  brandName = 'Galeria Taller J Espana',
+  brandName = 'Galeria Taller J España',
   navItems = DEFAULT_NAV_ITEMS,
   contact = DEFAULT_CONTACT,
   legalItems = [
