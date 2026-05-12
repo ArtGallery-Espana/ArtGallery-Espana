@@ -109,12 +109,9 @@ function CartPage({cart}: {cart: OptCart}) {
     setSavedItemsState(items);
   }
 
-  // ── In-flight operation locks ────────────────────────────────────────────────
+  // ── In-flight operation lock ─────────────────────────────────────────────────
   // pendingSaves: LinesRemove in-flight — keeps item in saved while remove settles
   const pendingSaves = useRef(new Set<string>());
-  // pendingAdds: user explicitly clicked "Agregar a la compra".
-  // Updating a ref (not state) avoids re-render so the CartForm can still submit.
-  const pendingAdds = useRef(new Set<string>());
 
   // Hydrate from localStorage once on mount (client only)
   useEffect(() => {
@@ -132,14 +129,21 @@ function CartPage({cart}: {cart: OptCart}) {
     [cart?.lines?.nodes],
   );
 
-  // Lines shown in the active section.
-  // Items in "saved for later" are hidden here even if Shopify still has them
-  // in the cart (e.g. cart restoration after an abandoned checkout).
+  // Set of merchandise IDs currently in the active cart — used to:
+  //  (a) hide active lines that the user moved to "saved for later"
+  //  (b) skip LinesAdd when "Agregar a la compra" targets a variant Shopify
+  //      already has (e.g. abandoned-checkout restoration brought it back).
+  const activeMerchIds = useMemo(
+    () => new Set(activeLines.map((l) => l.merchandise.id)),
+    [activeLines],
+  );
+
+  // Lines shown in the active section. Items in "saved for later" are hidden
+  // here even if Shopify still has them in the cart.
   const displayedActiveLines = useMemo(() => {
-    const savedIds = new Set(savedRef.current.map((s) => s.merchandiseId));
+    const savedIds = new Set(savedItems.map((s) => s.merchandiseId));
     return activeLines.filter((l) => !savedIds.has(l.merchandise.id));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeLines, savedItems]); // savedItems (state) re-triggers when saved changes
+  }, [activeLines, savedItems]);
 
   // Total quantity of displayed active items (used for hero counter and shipping)
   const activeCount = displayedActiveLines.reduce((sum, l) => sum + l.quantity, 0);
@@ -151,39 +155,14 @@ function CartPage({cart}: {cart: OptCart}) {
   );
 
   // ── Cleanup effect ──────────────────────────────────────────────────────────
-  // Removes a saved item ONLY when the user explicitly clicked "Agregar a la
-  // compra" (pendingAdds) AND the item is confirmed in the active cart.
-  // Items without an explicit add-back intent are NEVER evicted — this prevents
-  // Shopify cart restoration after checkout from clearing the saved section.
+  // Clears `pendingSaves` locks once Shopify confirms the LinesRemove. Items
+  // are never auto-evicted here: removal from "guardado" happens synchronously
+  // in handleRestore when the user clicks "Agregar a la compra".
   useEffect(() => {
-    const current = savedRef.current;
-    if (current.length === 0) return;
-
+    if (pendingSaves.current.size === 0) return;
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
-
-    const stillSaved = current.filter((s) => {
-      // Pending save (LinesRemove in-flight): keep until remove is confirmed
-      if (pendingSaves.current.has(s.merchandiseId)) {
-        if (!activeIds.has(s.merchandiseId)) {
-          pendingSaves.current.delete(s.merchandiseId); // confirmed removed
-        }
-        return true;
-      }
-      // Explicit add-back (LinesAdd in-flight): remove from saved once confirmed
-      if (pendingAdds.current.has(s.merchandiseId)) {
-        if (activeIds.has(s.merchandiseId)) {
-          pendingAdds.current.delete(s.merchandiseId); // confirmed added
-          return false; // ← move to active ✓
-        }
-        return true; // still in-flight
-      }
-      // No explicit intent → always keep in saved
-      return true;
-    });
-
-    if (stillSaved.length !== current.length) {
-      setSavedItems(stillSaved);
-      writeSaved(stillSaved);
+    for (const id of pendingSaves.current) {
+      if (!activeIds.has(id)) pendingSaves.current.delete(id);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCartKey]);
@@ -212,9 +191,17 @@ function CartPage({cart}: {cart: OptCart}) {
     writeSaved(updated);
   }
 
-  function handleAddBack(merchandiseId: string) {
-    // Only updates a ref → no re-render → CartForm in SavedLine can still submit
-    pendingAdds.current.add(merchandiseId);
+  // Synchronously drop an item from the saved list. Called on click — the
+  // CartForm submit still runs (when needed) because we don't intercept the
+  // event; we just update React state.
+  function handleRestore(merchandiseId: string) {
+    const filtered = savedRef.current.filter(
+      (s) => s.merchandiseId !== merchandiseId,
+    );
+    if (filtered.length !== savedRef.current.length) {
+      setSavedItems(filtered);
+      writeSaved(filtered);
+    }
   }
 
   // ── Empty state ──────────────────────────────────────────────────────────────
@@ -294,7 +281,8 @@ function CartPage({cart}: {cart: OptCart}) {
                       <SavedLine
                         key={item.merchandiseId}
                         item={item}
-                        onAddBack={() => handleAddBack(item.merchandiseId)}
+                        alreadyInCart={activeMerchIds.has(item.merchandiseId)}
+                        onRestore={() => handleRestore(item.merchandiseId)}
                       />
                     ))}
                   </div>
@@ -375,11 +363,12 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
             </div>
           </div>
 
-          {/* quantity + action buttons */}
+          {/* action buttons — no qty controls: each artwork is a single piece */}
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
 
-            <QuantityControl line={line} />
-
+            <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+              1 obra · Pieza única
+            </span>
             <span className="text-[rgba(35,35,39,.18)]">|</span>
 
             <Link
@@ -419,114 +408,114 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
   );
 }
 
-// ─── Quantity +/− controls ────────────────────────────────────────────────────
-
-function QuantityControl({line}: {line: CartLine}) {
-  const {id, quantity, isOptimistic} = line;
-  const decQty = Math.max(0, quantity - 1);
-  const incQty = quantity + 1;
-  // Same fetcherKey for both buttons: rapid clicks cancel each other
-  const fetchKey = `LinesUpdate-${id}`;
-
-  const btnCls =
-    'flex h-7 w-7 items-center justify-center border border-[rgba(35,35,39,.28)] ' +
-    '[font-family:var(--mono)] text-[13px] text-[#232327] transition ' +
-    'hover:border-[#232327] disabled:cursor-not-allowed disabled:opacity-30';
-
-  return (
-    <div className="flex items-center gap-2">
-      <CartForm
-        fetcherKey={fetchKey}
-        route="/cart"
-        action={CartForm.ACTIONS.LinesUpdate}
-        inputs={{lines: [{id, quantity: decQty}]}}
-      >
-        <button
-          type="submit"
-          disabled={quantity <= 1 || !!isOptimistic}
-          aria-label="Disminuir cantidad"
-          className={btnCls}
-        >
-          &#8722;
-        </button>
-      </CartForm>
-
-      <span className="min-w-[1.5rem] text-center [font-family:var(--mono)] text-[12px] text-[#232327]">
-        {quantity}
-      </span>
-
-      <CartForm
-        fetcherKey={fetchKey}
-        route="/cart"
-        action={CartForm.ACTIONS.LinesUpdate}
-        inputs={{lines: [{id, quantity: incQty}]}}
-      >
-        <button
-          type="submit"
-          disabled={!!isOptimistic}
-          aria-label="Aumentar cantidad"
-          className={btnCls}
-        >
-          &#43;
-        </button>
-      </CartForm>
-    </div>
-  );
-}
-
 // ─── Saved line item ──────────────────────────────────────────────────────────
 
-function SavedLine({item, onAddBack}: {item: SavedItem; onAddBack: () => void}) {
+function SavedLine({
+  item,
+  alreadyInCart,
+  onRestore,
+}: {
+  item: SavedItem;
+  alreadyInCart: boolean;
+  onRestore: () => void;
+}) {
   const priceData = {amount: item.priceAmount, currencyCode: item.priceCurrencyCode};
 
-  return (
-    <div className="border-b border-[rgba(35,35,39,.08)] py-8 opacity-60">
-      <div className="flex gap-6">
-        <div className="relative h-[110px] w-[110px] shrink-0 overflow-hidden bg-[#EEE8E1]">
-          {item.imageUrl && (
-            <img src={item.imageUrl} alt={item.imageAlt ?? item.productTitle} className="h-full w-full object-cover" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.40)] to-transparent" />
-          <span className="absolute bottom-2 right-2 [font-family:var(--mono)] text-[7px] uppercase tracking-[0.10em] text-white">
-            {item.productHandle.toUpperCase()}
-          </span>
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-between">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="mb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.40)]">
-                {item.productHandle.toUpperCase()}
-              </p>
-              <h3 className="[font-family:var(--serif)] text-[1.25rem] leading-[1.1] text-[#111111]">
-                {item.productTitle}
-              </h3>
-              {item.variantTitle && (
-                <p className="mt-1 text-[13px] text-[rgba(35,35,39,.40)]">{item.variantTitle}</p>
-              )}
-            </div>
-            <div className="[font-family:var(--serif)] text-[1.2rem] leading-none text-[rgba(35,35,39,.50)]">
-              <Money data={priceData} />
-            </div>
+  // Synthetic selectedVariant rebuilt from the localStorage snapshot. Hydrogen
+  // needs this to drive the optimistic line in useOptimisticCart (without it,
+  // the click feels dead until the server round-trips).
+  const selectedVariant = useMemo(
+    () => ({
+      id: item.merchandiseId,
+      availableForSale: true,
+      title: item.variantTitle ?? 'Default Title',
+      selectedOptions: [],
+      price: priceData,
+      image: item.imageUrl
+        ? {url: item.imageUrl, altText: item.imageAlt ?? null}
+        : null,
+      product: {
+        handle: item.productHandle,
+        title: item.productTitle,
+        featuredImage: item.imageUrl
+          ? {url: item.imageUrl, altText: item.imageAlt ?? null}
+          : null,
+      },
+    }),
+    // priceData is built from primitives on `item`; depending on `item` is enough
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [item],
+  );
+
+  const body = (
+    <>
+      <div className="relative h-[110px] w-[110px] shrink-0 overflow-hidden bg-[#EEE8E1]">
+        {item.imageUrl && (
+          <img src={item.imageUrl} alt={item.imageAlt ?? item.productTitle} className="h-full w-full object-cover" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.40)] to-transparent" />
+        <span className="absolute bottom-2 right-2 [font-family:var(--mono)] text-[7px] uppercase tracking-[0.10em] text-white">
+          {item.productHandle.toUpperCase()}
+        </span>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-between">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="mb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.40)]">
+              {item.productHandle.toUpperCase()}
+            </p>
+            <h3 className="[font-family:var(--serif)] text-[1.25rem] leading-[1.1] text-[#111111]">
+              {item.productTitle}
+            </h3>
+            {item.variantTitle && (
+              <p className="mt-1 text-[13px] text-[rgba(35,35,39,.40)]">{item.variantTitle}</p>
+            )}
           </div>
-          {/*
-           * onAddBack updates pendingAdds ref only — no state → no re-render →
-           * CartForm can still submit after onClick fires.
-           */}
+          <div className="[font-family:var(--serif)] text-[1.2rem] leading-none text-[rgba(35,35,39,.50)]">
+            <Money data={priceData} />
+          </div>
+        </div>
+        {alreadyInCart ? (
+          // Variant is still in the Shopify cart (e.g. restored after an
+          // abandoned checkout). LinesAdd would no-op against the inventory
+          // cap — just drop it from "guardado" locally.
+          <button
+            type="button"
+            onClick={onRestore}
+            className="mt-4 self-start [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
+          >
+            Agregar a la compra
+          </button>
+        ) : (
           <CartForm
             route="/cart"
             action={CartForm.ACTIONS.LinesAdd}
-            inputs={{lines: [{merchandiseId: item.merchandiseId, quantity: item.quantity}]}}
+            inputs={{
+              lines: [
+                {
+                  merchandiseId: item.merchandiseId,
+                  quantity: item.quantity || 1,
+                  selectedVariant,
+                },
+              ],
+            }}
           >
             <button
               type="submit"
-              onClick={onAddBack}
+              onClick={onRestore}
               className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
             >
               Agregar a la compra
             </button>
           </CartForm>
-        </div>
+        )}
       </div>
+    </>
+  );
+
+  return (
+    <div className="border-b border-[rgba(35,35,39,.08)] py-8 opacity-60">
+      <div className="flex gap-6">{body}</div>
     </div>
   );
 }
