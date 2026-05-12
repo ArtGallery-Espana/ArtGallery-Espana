@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef, useMemo} from 'react';
+import {useState, useEffect, useLayoutEffect, useRef, useMemo} from 'react';
 import {CartForm, Image, Money, useOptimisticCart} from '@shopify/hydrogen';
 import {Link, useFetcher} from 'react-router';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
@@ -23,6 +23,13 @@ type SavedItem = {
   priceAmount: string;
   priceCurrencyCode: string;
 };
+
+// useLayoutEffect fires synchronously before the browser paints, so hydrating
+// localStorage state before the first paint prevents the one-frame flash where
+// all cart lines are visible before the savedItems filter kicks in.
+// The isomorphic form avoids the React SSR warning about useLayoutEffect on the server.
+const useIsomorphicLayoutEffect =
+  typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 const SAVED_KEY = 'cart-saved-items';
 // Shipping: $150 per piece (DHL international for artwork)
@@ -143,7 +150,11 @@ function CartPage({cart}: {cart: OptCart}) {
   const prevShippingNoteRef = useRef('');
 
   // ── Mount effect: hydrate localStorage + set hydrated flag ───────────────────
-  useEffect(() => {
+  // useIsomorphicLayoutEffect runs before the first browser paint on the client,
+  // so savedItems is populated and hydrated=true before the user sees anything.
+  // This eliminates the one-frame flash where all Shopify lines are visible before
+  // the saved-items filter applies (most noticeable when navigating back from checkout).
+  useIsomorphicLayoutEffect(() => {
     const stored = readSaved();
     savedRef.current = stored;
     setSavedItemsState(stored);
@@ -215,18 +226,42 @@ function CartPage({cart}: {cart: OptCart}) {
     [activeLines],
   );
 
-  // ── Cleanup effect ──────────────────────────────────────────────────────────
-  // Fires when cart contents change (activeCartKey). Clears pendingSaves locks
-  // for any line that Shopify has now confirmed removed (no longer in activeLines).
-  // When all pending saves are settled, clears the savePending flag so the
-  // checkout button re-enables.
+  // ── Cleanup + restore-confirmation effect ──────────────────────────────────
+  // Fires whenever the Shopify cart contents change (activeCartKey). Does two jobs:
+  //
+  // (1) Clears pendingSaves locks for lines Shopify confirmed removed. When all
+  //     saves are settled, re-enables the checkout button (savePending → false).
+  //
+  // (2) Auto-removes from savedItems any item that now appears in activeLines
+  //     and is NOT in pendingSaves. That means Shopify just confirmed a LinesAdd
+  //     (either from "Agregar a la compra" or a fresh add from the PDP). We do
+  //     this here — not in the button onClick — so the item only leaves the saved
+  //     section after the server confirms the add. If the add fails, the item
+  //     stays safely in the saved section and the user can retry.
   useEffect(() => {
-    if (pendingSaves.current.size === 0) return;
     const activeIds = new Set(activeLines.map((l) => l.merchandise.id));
-    for (const id of pendingSaves.current) {
-      if (!activeIds.has(id)) pendingSaves.current.delete(id);
+
+    // (1) Settle pending saves
+    if (pendingSaves.current.size > 0) {
+      for (const id of pendingSaves.current) {
+        if (!activeIds.has(id)) pendingSaves.current.delete(id);
+      }
+      if (pendingSaves.current.size === 0) setSavePending(false);
     }
-    if (pendingSaves.current.size === 0) setSavePending(false);
+
+    // (2) Confirm pending adds: move item from saved → active section
+    if (hydrated && savedRef.current.length > 0) {
+      const confirmed = new Set(
+        savedRef.current
+          .filter((s) => activeIds.has(s.merchandiseId) && !pendingSaves.current.has(s.merchandiseId))
+          .map((s) => s.merchandiseId),
+      );
+      if (confirmed.size > 0) {
+        const updated = savedRef.current.filter((s) => !confirmed.has(s.merchandiseId));
+        setSavedItems(updated);
+        writeSaved(updated);
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCartKey]);
 
@@ -582,6 +617,9 @@ function SavedLine({
             Agregar a la compra
           </button>
         ) : (
+          // No onClick here — removal from savedItems is deferred to the cleanup
+          // effect so the item stays visible in the saved section until Shopify
+          // confirms the LinesAdd. If the add fails, the item remains safely saved.
           <CartForm
             route="/cart"
             action={CartForm.ACTIONS.LinesAdd}
@@ -597,7 +635,6 @@ function SavedLine({
           >
             <button
               type="submit"
-              onClick={onRestore}
               className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
             >
               Agregar a la compra
