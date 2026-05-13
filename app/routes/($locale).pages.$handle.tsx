@@ -1,5 +1,8 @@
 import {useLoaderData} from 'react-router';
 import type {Route} from './+types/pages.$handle';
+import {ArtistEditorialPage} from '~/components/ArtistEditorialPage';
+import {ContactEditorialPage} from '~/components/ContactEditorialPage';
+import {ShippingEditorialPage} from '~/components/ShippingEditorialPage';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 
 export const meta: Route.MetaFunction = ({data}) => {
@@ -56,6 +59,18 @@ function loadDeferredData({context}: Route.LoaderArgs) {
 
 export default function Page() {
   const {page} = useLoaderData<typeof loader>();
+
+  if (page.handle === 'artista') {
+    return <ArtistEditorialPage />;
+  }
+
+  if (page.handle === 'envios-y-pagos') {
+    return <ShippingEditorialPage />;
+  }
+
+  if (page.handle === 'contacto') {
+    return <ContactEditorialPage />;
+  }
 
   return (
     <div className="page">

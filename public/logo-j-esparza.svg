@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">J. Esparza logo</title>
+  <desc id="desc">Marca monocromatica de J. Esparza para Galeria Taller J España.</desc>
+  <rect width="512" height="512" fill="#050505"/>
+  <g fill="#f6f6f6">
+    <path d="M212 42c55 3 112 18 166 43v162c0 70-47 124-112 134l-23 4 50 79H175l-32-80c-15-39-7-77 21-102 25-23 55-45 69-83 16-45 6-99-21-157z"/>
+    <circle cx="292" cy="95" r="15" fill="#050505"/>
+    <path d="M25 114h202c3 14 4 27 4 39H25c-9 0-15-7-15-17v-5c0-10 6-17 15-17z"/>
+    <path d="M389 114h104c8 0 12 6 9 14l-13 32H389z"/>
+    <path d="M23 167h205c-2 13-5 25-10 37H35c-8 0-14-5-17-13L8 167z"/>
+    <path d="M389 167h93l-12 37h-81z"/>
+    <path d="M41 211h174c-6 13-13 25-22 37H57c-8 0-14-4-17-11L28 211z"/>
+    <path d="M389 211h75l-12 37h-63z"/>
+    <path d="M62 255h126c-11 13-24 25-38 37H81c-7 0-13-4-16-10L52 255z"/>
+    <path d="M389 255h56l-12 37h-44z"/>
+    <path d="M87 299h55c-14 12-29 24-43 37z"/>
+    <path d="M389 299h37l-12 37h-25z"/>
+    <path d="M218 401h23v42h-23z"/>
+    <path d="M260 401h29l22 42h-31z"/>
+    <path d="M315 401h31l21 42h-31z"/>
+    <path d="M372 401h31l21 42h-31z"/>
+    <path d="M431 401h24l29 42h-32z"/>
+  </g>
+</svg>
