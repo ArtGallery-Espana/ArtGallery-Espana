@@ -16,6 +16,8 @@
   --serif: "Cormorant Garamond", "EB Garamond", Georgia, serif;
   --sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --turq: #2f9ea0;
+  --mag: #c84d92;
 }
 
 img {
