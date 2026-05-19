@@ -1618,42 +1618,90 @@
   .contact-details a:hover { color: var(--color-turq); }
 
 
-  /* === 6.14 FLOATING WHATSAPP =========================================== */
+  /* === 6.14 FLOATING WHATSAPP ==========================================
+   *
+   * El botón se renderiza plegado por defecto como un círculo turquesa
+   * que solo muestra el ícono de WhatsApp. Al recibir hover/focus se
+   * expande hacia la izquierda revelando la etiqueta "Chatear" con un
+   * fade-in. Está anclado a `right`/`bottom`, por lo que el crecimiento
+   * a la izquierda mantiene el ícono fijo bajo el cursor.
+   *
+   * El orden en el DOM es <strong> + <span icon>; el ícono queda a la
+   * derecha y el texto desliza hacia afuera al expandirse.
+   */
+
+  /* Contenedor ─ círculo plegado por defecto. */
   .floating-whatsapp {
-    align-items: center;
-    background: var(--color-ink);
-    border-radius: 999px;
-    bottom: 1.5rem;
-    color: #fff;
-    display: inline-flex;
-    gap: 0.75rem;
-    padding: 0.85rem 1.15rem;
-    position: fixed;
-    right: 1.5rem;
-    text-decoration: none;
-    z-index: 20;
-  }
-  .floating-whatsapp span {
     align-items: center;
     background: var(--color-turq);
     border-radius: 999px;
+    bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(47, 158, 160, 0.32);
+    color: #fff;
     display: inline-flex;
-    height: 1.8rem;
+    height: 3.5rem;
+    position: fixed;
+    right: 1.5rem;
+    text-decoration: none;
+    transition: box-shadow 240ms ease;
+    z-index: 20;
+  }
+
+  .floating-whatsapp:hover,
+  .floating-whatsapp:focus-visible {
+    box-shadow: 0 12px 30px rgba(47, 158, 160, 0.45);
+    outline: none;
+  }
+
+  /* Ícono ─ tamaño fijo, define el lado del círculo plegado. */
+  .floating-whatsapp-icon {
+    align-items: center;
+    display: inline-flex;
+    flex-shrink: 0;
+    height: 3.5rem;
     justify-content: center;
-    width: 1.8rem;
+    width: 3.5rem;
   }
   .floating-whatsapp-icon svg {
     color: #fff;
     display: block;
-    height: 1.05rem;
-    width: 1.05rem;
+    height: 1.4rem;
+    width: 1.4rem;
   }
-  .floating-whatsapp strong {
+
+  /* Etiqueta ─ colapsada (max-width 0) por defecto; se expande en hover. */
+  .floating-whatsapp-label {
     color: #fff;
     font-family: var(--mono);
     font-size: 0.76rem;
+    font-weight: 600;
     letter-spacing: 0.14em;
+    margin: 0;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-left: 0;
     text-transform: uppercase;
+    transition:
+      max-width 280ms ease,
+      opacity 200ms ease 60ms,
+      padding-left 280ms ease;
+    white-space: nowrap;
+  }
+
+  .floating-whatsapp:hover .floating-whatsapp-label,
+  .floating-whatsapp:focus-visible .floating-whatsapp-label {
+    max-width: 8rem;
+    opacity: 1;
+    padding-left: 1.1rem;
+  }
+
+  /* Accesibilidad: respeta la preferencia de movimiento reducido. */
+  @media (prefers-reduced-motion: reduce) {
+    .floating-whatsapp,
+    .floating-whatsapp-label {
+      transition: none;
+    }
   }
 
 
