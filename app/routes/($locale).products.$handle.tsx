@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Link, useLoaderData} from 'react-router';
+import {useLoaderData, useNavigate, useNavigationType} from 'react-router';
 import type {Route} from './+types/products.$handle';
 import {
   Analytics,
@@ -12,6 +12,7 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {AddToCartButton} from '~/components/AddToCartButton';
+import {ProductConsultation} from '~/components/ProductConsultation';
 import {ProductForm} from '~/components/ProductForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
 
@@ -170,6 +171,7 @@ export default function Product() {
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
       <section className="px-6 pb-20 pt-10 md:px-10 xl:px-14 xl:pb-28 xl:pt-12">
         <div className="mx-auto max-w-[1440px]">
+          <BackToCatalogButton />
           <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-20">
             <div>
               <figure className="group">
@@ -301,42 +303,27 @@ export default function Product() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="[&_form]:block [&_form]:w-full">
-                    <AddToCartButton
-                      className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#111111] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!selectedVariant || !selectedVariant.availableForSale}
-                      lines={
-                        selectedVariant
-                          ? [
-                              {
-                                merchandiseId: selectedVariant.id,
-                                quantity: 1,
-                                selectedVariant,
-                              },
-                            ]
-                          : []
-                      }
-                    >
-                      {actionCopy}
-                    </AddToCartButton>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Link
-                      className="home-cta-ghost inline-flex h-[54px] items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
-                      to="/pages/contacto"
-                    >
-                      Ofertar
-                    </Link>
-                    <Link
-                      className="home-cta-ghost inline-flex h-[54px] items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
-                      to="/pages/contacto"
-                    >
-                      Consultar
-                    </Link>
-                  </div>
+                <div className="[&_form]:block [&_form]:w-full">
+                  <AddToCartButton
+                    className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#111111] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!selectedVariant || !selectedVariant.availableForSale}
+                    lines={
+                      selectedVariant
+                        ? [
+                            {
+                              merchandiseId: selectedVariant.id,
+                              quantity: 1,
+                              selectedVariant,
+                            },
+                          ]
+                        : []
+                    }
+                  >
+                    {actionCopy}
+                  </AddToCartButton>
                 </div>
+
+                <ProductConsultation productTitle={title} />
 
                 {hasOptions ? (
                   <div className="mt-8 border-t border-[rgba(35,35,39,.10)] pt-6">
@@ -525,6 +512,47 @@ function DataPair({label, value}: {label: string; value: string}) {
         {label}
       </div>
       <div className="text-[14px] leading-[1.55] text-[#111111]">{value}</div>
+    </div>
+  );
+}
+
+/**
+ * Botón "Volver al catálogo" del PDP.
+ *
+ * Comportamiento:
+ *   - Si el visitante llegó por navegación cliente (clicó un <Link>),
+ *     `useNavigationType()` reporta 'PUSH' y `navigate(-1)` regresa al
+ *     paso anterior — típicamente la collection desde la que vino.
+ *   - Si entró por URL directa (recarga, share, bookmark), el tipo es
+ *     'POP'/'REPLACE': no hay historial al que volver, así que enviamos
+ *     a `/collections/all` como destino seguro.
+ *
+ * El handler se memoriza con useCallback porque el botón vive en una
+ * página con bastante render churn (sidebar sticky + lightbox state).
+ */
+function BackToCatalogButton() {
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const canGoBack = navigationType === 'PUSH';
+
+  const handleBack = React.useCallback(() => {
+    if (canGoBack) {
+      navigate(-1);
+    } else {
+      navigate('/collections/all');
+    }
+  }, [canGoBack, navigate]);
+
+  return (
+    <div className="mb-8">
+      <button
+        className="inline-flex items-center gap-2 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)] underline-offset-4 transition hover:text-[#232327] hover:underline"
+        onClick={handleBack}
+        type="button"
+      >
+        <span aria-hidden="true">←</span>
+        Volver al catálogo
+      </button>
     </div>
   );
 }
