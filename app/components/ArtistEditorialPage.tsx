@@ -187,11 +187,10 @@ const TRAJECTORY_TIMELINE = [
 export function ArtistEditorialPage() {
   return (
     <article className="editorial-page artist-page">
-      <section className="editorial-hero artist-hero">
+      <section className="editorial-hero artist-hero" data-reveal>
         <div className="editorial-copy">
           <p className="editorial-kicker">El artista</p>
           <h1>Jorge España</h1>
-          <p className="artist-origin"></p>
           <p className="editorial-lede">
             Pintor ecuatoriano. Su obra se desarrolla entre Cuenca y Galapagos,
             dos territorios que han marcado una practica construida desde la
@@ -208,7 +207,7 @@ export function ArtistEditorialPage() {
         </figure>
       </section>
 
-      <section className="editorial-section artist-biography">
+      <section className="editorial-section artist-biography" data-reveal>
         <div>
           <p className="editorial-kicker">Biografia</p>
           <h2>Una practica entre taller, residencia y desplazamiento.</h2>
@@ -236,7 +235,7 @@ export function ArtistEditorialPage() {
         </div>
       </section>
 
-      <section className="editorial-section artist-statement">
+      <section className="editorial-section artist-statement" data-reveal>
         <div>
           <p className="editorial-kicker">Declaracion artistica</p>
           <h2>La luz como paisaje, tiempo y experiencia.</h2>
@@ -273,7 +272,7 @@ export function ArtistEditorialPage() {
         </div>
       </section>
 
-      <section className="editorial-section artist-facts-section">
+      <section className="editorial-section artist-facts-section" data-reveal>
         <div className="artist-profile-story">
           <figure className="artist-profile-media">
             <img
@@ -302,7 +301,7 @@ export function ArtistEditorialPage() {
         </div>
       </section>
 
-      <section className="editorial-section artist-trajectory">
+      <section className="editorial-section artist-trajectory" data-reveal>
         <div>
           <h2>Trayectoria</h2>
           <div className="trajectory-gallery">
@@ -324,7 +323,7 @@ export function ArtistEditorialPage() {
         </ol>
       </section>
 
-      <section className="editorial-section galapagos-section">
+      <section className="editorial-section galapagos-section" data-reveal>
         <div className="galapagos-header">
           <div>
             <p className="editorial-kicker">Conexion Galapagos</p>
@@ -353,7 +352,7 @@ export function ArtistEditorialPage() {
         </div>
       </section>
 
-      <section className="editorial-section process-section">
+      <section className="editorial-section process-section" data-reveal>
         <div className="process-media">
           <img alt="Vista del taller del artista" src={WORKSHOP_IMAGE_URL} />
         </div>

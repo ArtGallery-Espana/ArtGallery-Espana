@@ -947,10 +947,12 @@
   .editorial-page {
     color: var(--color-char);
     display: grid;
-    gap: clamp(3rem, 7vw, 6rem);
-    padding: clamp(2rem, 5vw, 4rem)
+    /* Gap entre secciones: reducido para una narrativa más fluida
+     * (antes clamp(3rem,7vw,6rem) → hasta 96px se sentía desconectado). */
+    gap: clamp(2rem, 4vw, 3.25rem);
+    padding: clamp(1.5rem, 3vw, 2.5rem)
              clamp(1rem, 4vw, 3rem)
-             clamp(4rem, 8vw, 7rem);
+             clamp(2.5rem, 5vw, 4rem);
   }
 
   .editorial-page h1,
@@ -980,17 +982,8 @@
     color: var(--muted-2);
     font-size: 1.05rem;
     line-height: 1.75;
-    margin-top: 1.75rem !important;
-    max-width: 48ch;
-  }
-
-  .artist-origin {
-    color: rgba(35, 35, 39, 0.62);
-    font-family: var(--mono);
-    font-size: 0.82rem;
-    letter-spacing: 0.18em;
     margin-top: 1.25rem !important;
-    text-transform: uppercase;
+    max-width: 48ch;
   }
 
   /* --- Contenedores horizontales con max-width centrado ---------------- */
@@ -1007,7 +1000,7 @@
   .editorial-hero {
     align-items: center;
     display: grid;
-    gap: clamp(2rem, 6vw, 6rem);
+    gap: clamp(1.5rem, 4vw, 3rem);
   }
 
   .artist-placeholder {
@@ -1062,7 +1055,7 @@
   .payments-section,
   .shipping-table-section {
     display: grid;
-    gap: 2rem;
+    gap: 1.5rem;
   }
 
   .artist-statement,
@@ -1248,7 +1241,7 @@
   .trajectory-gallery {
     display: grid;
     gap: 1rem;
-    margin-top: 1.5rem;
+    margin-top: 1rem;
   }
   .trajectory-gallery figure {
     background: rgba(255, 255, 255, 0.74);
@@ -1435,7 +1428,7 @@
   .process-section {
     align-items: center;
     display: grid;
-    gap: clamp(2rem, 5vw, 5rem);
+    gap: clamp(1.5rem, 3vw, 3rem);
   }
 
   .process-media { overflow: hidden; }
@@ -1741,6 +1734,38 @@
   }
 
 
+  /* === 6.16 SCROLL REVEAL ===============================================
+   *
+   * Animación de entrada al hacer scroll. La clase `.reveal` la añade el
+   * componente `ScrollReveal` en cliente (vía layout-effect, antes del
+   * primer paint → sin parpadeo). `is-revealed` se alterna según la
+   * intersección con el viewport, por lo que anima al bajar y al subir.
+   * Sin JS, el contenido nunca recibe `.reveal` y se ve normal.
+   */
+  .reveal {
+    opacity: 0;
+    /* Desplazamiento + leve escala para que la entrada se note claramente. */
+    transform: translateY(56px) scale(0.97);
+    transition:
+      opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal.is-revealed {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+
   /* === 6.15 BREAKPOINTS EDITORIALES ==================================== */
 
   /* Desktop (≥ 900px): layouts en dos columnas para hero, proceso,
@@ -1769,7 +1794,7 @@
 
     .artist-facts-section {
       align-items: stretch;
-      gap: clamp(2.5rem, 4vw, 4rem);
+      gap: clamp(1.75rem, 3vw, 2.75rem);
       grid-template-columns: minmax(20rem, 0.86fr) minmax(0, 1.14fr);
     }
 
@@ -1807,7 +1832,7 @@
     .galapagos-section { grid-template-columns: 1fr; }
     .galapagos-header {
       align-items: start;
-      gap: clamp(2rem, 4vw, 4rem);
+      gap: clamp(1.5rem, 3vw, 2.75rem);
       grid-template-columns: minmax(18rem, 0.95fr) minmax(0, 1.05fr);
     }
     .galapagos-gallery {

@@ -1,7 +1,7 @@
 export function ShippingEditorialPage() {
   return (
     <article className="editorial-page shipping-page">
-      <header className="editorial-page-header">
+      <header className="editorial-page-header" data-reveal>
         <p className="editorial-kicker">Servicio</p>
         <h1>Envios y pagos</h1>
         <p className="editorial-lede">
@@ -10,7 +10,7 @@ export function ShippingEditorialPage() {
         </p>
       </header>
 
-      <section className="editorial-section shipping-table-section">
+      <section className="editorial-section shipping-table-section" data-reveal>
         <div>
           <p className="editorial-kicker">Metodos de envio</p>
           <h2>Opciones nacionales e internacionales</h2>
@@ -41,7 +41,7 @@ export function ShippingEditorialPage() {
         </div>
       </section>
 
-      <section className="editorial-section returns-section">
+      <section className="editorial-section returns-section" data-reveal>
         <div>
           <p className="editorial-kicker">Devoluciones</p>
           <h2>Politica en preparacion</h2>
@@ -53,7 +53,7 @@ export function ShippingEditorialPage() {
         </p>
       </section>
 
-      <section className="editorial-section payments-section">
+      <section className="editorial-section payments-section" data-reveal>
         <div>
           <p className="editorial-kicker">Pagos aceptados</p>
           <h2>Formas disponibles</h2>

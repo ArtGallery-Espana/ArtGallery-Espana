@@ -10,12 +10,12 @@ const CONTACT_DETAILS = {
 export function ContactEditorialPage() {
   return (
     <article className="editorial-page contact-page">
-      <header className="editorial-page-header">
+      <header className="editorial-page-header" data-reveal>
         <p className="editorial-kicker">Contacto</p>
         <h1>Conversemos sobre una obra, una visita o una consulta.</h1>
       </header>
 
-      <section className="contact-layout">
+      <section className="contact-layout" data-reveal>
         <form
           className="contact-form"
           onSubmit={(event) => event.preventDefault()}

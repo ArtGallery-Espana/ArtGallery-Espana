@@ -14,6 +14,7 @@ import {
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
 import {Footer, TopBar} from '~/components/shared';
 import {WhatsAppButton} from '~/components/WhatsAppButton';
+import {ScrollReveal} from '~/components/ScrollReveal';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -36,6 +37,7 @@ export function PageLayout({
       <main className="site-main bg-[#F6F1EA]">{children}</main>
       <Footer />
       <WhatsAppButton />
+      <ScrollReveal />
     </Aside.Provider>
   );
 }

@@ -125,7 +125,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35">
+      <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35" data-reveal>
         <div className="mx-auto max-w-360">
           <div className="grid border-y border-[rgba(35,35,39,.10)] lg:grid-cols-3">
             <TrustBlock
@@ -149,7 +149,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-24 md:px-10 xl:px-14 xl:pt-[160px]">
+      <section className="px-6 pt-24 md:px-10 xl:px-14 xl:pt-[160px]" data-reveal>
         <div className="mx-auto max-w-[1440px]">
           <SectionHead
             num="02 — Obra reciente"
@@ -200,7 +200,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]">
+      <section className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]" data-reveal>
         <div className="mx-auto max-w-[1440px]">
           <div className="grid gap-14 xl:grid-cols-[1fr_1.35fr] xl:gap-24">
             <div>
