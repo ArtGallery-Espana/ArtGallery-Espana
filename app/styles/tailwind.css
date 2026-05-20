@@ -690,11 +690,17 @@
 
   /* === 6.11 SHARED TOPBAR + FOOTER (componentes vivos de shared.tsx) === */
 
-  /* TopBar */
+  /* TopBar
+   *
+   * Tope de página → transparente (deja ver el ivory del body).
+   * Al hacer scroll, React le añade `.is-scrolled` y pasa a fondo oscuro
+   * translúcido + backdrop-blur. Los colores de logo/links son adaptivos:
+   * oscuros sobre el ivory del tope, blancos sobre el header oscuro.
+   */
   .shared-topbar {
     align-items: center;
-    background: #fff;
-    border-bottom: 1px solid #e8e3dc;
+    background: transparent;
+    border-bottom: 1px solid transparent;
     display: grid;
     gap: 1rem;
     grid-template-columns: 1fr auto 1fr;
@@ -702,7 +708,17 @@
     padding: 0.875rem clamp(1rem, 4vw, 3rem);
     position: sticky;
     top: 0;
+    transition:
+      background-color 280ms ease,
+      border-color 280ms ease,
+      backdrop-filter 280ms ease;
     z-index: 5;
+  }
+
+  .shared-topbar.is-scrolled {
+    background: rgba(31, 26, 23, 0.82);
+    backdrop-filter: blur(12px);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
   }
 
   .shared-topbar-logo {
@@ -715,6 +731,11 @@
     gap: 0.75rem;
     line-height: 1;
     text-decoration: none;
+    transition: color 280ms ease;
+  }
+
+  .shared-topbar.is-scrolled .shared-topbar-logo {
+    color: #fff;
   }
 
   .shared-topbar-logo-image {
@@ -737,10 +758,18 @@
     color: #312923;
     font-size: 0.95rem;
     text-decoration: none;
+    transition: color 200ms ease;
   }
   .shared-topbar-link:hover,
-  .shared-topbar-link-active { color: #008c8c; }
+  .shared-topbar-link-active { color: var(--color-turq); }
   .shared-topbar-link-active { font-weight: 700; }
+
+  /* Scrolled: links blancos, hover/active turquesa. */
+  .shared-topbar.is-scrolled .shared-topbar-link { color: #fff; }
+  .shared-topbar.is-scrolled .shared-topbar-link:hover,
+  .shared-topbar.is-scrolled .shared-topbar-link-active {
+    color: var(--color-turq);
+  }
 
   .shared-topbar-actions {
     align-items: center;
@@ -762,6 +791,7 @@
   .shared-cart-button {
     align-items: center;
     background: #1f1a17;
+    border: 1px solid transparent;
     border-radius: 4px;
     color: #fff;
     display: inline-flex;
@@ -769,8 +799,14 @@
     min-height: 2.375rem;
     padding: 0.375rem 0.75rem;
     text-decoration: none;
+    transition: background 200ms ease, border-color 200ms ease;
   }
   .shared-cart-button:hover { background: #312923; }
+
+  /* Scrolled: borde claro para separar el botón del header oscuro. */
+  .shared-topbar.is-scrolled .shared-cart-button {
+    border-color: rgba(255, 255, 255, 0.22);
+  }
 
   .shared-cart-badge {
     align-items: center;
