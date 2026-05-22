@@ -38,7 +38,11 @@ export async function action({request, context}: Route.ActionArgs) {
   const payload = validation.data;
 
   const result = await sendResendEmail(context.env.RESEND_API_KEY, {
-    from: EMAIL_FROM,
+    // Usa el remitente del dominio verificado en Resend (CONTACT_FROM_EMAIL,
+    // compartido con el formulario de contacto) para poder ENTREGAR a correos
+    // externos como jorgeespanaecomerce@hotmail.com. Si no está configurado,
+    // cae a onboarding@resend.dev (que solo entrega al dueño de la cuenta).
+    from: context.env.CONTACT_FROM_EMAIL || EMAIL_FROM,
     to: EMAIL_RECIPIENTS.to,
     cc: EMAIL_RECIPIENTS.cc || undefined,
     replyTo: payload.visitorEmail,

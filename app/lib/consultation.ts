@@ -12,31 +12,16 @@
  * el toggle sea explícito y obvio en el diff del PR.
  */
 
-// ── Toggle de entorno ───────────────────────────────────────────────────────
-const IS_PRODUCTION = false;
-
-// ── Destinatarios ──────────────────────────────────────────────────────────
-// `cc` puede ser '' si no se requiere copia.
-type Recipients = {to: string; cc: string};
-
-// ⚠️ En modo onboarding de Resend (sin dominio verificado) SOLO se puede
-// enviar al correo dueño de la cuenta de Resend, y eso incluye el CC.
-// Por eso `to` = correo de la cuenta y `cc` vacío durante pruebas.
-// Cuando se verifique un dominio en Resend, restaurar los correos reales
-// del estudio y `EMAIL_FROM` al dominio verificado.
-const TEST_RECIPIENTS: Recipients = {
-  to: 'barrosoandy03@gmail.com',
+// ── Destinatario ────────────────────────────────────────────────────────────
+// Correo del estudio que recibe las consultas de obra (cuenta Resend
+// "jorgeespanaecomerce"). Única fuente de verdad.
+//
+// La entrega funciona porque el remitente (EMAIL_FROM) sale del dominio
+// verificado notifications.artgalleryjorgeespana.com.
+export const EMAIL_RECIPIENTS = {
+  to: 'jorgeespanaecomerce@hotmail.com',
   cc: '',
 };
-
-const PRODUCTION_RECIPIENTS: Recipients = {
-  to: 'jespanaa9207@gmail.com',
-  cc: 'maite.guic2@gmail.com',
-};
-
-export const EMAIL_RECIPIENTS: Recipients = IS_PRODUCTION
-  ? PRODUCTION_RECIPIENTS
-  : TEST_RECIPIENTS;
 
 // ── WhatsApp ───────────────────────────────────────────────────────────────
 // Número del estudio sin símbolos: wa.me solo acepta dígitos.
@@ -44,11 +29,12 @@ export const WHATSAPP_PHONE_DIGITS = '593998073728';
 export const WHATSAPP_PHONE_DISPLAY = '+593 99 807 3728';
 
 // ── Dirección "From" del email ─────────────────────────────────────────────
-// `onboarding@resend.dev` funciona out-of-the-box mientras la cuenta de
-// Resend no tenga un dominio verificado. Una vez que el equipo verifique
-// `galeriatallerjespana.com` en Resend, reemplazar por
-// `Galería Taller J España <hola@galeriatallerjespana.com>`.
-export const EMAIL_FROM = 'Galería Taller J España <onboarding@resend.dev>';
+// Remitente sobre el dominio VERIFICADO en Resend
+// (notifications.artgalleryjorgeespana.com). Esto permite entregar a cualquier
+// destinatario (no solo al correo de la cuenta). `api.consultation.tsx` usa
+// `CONTACT_FROM_EMAIL` si está definido en el entorno; si no, este valor.
+export const EMAIL_FROM =
+  'Galería Taller J España <no-reply@notifications.artgalleryjorgeespana.com>';
 
 // ── Builders de URL ────────────────────────────────────────────────────────
 
