@@ -46,7 +46,7 @@ function SocialIcon({
   return (
     <a
       aria-label={label}
-      className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(35,35,39,.18)] text-[rgba(35,35,39,.62)] transition hover:border-[#2F9EA0] hover:text-[#2F9EA0]"
+      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(35,35,39,.18)] text-[rgba(35,35,39,.62)] transition hover:border-[#2F9EA0] hover:text-[#2F9EA0]"
       href={href}
       rel="noopener noreferrer"
       target="_blank"

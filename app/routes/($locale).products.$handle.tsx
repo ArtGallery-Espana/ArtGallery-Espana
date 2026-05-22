@@ -544,9 +544,9 @@ function BackToCatalogButton() {
   }, [canGoBack, navigate]);
 
   return (
-    <div className="mb-8">
+    <div className="mb-6">
       <button
-        className="inline-flex items-center gap-2 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)] underline-offset-4 transition hover:text-[#232327] hover:underline"
+        className="-ml-1 inline-flex min-h-[44px] items-center gap-2 px-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)] underline-offset-4 transition hover:text-[#232327] hover:underline"
         onClick={handleBack}
         type="button"
       >

@@ -189,16 +189,22 @@ function CarouselDots({count, active, onSelect}: CarouselDotsProps) {
       {Array.from({length: count}).map((_, index) => {
         const isActive = index === active;
         return (
+          // El <button> da el área táctil de 44px (h-11); el <span> interior
+          // es el punto visual pequeño.
           <button
             aria-current={isActive}
             aria-label={`Ir a la obra ${index + 1} de ${count}`}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              isActive ? 'w-8 bg-white' : 'w-2 bg-white/45 hover:bg-white/70'
-            }`}
+            className="flex h-11 items-center justify-center px-1"
             key={index}
             onClick={() => onSelect(index)}
             type="button"
-          />
+          >
+            <span
+              className={`block h-2 rounded-full transition-all duration-300 ${
+                isActive ? 'w-8 bg-white' : 'w-2 bg-white/45 hover:bg-white/70'
+              }`}
+            />
+          </button>
         );
       })}
     </div>

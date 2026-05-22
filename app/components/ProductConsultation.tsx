@@ -148,7 +148,7 @@ function ConsultationModal({productTitle, onClose}: ConsultationModalProps) {
               sin tener que llegar al "Cancelar" del final del formulario. */}
           <button
             aria-label="Cerrar"
-            className="absolute right-4 top-4 inline-flex h-9 w-9 items-center justify-center text-[20px] leading-none text-[rgba(35,35,39,.55)] transition hover:text-[#232327]"
+            className="absolute right-3 top-3 inline-flex h-11 w-11 items-center justify-center text-[22px] leading-none text-[rgba(35,35,39,.55)] transition hover:text-[#232327]"
             onClick={onClose}
             type="button"
           >

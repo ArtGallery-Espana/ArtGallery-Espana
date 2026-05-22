@@ -95,7 +95,8 @@ function FilterPill({
     <button
       type="button"
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-4 py-[6px] [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] transition ${
+      // min-h 44px en móvil (target táctil); compacto en desktop (≥768px).
+      className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-4 py-2 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] transition md:min-h-0 md:py-[6px] ${
         active
           ? 'border-[#2F9EA0] bg-transparent text-[#2F9EA0]'
           : 'border-[rgba(35,35,39,.22)] bg-transparent text-[rgba(35,35,39,.65)] hover:border-[#2F9EA0] hover:text-[#2F9EA0]'

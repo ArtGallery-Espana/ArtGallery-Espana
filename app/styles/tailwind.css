@@ -757,6 +757,9 @@
   .shared-topbar-link {
     color: #312923;
     font-size: 0.95rem;
+    /* Padding vertical → área táctil cómoda en móvil (≥44px de alto con
+       el line-height del topbar). */
+    padding: 0.6rem 0.15rem;
     text-decoration: none;
     transition: color 200ms ease;
   }
@@ -784,7 +787,7 @@
     border-radius: 4px;
     color: #1f1a17;
     font: inherit;
-    min-height: 2.375rem;
+    min-height: 2.75rem; /* 44px — target táctil mínimo */
     padding: 0.375rem 0.625rem;
   }
 
@@ -796,8 +799,8 @@
     color: #fff;
     display: inline-flex;
     gap: 0.5rem;
-    min-height: 2.375rem;
-    padding: 0.375rem 0.75rem;
+    min-height: 2.75rem; /* 44px — target táctil mínimo */
+    padding: 0.375rem 0.875rem;
     text-decoration: none;
     transition: background 200ms ease, border-color 200ms ease;
   }
