@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Link, data, useLoaderData} from 'react-router';
+import {Link, data, useLoaderData, useNavigate, useNavigationType} from 'react-router';
 import type {Route} from './+types/products.$handle';
 import {
   Analytics,
@@ -12,6 +12,7 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {AddToCartButton} from '~/components/AddToCartButton';
+import {ProductConsultation} from '~/components/ProductConsultation';
 import {ProductForm} from '~/components/ProductForm';
 import {ProductOfferForm} from '~/components/ProductOfferForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
@@ -309,6 +310,7 @@ export default function Product() {
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
       <section className="px-6 pb-20 pt-10 md:px-10 xl:px-14 xl:pb-28 xl:pt-12">
         <div className="mx-auto max-w-[1440px]">
+          <BackToCatalogButton />
           <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-20">
             <div>
               <figure className="group">
@@ -461,22 +463,19 @@ export default function Product() {
                     </AddToCartButton>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    <Link
-                      className="home-cta-ghost inline-flex h-[54px] items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
-                      to="/pages/contacto"
-                    >
-                      Consultar
-                    </Link>
-                    <button
-                      className="home-cta-ghost inline-flex h-[54px] items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
-                      onClick={() => setIsOfferDialogOpen(true)}
-                      type="button"
-                    >
-                      Ofertar
-                    </button>
-                  </div>
+                  {/* "Ofertar" abre el diálogo de oferta (PR #11). La consulta
+                      (WhatsApp/Email) vive en <ProductConsultation/> abajo, así
+                      que no duplicamos el botón "Consultar". */}
+                  <button
+                    className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
+                    onClick={() => setIsOfferDialogOpen(true)}
+                    type="button"
+                  >
+                    Ofertar
+                  </button>
                 </div>
+
+                <ProductConsultation productTitle={title} />
 
                 {hasOptions ? (
                   <div className="mt-8 border-t border-[rgba(35,35,39,.10)] pt-6">
@@ -756,6 +755,47 @@ function DataPair({label, value}: {label: string; value: string}) {
         {label}
       </div>
       <div className="text-[14px] leading-[1.55] text-[#111111]">{value}</div>
+    </div>
+  );
+}
+
+/**
+ * Botón "Volver al catálogo" del PDP.
+ *
+ * Comportamiento:
+ *   - Si el visitante llegó por navegación cliente (clicó un <Link>),
+ *     `useNavigationType()` reporta 'PUSH' y `navigate(-1)` regresa al
+ *     paso anterior — típicamente la collection desde la que vino.
+ *   - Si entró por URL directa (recarga, share, bookmark), el tipo es
+ *     'POP'/'REPLACE': no hay historial al que volver, así que enviamos
+ *     a `/collections/all` como destino seguro.
+ *
+ * El handler se memoriza con useCallback porque el botón vive en una
+ * página con bastante render churn (sidebar sticky + lightbox state).
+ */
+function BackToCatalogButton() {
+  const navigate = useNavigate();
+  const navigationType = useNavigationType();
+  const canGoBack = navigationType === 'PUSH';
+
+  const handleBack = React.useCallback(() => {
+    if (canGoBack) {
+      navigate(-1);
+    } else {
+      navigate('/collections/all');
+    }
+  }, [canGoBack, navigate]);
+
+  return (
+    <div className="mb-6">
+      <button
+        className="-ml-1 inline-flex min-h-[44px] items-center gap-2 px-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)] underline-offset-4 transition hover:text-[#232327] hover:underline"
+        onClick={handleBack}
+        type="button"
+      >
+        <span aria-hidden="true">←</span>
+        Volver al catálogo
+      </button>
     </div>
   );
 }

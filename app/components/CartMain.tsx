@@ -484,7 +484,7 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
       <div className="flex gap-6 md:gap-8">
 
         {/* thumbnail */}
-        <div className="relative h-[160px] w-[160px] shrink-0 overflow-hidden bg-[#EEE8E1] md:h-[190px] md:w-[190px]">
+        <div className="relative h-[120px] w-[120px] shrink-0 overflow-hidden bg-[#EEE8E1] sm:h-[160px] sm:w-[160px] md:h-[190px] md:w-[190px]">
           {thumb && <Image data={thumb} className="h-full w-full object-cover" sizes="190px" />}
           <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.50)] to-transparent" />
           <span className="absolute bottom-2 left-2 max-w-[55%] [font-family:var(--mono)] text-[8px] uppercase leading-tight tracking-[0.10em] text-white">
@@ -530,7 +530,7 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
             <Link
               to={`/products/${product.handle}`}
               prefetch="intent"
-              className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#232327] underline underline-offset-4"
+              className="inline-flex min-h-[44px] items-center [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#232327] underline underline-offset-4"
             >
               Ver ficha
             </Link>
@@ -541,7 +541,7 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
                 type="submit"
                 disabled={!!isOptimistic}
                 onClick={onSave}
-                className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)] underline underline-offset-4 disabled:opacity-40"
+                className="inline-flex min-h-[44px] items-center [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)] underline underline-offset-4 disabled:opacity-40"
               >
                 Guardar para más tarde
               </button>
@@ -552,7 +552,7 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
               <button
                 type="submit"
                 disabled={!!isOptimistic}
-                className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92] underline underline-offset-4 disabled:opacity-40"
+                className="inline-flex min-h-[44px] items-center [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92] underline underline-offset-4 disabled:opacity-40"
               >
                 Eliminar
               </button>

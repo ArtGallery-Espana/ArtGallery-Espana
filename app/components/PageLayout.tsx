@@ -13,6 +13,8 @@ import {
 } from '~/components/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
 import {Footer, TopBar} from '~/components/shared';
+import {WhatsAppButton} from '~/components/WhatsAppButton';
+import {ScrollReveal} from '~/components/ScrollReveal';
 import type {CurrencyChoice} from '~/lib/i18n';
 
 interface PageLayoutProps {
@@ -37,6 +39,8 @@ export function PageLayout({
       <TopBarWithCart cart={cart} currency={selectedCurrency} />
       <main className="site-main bg-[#F6F1EA]">{children}</main>
       <Footer />
+      <WhatsAppButton />
+      <ScrollReveal />
     </Aside.Provider>
   );
 }
