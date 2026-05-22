@@ -353,7 +353,7 @@ export default function CatalogPage() {
       </section>
 
       {/* GRID */}
-      <section className="px-6 pb-24 pt-8 md:px-10 xl:px-14">
+      <section className="px-6 pb-24 pt-8 md:px-10 xl:px-14" data-reveal>
         <div className="mx-auto max-w-[1400px]">
           <p className="mb-8 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[#C84D92]">
             {sorted.length} resultado{sorted.length !== 1 ? 's' : ''}
@@ -383,7 +383,7 @@ export default function CatalogPage() {
       </section>
 
       {/* DOSSIER CTA */}
-      <section className="border-t border-[rgba(35,35,39,.12)] px-6 py-20 md:px-10 xl:px-14">
+      <section className="border-t border-[rgba(35,35,39,.12)] px-6 py-20 md:px-10 xl:px-14" data-reveal>
         <div className="mx-auto max-w-[1400px]">
           <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
             <h2 className="max-w-[520px] [font-family:var(--serif)] text-[clamp(1.6rem,2.8vw,2.4rem)] leading-[1.2] text-[#111111]">

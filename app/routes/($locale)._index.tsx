@@ -3,6 +3,8 @@ import {Image, Money} from '@shopify/hydrogen';
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/_index';
 import {MockShopNotice} from '~/components/MockShopNotice';
+import {FeaturedWorksCarousel} from '~/components/FeaturedWorksCarousel';
+import {buildFeaturedSlides} from '~/lib/featuredWorks';
 
 export const meta: Route.MetaFunction = () => {
   return [{title: 'Galeria Taller J España | Home'}];
@@ -10,17 +12,25 @@ export const meta: Route.MetaFunction = () => {
 
 export async function loader({context}: Route.LoaderArgs) {
   const {storefront, env} = context;
-  const {featuredProducts, recentProducts} = await storefront.query(
-    HOMEPAGE_PRODUCTS_QUERY,
-  );
+  const {featuredProducts, recentProducts, carouselProducts} =
+    await storefront.query(HOMEPAGE_PRODUCTS_QUERY);
 
   const recentWorks = recentProducts.nodes;
   const heroProduct = featuredProducts.nodes[0] ?? recentWorks[0] ?? null;
 
+  // Slides del carrusel: obras manuales + (productos con tag `carrusel` o,
+  // si no hay, los últimos agregados). Se construye en el servidor.
+  const carouselSlides = buildFeaturedSlides(
+    carouselProducts.nodes,
+    recentProducts.nodes,
+  );
+
   return {
     isShopLinked: Boolean(env.PUBLIC_STORE_DOMAIN),
     heroProduct,
-    recentWorks,
+    // La sección "obra reciente" muestra 3; el carrusel usa hasta 5.
+    recentWorks: recentWorks.slice(0, 3),
+    carouselSlides,
   };
 }
 
@@ -32,6 +42,11 @@ export default function Homepage() {
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
       {data.isShopLinked ? null : <MockShopNotice />}
+
+      {/* Carrusel full-bleed: cabecera del home, antes de la obra destacada. */}
+      {data.carouselSlides.length > 0 ? (
+        <FeaturedWorksCarousel slides={data.carouselSlides} />
+      ) : null}
 
       <section className="px-6 pb-16 pt-8 md:px-10 xl:px-14 xl:pb-20 xl:pt-12">
         <div className="mx-auto max-w-360">
@@ -638,7 +653,17 @@ const HOMEPAGE_PRODUCTS_QUERY = `#graphql
         ...HomepageProduct
       }
     }
-    recentProducts: products(first: 3, reverse: true, sortKey: CREATED_AT) {
+    recentProducts: products(first: 5, reverse: true, sortKey: CREATED_AT) {
+      nodes {
+        ...HomepageProduct
+      }
+    }
+    carouselProducts: products(
+      first: 5
+      reverse: true
+      sortKey: CREATED_AT
+      query: "tag:carrusel"
+    ) {
       nodes {
         ...HomepageProduct
       }
