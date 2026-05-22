@@ -253,7 +253,7 @@ export default function Homepage() {
                   <img
                     alt="Vista del taller en Cuenca"
                     className="h-full w-full object-cover"
-                    src="https://cdn.shopify.com/s/files/1/0761/3857/8106/files/Taller.jpg?v=1778463311"
+                    src="/images/taller-cuenca.jpeg"
                   />
                   <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
                   <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
