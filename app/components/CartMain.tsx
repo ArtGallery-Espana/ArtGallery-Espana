@@ -4,7 +4,11 @@ import type {CurrencyCode} from '@shopify/hydrogen/storefront-api-types';
 import {Link, useFetcher} from 'react-router';
 import type {CartApiQueryFragment} from 'storefrontapi.generated';
 import {useAside} from '~/components/Aside';
-import {CartLineItem, type CartLine} from '~/components/CartLineItem';
+import {
+  CartLineItem,
+  CartQuantityControls,
+  type CartLine,
+} from '~/components/CartLineItem';
 import {CartSummary} from './CartSummary';
 
 export type CartLayout = 'page' | 'aside';
@@ -514,18 +518,13 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
                     Shopify confirms — fall back to a dash so render never crashes. */}
                 {line.cost?.totalAmount ? <Money data={line.cost.totalAmount} /> : '—'}
               </div>
-              <p className="mt-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.40)]">
-                Pieza única
-              </p>
             </div>
           </div>
 
-          {/* action buttons — no qty controls: each artwork is a single piece */}
+          {/* action row */}
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
 
-            <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-              1 obra · Pieza única
-            </span>
+            <CartQuantityControls line={line} size="md" />
             <span className="text-[rgba(35,35,39,.18)]">|</span>
 
             <Link
@@ -555,7 +554,7 @@ function ActiveLine({line, onSave}: {line: CartLine; onSave: () => void}) {
                 disabled={!!isOptimistic}
                 className="inline-flex min-h-[44px] items-center [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92] underline underline-offset-4 disabled:opacity-40"
               >
-                Quitar
+                Eliminar
               </button>
             </CartForm>
           </div>

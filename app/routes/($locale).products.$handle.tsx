@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {useLoaderData, useNavigate, useNavigationType} from 'react-router';
+import {Link, data, useLoaderData, useNavigate, useNavigationType} from 'react-router';
 import type {Route} from './+types/products.$handle';
 import {
   Analytics,
@@ -14,7 +14,16 @@ import {
 import {AddToCartButton} from '~/components/AddToCartButton';
 import {ProductConsultation} from '~/components/ProductConsultation';
 import {ProductForm} from '~/components/ProductForm';
+import {ProductOfferForm} from '~/components/ProductOfferForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {
+  assertOffersEnv,
+  getOfferFormValues,
+  normalizeVariantTitle,
+  OfferSubmissionError,
+  submitOffer,
+  validateOfferForm,
+} from '~/lib/offers.server';
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [
@@ -28,6 +37,115 @@ export const meta: Route.MetaFunction = ({data}) => {
 
 export async function loader(args: Route.LoaderArgs) {
   return loadCriticalData(args);
+}
+
+export async function action({context, params, request}: Route.ActionArgs) {
+  if (request.method !== 'POST') {
+    return data(
+      {status: 'error', message: 'Método no permitido.' as const},
+      {status: 405},
+    );
+  }
+
+  const values = getOfferFormValues(await request.formData());
+  const fieldErrors = validateOfferForm(values);
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return data(
+      {
+        status: 'error' as const,
+        message: 'Revisa los campos marcados e inténtalo nuevamente.',
+        fieldErrors,
+        values,
+      },
+      {status: 400},
+    );
+  }
+
+  const {handle} = params;
+
+  if (!handle) {
+    return data(
+      {
+        status: 'error' as const,
+        message: 'No pudimos identificar el producto de la oferta.',
+        fieldErrors: {product_id: 'Producto no disponible.'},
+        values,
+      },
+      {status: 400},
+    );
+  }
+
+  try {
+    assertOffersEnv(context.env);
+
+    const {product} = await context.storefront.query(PRODUCT_QUERY, {
+      variables: {handle, selectedOptions: getSelectedProductOptions(request)},
+    });
+
+    if (!product?.id) {
+      return data(
+        {
+          status: 'error' as const,
+          message: 'No pudimos identificar el producto de la oferta.',
+          fieldErrors: {product_id: 'Producto no disponible.'},
+          values,
+        },
+        {status: 400},
+      );
+    }
+
+    const selectedVariant = product.selectedOrFirstAvailableVariant;
+
+    if (!selectedVariant?.id) {
+      return data(
+        {
+          status: 'error' as const,
+          message: 'Selecciona una variante válida antes de enviar la oferta.',
+          fieldErrors: {variant_id: 'Selecciona una variante válida.'},
+          values,
+        },
+        {status: 400},
+      );
+    }
+
+    await submitOffer(context.env, {
+      shop: context.env.OFFERS_SHOP_DOMAIN,
+      product_id: product.id,
+      variant_id: selectedVariant.id,
+      product_title: product.title,
+      variant_title: normalizeVariantTitle(selectedVariant.title),
+      name: values.name,
+      email: values.email,
+      quantity: Number(values.quantity),
+      offer: Number(values.offer),
+      currency:
+        selectedVariant.price.currencyCode ||
+        product.priceRange.minVariantPrice.currencyCode,
+      message: values.message || undefined,
+    });
+
+    return data({
+      status: 'success' as const,
+      message: 'Tu oferta fue enviada correctamente. Te contactaremos muy pronto.',
+    });
+  } catch (error) {
+    const status =
+      error instanceof OfferSubmissionError && error.status ? error.status : 500;
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'No pudimos enviar tu oferta. Inténtalo nuevamente.';
+
+    return data(
+      {
+        status: 'error' as const,
+        message,
+        values,
+      },
+      {status},
+    );
+  }
 }
 
 async function loadCriticalData({context, params, request}: Route.LoaderArgs) {
@@ -60,6 +178,13 @@ export default function Product() {
   );
   const [isLightboxOpen, setIsLightboxOpen] = React.useState(false);
   const [lightboxZoom, setLightboxZoom] = React.useState(1);
+  const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
+  const [offerSuccessEmail, setOfferSuccessEmail] = React.useState<string | null>(null);
+
+  const handleOfferSuccess = React.useCallback((email: string) => {
+    setIsOfferDialogOpen(false);
+    setOfferSuccessEmail(email);
+  }, []);
 
   const selectedVariant = useOptimisticVariant(
     product.selectedOrFirstAvailableVariant,
@@ -136,6 +261,20 @@ export default function Product() {
 
     return () => window.clearInterval(interval);
   }, [gallery, isLightboxOpen]);
+
+  React.useEffect(() => {
+    if (!isOfferDialogOpen) return;
+    const previousBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOfferDialogOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOfferDialogOpen]);
 
   React.useEffect(() => {
     if (!isLightboxOpen) return;
@@ -303,24 +442,37 @@ export default function Product() {
                   </div>
                 </div>
 
-                <div className="[&_form]:block [&_form]:w-full">
-                  <AddToCartButton
-                    className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#111111] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
-                    disabled={!selectedVariant || !selectedVariant.availableForSale}
-                    lines={
-                      selectedVariant
-                        ? [
-                            {
-                              merchandiseId: selectedVariant.id,
-                              quantity: 1,
-                              selectedVariant,
-                            },
-                          ]
-                        : []
-                    }
+                <div className="space-y-4">
+                  <div className="[&_form]:block [&_form]:w-full">
+                    <AddToCartButton
+                      className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#111111] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!selectedVariant || !selectedVariant.availableForSale}
+                      lines={
+                        selectedVariant
+                          ? [
+                              {
+                                merchandiseId: selectedVariant.id,
+                                quantity: 1,
+                                selectedVariant,
+                              },
+                            ]
+                          : []
+                      }
+                    >
+                      {actionCopy}
+                    </AddToCartButton>
+                  </div>
+
+                  {/* "Ofertar" abre el diálogo de oferta (PR #11). La consulta
+                      (WhatsApp/Email) vive en <ProductConsultation/> abajo, así
+                      que no duplicamos el botón "Consultar". */}
+                  <button
+                    className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
+                    onClick={() => setIsOfferDialogOpen(true)}
+                    type="button"
                   >
-                    {actionCopy}
-                  </AddToCartButton>
+                    Ofertar
+                  </button>
                 </div>
 
                 <ProductConsultation productTitle={title} />
@@ -481,6 +633,97 @@ export default function Product() {
                 </button>
               ) : null}
             </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isOfferDialogOpen ? (
+        <div
+          aria-label="Formulario de oferta"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(17,17,17,.72)] p-4 pt-[8vh] md:p-8 md:pt-[10vh]"
+          role="dialog"
+        >
+          <button
+            aria-label="Cerrar"
+            className="absolute inset-0"
+            onClick={() => setIsOfferDialogOpen(false)}
+            type="button"
+          />
+          <div className="relative z-10 w-full max-w-[780px] bg-[#F6F1EA] p-6 md:p-8">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
+                Hacer oferta
+              </div>
+              <button
+                aria-label="Cerrar"
+                className="inline-flex h-8 w-8 items-center justify-center border border-[rgba(35,35,39,.14)] bg-white text-[14px] text-[#232327] transition hover:border-[rgba(35,35,39,.28)]"
+                onClick={() => setIsOfferDialogOpen(false)}
+                type="button"
+              >
+                ✕
+              </button>
+            </div>
+            <ProductOfferForm
+              compareAtPrice={selectedVariant?.compareAtPrice ?? null}
+              currency={
+                selectedVariant?.price.currencyCode ||
+                product.priceRange.minVariantPrice.currencyCode
+              }
+              maxQuantity={selectedVariant?.quantityAvailable ?? null}
+              onSuccess={handleOfferSuccess}
+              price={selectedVariant?.price || product.priceRange.minVariantPrice}
+              productId={product.id}
+              productImage={activeImage ?? selectedVariant?.image ?? null}
+              productTitle={product.title}
+              variantId={selectedVariant?.id}
+              variantTitle={selectedVariant?.title}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {offerSuccessEmail !== null ? (
+        <div
+          aria-label="Oferta enviada"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(17,17,17,.72)] p-4"
+          role="dialog"
+        >
+          <button
+            aria-label="Cerrar"
+            className="absolute inset-0"
+            onClick={() => setOfferSuccessEmail(null)}
+            type="button"
+          />
+          <div className="relative z-10 w-full max-w-[420px] bg-[#F6F1EA] p-8 text-center">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#2F9EA0]/12 mx-auto">
+              <svg
+                className="h-6 w-6 text-[#2F9EA0]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={1.8}
+                viewBox="0 0 24 24"
+              >
+                <path d="M4.5 12.75l6 6 9-13.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <div className="mb-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
+              Oferta recibida
+            </div>
+            <p className="mb-2 text-[15px] font-medium text-[#C84D92]">
+              Estamos revisando tu oferta
+            </p>
+            <p className="mb-10 text-[13px] leading-[1.7] text-[rgba(35,35,39,.65)]">
+              Nos pondremos en contacto contigo en{' '}
+              <span className="font-medium text-[#C84D92]">{offerSuccessEmail}</span>{' '}
+              una vez hayamos revisado tu propuesta con la galería.
+            </p>
+            <button
+              className="mt-4 inline-flex h-[48px] w-full items-center justify-center rounded-[2px] bg-[#2F9EA0] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#247D7F]"
+              onClick={() => setOfferSuccessEmail(null)}
+              type="button"
+            >
+              Aceptar
+            </button>
           </div>
         </div>
       ) : null}
@@ -683,6 +926,7 @@ type ProductData = {
   selectedOrFirstAvailableVariant: {
     id: string;
     availableForSale: boolean;
+    quantityAvailable?: number | null;
     sku?: string | null;
     title: string;
     image?: {
@@ -706,6 +950,7 @@ type ProductData = {
 const PRODUCT_VARIANT_FRAGMENT = `#graphql
   fragment ProductVariant on ProductVariant {
     availableForSale
+    quantityAvailable
     compareAtPrice {
       amount
       currencyCode

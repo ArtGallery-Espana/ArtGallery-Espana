@@ -1,6 +1,7 @@
 import type {ReactNode} from 'react';
 import {useEffect, useState} from 'react';
-import {Link, NavLink} from 'react-router';
+import {Form, Link, NavLink, useLocation} from 'react-router';
+import type {CurrencyChoice} from '~/lib/i18n';
 
 type NavItem = {
   label: string;
@@ -24,6 +25,7 @@ type TopBarProps = {
   navItems?: NavItem[];
   languages?: LanguageItem[];
   currentLanguage?: string;
+  currency?: CurrencyChoice;
   cartCount?: number;
   cartHref?: string;
   onLanguageChange?: (language: string) => void;
@@ -86,6 +88,7 @@ export function TopBar({
   navItems = DEFAULT_NAV_ITEMS,
   languages = DEFAULT_LANGUAGES,
   currentLanguage = 'ES',
+  currency = 'USD',
   cartCount = 0,
   cartHref = '/cart',
   onLanguageChange,
@@ -138,6 +141,8 @@ export function TopBar({
           </select>
         </label>
 
+        <CurrencySelector currency={currency} />
+
         <Link className="shared-cart-button" to={cartHref} aria-label="Carrito">
           <span>Carrito</span>
           <span className="shared-cart-badge" aria-label={`${cartCount} items`}>
@@ -146,6 +151,46 @@ export function TopBar({
         </Link>
       </div>
     </header>
+  );
+}
+
+function CurrencySelector({currency}: {currency: CurrencyChoice}) {
+  const location = useLocation();
+  const redirectTo = location.pathname + location.search;
+
+  return (
+    <Form method="post" action="/currency" className="shared-currency">
+      <input type="hidden" name="redirectTo" value={redirectTo} />
+      <button
+        type="submit"
+        name="currency"
+        value="USD"
+        aria-pressed={currency === 'USD'}
+        className={
+          currency === 'USD'
+            ? 'shared-currency-option shared-currency-option-active'
+            : 'shared-currency-option'
+        }
+      >
+        USD $
+      </button>
+      <span className="shared-currency-divider" aria-hidden="true">
+        |
+      </span>
+      <button
+        type="submit"
+        name="currency"
+        value="EUR"
+        aria-pressed={currency === 'EUR'}
+        className={
+          currency === 'EUR'
+            ? 'shared-currency-option shared-currency-option-active'
+            : 'shared-currency-option'
+        }
+      >
+        EUR €
+      </button>
+    </Form>
   );
 }
 
