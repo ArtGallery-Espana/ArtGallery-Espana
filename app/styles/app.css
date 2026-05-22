@@ -1663,6 +1663,47 @@ body > main.site-main {
   background: #2f9ea0;
 }
 
+.contact-submit:disabled {
+  background: rgba(35, 35, 39, 0.45);
+  cursor: not-allowed;
+}
+
+.contact-field-error {
+  color: #c84d92;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  margin-top: 0.35rem;
+}
+
+.contact-form input[aria-invalid='true'],
+.contact-form textarea[aria-invalid='true'] {
+  border-color: #c84d92;
+}
+
+.contact-form-feedback {
+  border-radius: 2px;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  text-transform: uppercase;
+}
+
+.contact-form-feedback--success {
+  background: rgba(47, 158, 160, 0.12);
+  border: 1px solid rgba(47, 158, 160, 0.4);
+  color: #1f7172;
+}
+
+.contact-form-feedback--error {
+  background: rgba(200, 77, 146, 0.1);
+  border: 1px solid rgba(200, 77, 146, 0.4);
+  color: #a83c7a;
+}
+
 .contact-details {
   display: grid;
   gap: 1.75rem;

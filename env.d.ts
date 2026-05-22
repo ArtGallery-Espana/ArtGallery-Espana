@@ -20,6 +20,10 @@ declare global {
     OFFERS_APP_URL: string;
     OFFERS_APP_TOKEN: string;
     OFFERS_SHOP_DOMAIN: string;
+    RESEND_API_KEY: string;
+    CONTACT_FROM_EMAIL: string;
+    CONTACT_TO_EMAIL: string;
+    CONTACT_CC_EMAIL?: string;
   }
 }
 
