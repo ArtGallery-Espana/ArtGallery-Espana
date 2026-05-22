@@ -3,6 +3,8 @@ import {Image, Money} from '@shopify/hydrogen';
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/_index';
 import {MockShopNotice} from '~/components/MockShopNotice';
+import {FeaturedWorksCarousel} from '~/components/FeaturedWorksCarousel';
+import {buildFeaturedSlides} from '~/lib/featuredWorks';
 
 export const meta: Route.MetaFunction = () => {
   return [{title: 'Galeria Taller J España | Home'}];
@@ -10,17 +12,25 @@ export const meta: Route.MetaFunction = () => {
 
 export async function loader({context}: Route.LoaderArgs) {
   const {storefront, env} = context;
-  const {featuredProducts, recentProducts} = await storefront.query(
-    HOMEPAGE_PRODUCTS_QUERY,
-  );
+  const {featuredProducts, recentProducts, carouselProducts} =
+    await storefront.query(HOMEPAGE_PRODUCTS_QUERY);
 
   const recentWorks = recentProducts.nodes;
   const heroProduct = featuredProducts.nodes[0] ?? recentWorks[0] ?? null;
 
+  // Slides del carrusel: obras manuales + (productos con tag `carrusel` o,
+  // si no hay, los últimos agregados). Se construye en el servidor.
+  const carouselSlides = buildFeaturedSlides(
+    carouselProducts.nodes,
+    recentProducts.nodes,
+  );
+
   return {
     isShopLinked: Boolean(env.PUBLIC_STORE_DOMAIN),
     heroProduct,
-    recentWorks,
+    // La sección "obra reciente" muestra 3; el carrusel usa hasta 5.
+    recentWorks: recentWorks.slice(0, 3),
+    carouselSlides,
   };
 }
 
@@ -32,6 +42,11 @@ export default function Homepage() {
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
       {data.isShopLinked ? null : <MockShopNotice />}
+
+      {/* Carrusel full-bleed: cabecera del home, antes de la obra destacada. */}
+      {data.carouselSlides.length > 0 ? (
+        <FeaturedWorksCarousel slides={data.carouselSlides} />
+      ) : null}
 
       <section className="px-6 pb-16 pt-8 md:px-10 xl:px-14 xl:pb-20 xl:pt-12">
         <div className="mx-auto max-w-360">
@@ -125,7 +140,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35">
+      <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35" data-reveal>
         <div className="mx-auto max-w-360">
           <div className="grid border-y border-[rgba(35,35,39,.10)] lg:grid-cols-3">
             <TrustBlock
@@ -149,7 +164,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-24 md:px-10 xl:px-14 xl:pt-[160px]">
+      <section className="px-6 pt-24 md:px-10 xl:px-14 xl:pt-[160px]" data-reveal>
         <div className="mx-auto max-w-[1440px]">
           <SectionHead
             num="02 — Obra reciente"
@@ -200,7 +215,7 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]">
+      <section className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]" data-reveal>
         <div className="mx-auto max-w-[1440px]">
           <div className="grid gap-14 xl:grid-cols-[1fr_1.35fr] xl:gap-24">
             <div>
@@ -238,7 +253,7 @@ export default function Homepage() {
                   <img
                     alt="Vista del taller en Cuenca"
                     className="h-full w-full object-cover"
-                    src="https://cdn.shopify.com/s/files/1/0761/3857/8106/files/Taller.jpg?v=1778463311"
+                    src="/images/taller-cuenca.jpeg"
                   />
                   <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
                   <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
@@ -638,7 +653,17 @@ const HOMEPAGE_PRODUCTS_QUERY = `#graphql
         ...HomepageProduct
       }
     }
-    recentProducts: products(first: 3, reverse: true, sortKey: CREATED_AT) {
+    recentProducts: products(first: 5, reverse: true, sortKey: CREATED_AT) {
+      nodes {
+        ...HomepageProduct
+      }
+    }
+    carouselProducts: products(
+      first: 5
+      reverse: true
+      sortKey: CREATED_AT
+      query: "tag:carrusel"
+    ) {
       nodes {
         ...HomepageProduct
       }

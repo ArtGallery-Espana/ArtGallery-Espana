@@ -1,7 +1,7 @@
 export function ShippingEditorialPage() {
   return (
     <article className="editorial-page shipping-page">
-      <header className="editorial-page-header">
+      <header className="editorial-page-header" data-reveal>
         <p className="editorial-kicker">Servicio</p>
         <h1>Envios y pagos</h1>
         <p className="editorial-lede">
@@ -10,7 +10,7 @@ export function ShippingEditorialPage() {
         </p>
       </header>
 
-      <section className="editorial-section shipping-table-section">
+      <section className="editorial-section shipping-table-section" data-reveal>
         <div>
           <p className="editorial-kicker">Metodos de envio</p>
           <h2>Opciones nacionales e internacionales</h2>
@@ -28,8 +28,11 @@ export function ShippingEditorialPage() {
             <tbody>
               <tr>
                 <th scope="row">Nacional</th>
-                <td>Entrega coordinada dentro de Ecuador</td>
-                <td>Confirmacion de destino y proteccion adecuada de la obra.</td>
+                <td>Servientrega — entrega coordinada dentro de Ecuador</td>
+                <td>
+                  El comprador debe indicar C.I., Provincia, Ciudad y
+                  Dirección.
+                </td>
               </tr>
               <tr>
                 <th scope="row">Internacional</th>
@@ -41,7 +44,28 @@ export function ShippingEditorialPage() {
         </div>
       </section>
 
-      <section className="editorial-section returns-section">
+      <section className="editorial-section shipping-national-section" data-reveal>
+        <div>
+          <p className="editorial-kicker">Envío nacional</p>
+          <h2>Servientrega</h2>
+        </div>
+        <div className="shipping-national-info">
+          <p>
+            Los envíos dentro de Ecuador se coordinan a través de Servientrega.
+            Una vez enviado el comprobante de pago, indícanos los siguientes
+            datos para gestionar la entrega:
+          </p>
+          <ul className="shipping-fields">
+            <li>C.I.</li>
+            <li>Provincia</li>
+            <li>Ciudad</li>
+            <li>Dirección</li>
+            <li>Referencia</li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="editorial-section returns-section" data-reveal>
         <div>
           <p className="editorial-kicker">Devoluciones</p>
           <h2>Politica en preparacion</h2>
@@ -53,7 +77,7 @@ export function ShippingEditorialPage() {
         </p>
       </section>
 
-      <section className="editorial-section payments-section">
+      <section className="editorial-section payments-section" data-reveal>
         <div>
           <p className="editorial-kicker">Pagos aceptados</p>
           <h2>Formas disponibles</h2>
@@ -64,8 +88,43 @@ export function ShippingEditorialPage() {
             <p>Pago directo mediante los canales habilitados por la tienda.</p>
           </div>
           <div className="payment-card">
-            <h3>Transferencias bancarias</h3>
-            <p>Coordinacion manual y confirmacion previa a la liberacion.</p>
+            <h3>Transferencia bancaria</h3>
+            <p>
+              Coordinación manual con confirmación previa a la liberación de la
+              obra.
+            </p>
+            <dl className="payment-detail">
+              <div>
+                <dt>Banco</dt>
+                <dd>Banco Pichincha</dd>
+              </div>
+              <div>
+                <dt>Cuenta de ahorros</dt>
+                <dd className="payment-detail-pending">Por confirmar</dd>
+              </div>
+              <div>
+                <dt>Titular</dt>
+                <dd>Jorge España</dd>
+              </div>
+              <div>
+                <dt>Envío de comprobante</dt>
+                <dd>
+                  <a
+                    href="https://wa.me/593998073728"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    WhatsApp +593 99 807 3728
+                  </a>
+                </dd>
+              </div>
+            </dl>
+          </div>
+          <div className="payment-card">
+            <h3>PayPal</h3>
+            <p>
+              Pago internacional con confirmación inmediata a través de PayPal.
+            </p>
           </div>
         </div>
         <p className="payment-note">

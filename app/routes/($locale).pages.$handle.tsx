@@ -1,13 +1,83 @@
-import {useLoaderData} from 'react-router';
+import {data, useLoaderData} from 'react-router';
 import type {Route} from './+types/pages.$handle';
 import {ArtistEditorialPage} from '~/components/ArtistEditorialPage';
 import {ContactEditorialPage} from '~/components/ContactEditorialPage';
 import {ShippingEditorialPage} from '~/components/ShippingEditorialPage';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import {
+  ContactSubmissionError,
+  assertContactEnv,
+  getContactFormValues,
+  sendContactEmail,
+  validateContactForm,
+  type ContactFieldErrors,
+  type ContactFormValues,
+} from '~/lib/contact.server';
+
+export type ContactActionData = {
+  status: 'success' | 'error';
+  message: string;
+  fieldErrors?: ContactFieldErrors;
+  values?: ContactFormValues;
+};
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [{title: `Hydrogen | ${data?.page.title ?? ''}`}];
 };
+
+export async function action({
+  request,
+  context,
+}: Route.ActionArgs) {
+  const formData = await request.formData();
+  const intent = formData.get('intent');
+
+  if (intent !== 'contact') {
+    return data<ContactActionData>(
+      {status: 'error', message: 'Acción no soportada.'},
+      {status: 400},
+    );
+  }
+
+  const values = getContactFormValues(formData);
+  const fieldErrors = validateContactForm(values);
+
+  if (Object.keys(fieldErrors).length > 0) {
+    return data<ContactActionData>(
+      {
+        status: 'error',
+        message: 'Revisa los campos del formulario.',
+        fieldErrors,
+        values,
+      },
+      {status: 400},
+    );
+  }
+
+  try {
+    assertContactEnv(context.env);
+    await sendContactEmail(context.env, values, {
+      shop: context.env.PUBLIC_STORE_DOMAIN,
+    });
+    return data<ContactActionData>({
+      status: 'success',
+      message:
+        'Recibimos tu mensaje. Te responderemos pronto desde el estudio.',
+    });
+  } catch (error) {
+    const isKnown = error instanceof ContactSubmissionError;
+    return data<ContactActionData>(
+      {
+        status: 'error',
+        message: isKnown
+          ? error.message
+          : 'No pudimos enviar tu mensaje. Intenta nuevamente en unos minutos.',
+        values,
+      },
+      {status: isKnown ? error.status : 500},
+    );
+  }
+}
 
 export async function loader(args: Route.LoaderArgs) {
   // Start fetching non-critical data without blocking time to first byte

@@ -13,6 +13,9 @@ import {
 } from '~/components/SearchFormPredictive';
 import {SearchResultsPredictive} from '~/components/SearchResultsPredictive';
 import {Footer, TopBar} from '~/components/shared';
+import {WhatsAppButton} from '~/components/WhatsAppButton';
+import {ScrollReveal} from '~/components/ScrollReveal';
+import type {CurrencyChoice} from '~/lib/i18n';
 
 interface PageLayoutProps {
   cart: Promise<CartApiQueryFragment | null>;
@@ -20,29 +23,41 @@ interface PageLayoutProps {
   header: HeaderQuery;
   isLoggedIn: Promise<boolean>;
   publicStoreDomain: string;
+  selectedCurrency?: CurrencyChoice;
   children?: React.ReactNode;
 }
 
 export function PageLayout({
   cart,
+  selectedCurrency = 'USD',
   children = null,
 }: PageLayoutProps) {
   return (
     <Aside.Provider>
       <CartAside cart={cart} />
       <SearchAside />
-      <TopBarWithCart cart={cart} />
+      <TopBarWithCart cart={cart} currency={selectedCurrency} />
       <main className="site-main bg-[#F6F1EA]">{children}</main>
       <Footer />
+      <WhatsAppButton />
+      <ScrollReveal />
     </Aside.Provider>
   );
 }
 
-function TopBarWithCart({cart}: {cart: PageLayoutProps['cart']}) {
+function TopBarWithCart({
+  cart,
+  currency,
+}: {
+  cart: PageLayoutProps['cart'];
+  currency: CurrencyChoice;
+}) {
   return (
-    <Suspense fallback={<TopBar cartCount={0} />}>
+    <Suspense fallback={<TopBar cartCount={0} currency={currency} />}>
       <Await resolve={cart}>
-        {(cart) => <TopBar cartCount={cart?.totalQuantity ?? 0} />}
+        {(cart) => (
+          <TopBar cartCount={cart?.totalQuantity ?? 0} currency={currency} />
+        )}
       </Await>
     </Suspense>
   );

@@ -1,6 +1,2009 @@
-/**
- * Configure Tailwind v4 in this file using CSS variables and directives:
- * https://tailwindcss.com/docs/v4-beta#css-first-configuration
- */
+/* =============================================================================
+ * Galería Taller J España — Hoja de estilos única
+ * -----------------------------------------------------------------------------
+ * Este archivo es la ÚNICA fuente CSS de la aplicación. Consolida lo que antes
+ * vivía en `reset.css` y `app.css` siguiendo la configuración CSS-first de
+ * Tailwind CSS v4 (https://tailwindcss.com/docs/v4-beta#css-first-configuration).
+ *
+ * Estructura (ver delimitadores `=== Nº. NOMBRE ===` para saltar a cada sección):
+ *
+ *   1. Fuentes externas .............. @import Google Fonts
+ *   2. Núcleo Tailwind ............... @import 'tailwindcss'
+ *   3. Design tokens ................. @theme  → genera utilidades (font-serif,
+ *                                                 bg-ivory, text-char, …)
+ *   4. Aliases legacy ................ :root   → conserva `var(--ivory)`,
+ *                                                 `var(--serif)`, etc. para los
+ *                                                 valores arbitrarios ya escritos
+ *                                                 en los componentes TSX.
+ *   5. Capa base ..................... @layer base — resets de elementos +
+ *                                                    setup tipográfico global.
+ *   6. Capa de componentes ........... @layer components — clases reutilizables
+ *                                                          agrupadas por dominio.
+ *   7. Capa de utilidades ............ @layer utilities — helpers atómicos.
+ *
+ * Convención:
+ *   - Tokens nuevos → declararlos en `@theme`. Tailwind v4 los expone tanto
+ *     como variable CSS (`var(--color-ivory)`) como utilidad (`bg-ivory`).
+ *   - Clases nuevas → preferir utilidades de Tailwind. Solo crear una clase
+ *     bajo `@layer components` cuando se repite ≥3 veces o expresa una unidad
+ *     visual con nombre propio (ej: `.editorial-kicker`).
+ * ========================================================================== */
 
+
+/* =============================================================================
+ * 1. FUENTES EXTERNAS
+ * ========================================================================== */
+@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+
+
+/* =============================================================================
+ * 2. NÚCLEO TAILWIND
+ * ========================================================================== */
 @import 'tailwindcss';
+
+
+/* =============================================================================
+ * 3. DESIGN TOKENS (Tailwind v4 @theme)
+ * -----------------------------------------------------------------------------
+ * Cada token aquí se convierte automáticamente en:
+ *   - Variable CSS global         → var(--color-ivory)
+ *   - Utilidad Tailwind            → bg-ivory, text-ivory, border-ivory…
+ * ========================================================================== */
+@theme {
+  /* --- Colores de marca ---------------------------------------------------- */
+  --color-ivory: #f6f1ea;       /* Fondo general              */
+  --color-char:  #232327;       /* Texto principal            */
+  --color-ink:   #111111;       /* Titulares                  */
+  --color-turq:  #2f9ea0;       /* Acento turquesa            */
+  --color-mag:   #c84d92;       /* Acento magenta             */
+  --color-dark:  #000000;       /* Skeleton (legacy)          */
+  --color-light: #ffffff;       /* Skeleton (legacy)          */
+
+  /* --- Familias tipográficas ---------------------------------------------- */
+  --font-serif: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  --font-sans:  "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+
+
+/* =============================================================================
+ * 4. ALIASES LEGACY EN :root
+ * -----------------------------------------------------------------------------
+ * Muchos componentes TSX usan valores arbitrarios con nombres cortos:
+ *   `[font-family:var(--serif)]`, `bg-[color:var(--ivory)]`, etc.
+ * Estos aliases mantienen ese contrato sin tocar los TSX.
+ * ========================================================================== */
+:root {
+  /* Colores (alias cortos) */
+  --ivory: var(--color-ivory);
+  --char:  var(--color-char);
+  --ink:   var(--color-ink);
+  --turq:  var(--color-turq);
+  --mag:   var(--color-mag);
+
+  /* Tipografía (alias cortos) */
+  --serif: var(--font-serif);
+  --sans:  var(--font-sans);
+  --mono:  var(--font-mono);
+
+  /* Acentos derivados del texto principal */
+  --muted:   rgba(35, 35, 39, 0.55);
+  --muted-2: rgba(35, 35, 39, 0.72);
+
+  /* Layout (skeleton: aside, header, grids, cart drawer) */
+  --aside-width: 400px;
+  --header-height: 64px;
+  --grid-item-width: 355px;
+  --cart-aside-summary-height: 250px;
+  --cart-aside-summary-height-with-discount: 300px;
+}
+
+
+/* =============================================================================
+ * 5. CAPA BASE — Resets y defaults del documento
+ * ========================================================================== */
+@layer base {
+  /* --- Body ---------------------------------------------------------------
+   * Combina el reset del skeleton (flex-column min-height) con la identidad
+   * editorial (fondo ivory, tipografía Inter, antialiasing).
+   */
+  body {
+    background: var(--ivory);
+    color: var(--char);
+    display: flex;
+    flex-direction: column;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.005em;
+    line-height: 1.55;
+    margin: 0;
+    min-height: 100vh;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* --- <main> envoltorio del sitio --------------------------------------- */
+  body > main.site-main {
+    background: var(--ivory);
+    margin: 0.75rem;
+  }
+
+  @media (min-width: 768px) {
+    body > main.site-main {
+      margin: 1rem;
+    }
+  }
+
+  body > main {
+    margin: 0 1rem 1rem 1rem;
+  }
+
+  /* --- Titulares (skeleton) ---------------------------------------------- */
+  h1, h2, p { margin: 0; padding: 0; }
+
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 2rem;
+    margin-top: 2rem;
+  }
+
+  h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 1rem;
+  }
+
+  h4 { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+  h5 { margin-top: 0.5rem; margin-bottom: 1rem; }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  /* --- Enlaces ----------------------------------------------------------- */
+  a {
+    color: #000;
+    text-decoration: none;
+  }
+  a:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* --- Otros elementos --------------------------------------------------- */
+  hr {
+    border-bottom: none;
+    border-top: 1px solid #000;
+    margin: 0;
+  }
+
+  pre { white-space: pre-wrap; }
+
+  section {
+    padding: 1rem 0;
+  }
+  @media (min-width: 768px) {
+    section { padding: 2rem 0; }
+  }
+
+  fieldset {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0.5rem;
+    padding: 1rem;
+  }
+
+  form {
+    max-width: 100%;
+  }
+  @media (min-width: 768px) {
+    form { max-width: 400px; }
+  }
+
+  input {
+    border: 1px solid #000;
+    border-radius: 4px;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+  }
+
+  legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  li { margin-bottom: 0.5rem; }
+  dl { margin: 0.5rem 0; }
+
+  code {
+    background: #ddd;
+    border-radius: 4px;
+    font-family: monospace;
+    padding: 0.25rem;
+  }
+
+  /* --- Imágenes ---------------------------------------------------------- */
+  img { border-radius: 4px; }
+}
+
+
+/* =============================================================================
+ * 6. CAPA DE COMPONENTES
+ * -----------------------------------------------------------------------------
+ * Cada subsección corresponde a un dominio del UI. Mantener el orden.
+ * ========================================================================== */
+@layer components {
+
+  /* === 6.1 LINKS GENÉRICOS ============================================== */
+  .link:hover {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+
+  /* === 6.2 ASIDE / OVERLAY (cart drawer + search aside) =============== */
+
+  /* Bloquea scroll del body cuando el overlay está abierto en mobile. */
+  @media (max-width: 45em) {
+    html:has(.overlay.expanded) { overflow: hidden; }
+  }
+
+  aside {
+    background: var(--color-light);
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+    height: 100vh;
+    width: min(var(--aside-width), 100vw);
+    position: fixed;
+    right: calc(-1 * var(--aside-width));
+    top: 0;
+    transition: transform 200ms ease-in-out;
+  }
+
+  aside header {
+    align-items: center;
+    border-bottom: 1px solid var(--color-dark);
+    display: flex;
+    height: var(--header-height);
+    justify-content: space-between;
+    padding: 0 20px;
+  }
+
+  aside header h2 { margin-top: 0; margin-bottom: 0.6rem; }
+  aside header h3 { margin: 0; }
+
+  aside header .close {
+    font-weight: bold;
+    opacity: 0.8;
+    text-decoration: none;
+    transition: all 200ms;
+    width: 20px;
+  }
+  aside header .close:hover { opacity: 1; }
+
+  aside main { margin: 1rem; }
+  aside p { margin: 0 0 0.25rem; }
+  aside p:last-child { margin: 0; }
+  aside li { margin-bottom: 0.125rem; }
+
+  .overlay {
+    background: rgba(0, 0, 0, 0.2);
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+    right: 0;
+    top: 0;
+    transition: opacity 400ms ease-in-out;
+    visibility: hidden;
+    z-index: 10;
+  }
+
+  .overlay .close-outside {
+    background: transparent;
+    border: none;
+    color: transparent;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: calc(100% - var(--aside-width));
+  }
+
+  .overlay .light  { background: rgba(255, 255, 255, 0.5); }
+  .overlay .cancel { cursor: default; height: 100%; position: absolute; width: 100%; }
+
+  .overlay.expanded {
+    opacity: 1;
+    pointer-events: auto;
+    visibility: visible;
+  }
+  .overlay.expanded aside {
+    transform: translateX(calc(var(--aside-width) * -1));
+  }
+
+  /* Botón con apariencia reseteada (heredada del header del aside). */
+  button.reset {
+    background: inherit;
+    border: 0;
+    font-size: inherit;
+  }
+  button.reset > * { margin: 0; }
+  button.reset:not(:has(> *)) {
+    height: 1.5rem;
+    line-height: 1.5rem;
+  }
+  button.reset:hover:not(:has(> *)) {
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+
+  /* === 6.3 HEADER SKELETON (legacy: Header.tsx — actualmente sin uso) === */
+  .header {
+    align-items: center;
+    background: #fff;
+    display: flex;
+    height: var(--header-height);
+    padding: 0 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  .header-menu-mobile-toggle {
+    @media (min-width: 48em) { display: none; }
+  }
+
+  .header-menu-mobile {
+    display: flex;
+    flex-direction: column;
+    grid-gap: 1rem;
+  }
+
+  .header-menu-desktop {
+    display: none;
+    grid-gap: 1rem;
+    @media (min-width: 45em) {
+      display: flex;
+      grid-gap: 1rem;
+      margin-left: 3rem;
+    }
+  }
+
+  .header-menu-item { cursor: pointer; }
+
+  .header-ctas {
+    align-items: center;
+    display: flex;
+    grid-gap: 1rem;
+    margin-left: auto;
+  }
+  .header-ctas > * { min-width: fit-content; }
+
+
+  /* === 6.4 FOOTER SKELETON (legacy: Footer.tsx — actualmente sin uso) === */
+  .footer {
+    background: var(--color-dark);
+    margin-top: auto;
+  }
+
+  .footer-menu {
+    display: flex;
+    flex-wrap: wrap;
+    grid-gap: 1rem;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .footer-menu a {
+    color: var(--color-light);
+    min-width: fit-content;
+  }
+
+
+  /* === 6.5 CART (drawer + skeleton page) ================================ */
+  .cart-main {
+    height: 100%;
+    max-height: calc(100vh - var(--cart-aside-summary-height));
+    overflow-y: auto;
+    width: auto;
+  }
+  .cart-main.with-discount {
+    max-height: calc(100vh - var(--cart-aside-summary-height-with-discount));
+  }
+
+  .cart-line { padding: 0.75rem 0; }
+  .cart-line-inner { display: flex; }
+  .cart-line img {
+    display: block;
+    height: 100%;
+    margin-right: 0.75rem;
+  }
+  .cart-line-quantity { display: flex; }
+
+  /* Componentes anidados (warranties, gift wrap, etc.) */
+  .cart-line-children { padding-left: 2rem; }
+
+  .cart-summary-page { position: relative; }
+  .cart-summary-aside {
+    background: white;
+    border-top: 1px solid var(--color-dark);
+    bottom: 0;
+    padding-top: 0.75rem;
+    position: absolute;
+    width: calc(var(--aside-width) - 40px);
+  }
+
+  .cart-discount {
+    align-items: center;
+    display: flex;
+    margin-top: 0.25rem;
+  }
+
+  .cart-subtotal {
+    align-items: center;
+    display: flex;
+  }
+
+
+  /* === 6.6 SEARCH (predictive aside + results page) ====================== */
+  .predictive-search {
+    height: calc(100vh - var(--header-height) - 40px);
+    overflow-y: auto;
+  }
+
+  .predictive-search-form {
+    background: var(--color-light);
+    position: sticky;
+    top: 0;
+  }
+
+  .predictive-search-result      { margin-bottom: 2rem; }
+  .predictive-search-result h5   { text-transform: uppercase; }
+  .predictive-search-result-item { margin-bottom: 0.5rem; }
+  .predictive-search-result-item a {
+    align-items: center;
+    display: flex;
+  }
+  .predictive-search-result-item a img {
+    height: 100%;
+    margin-right: 0.75rem;
+  }
+
+  .search-result       { margin-bottom: 1.5rem; }
+  .search-results-item { margin-bottom: 0.5rem; }
+  .search-results-item a {
+    align-items: center;
+    display: flex;
+    flex: row;
+    gap: 1rem;
+  }
+
+
+  /* === 6.7 LISTADOS Y FICHAS SKELETON (home/collections/blog/products) === */
+  .featured-collection {
+    display: block;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+  .featured-collection-image {
+    aspect-ratio: 1 / 1;
+    @media (min-width: 45em) { aspect-ratio: 16 / 9; }
+  }
+  .featured-collection img {
+    height: auto;
+    max-height: 100%;
+    object-fit: cover;
+  }
+
+  .recommended-products-grid {
+    display: grid;
+    grid-gap: 1.5rem;
+    grid-template-columns: repeat(2, 1fr);
+    @media (min-width: 45em) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+  .recommended-product img { height: auto; }
+
+  .collections-grid {
+    display: grid;
+    grid-gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-width), 1fr));
+    margin-bottom: 2rem;
+  }
+  .collection-item img { height: auto; }
+
+  .collection-description {
+    margin-bottom: 1rem;
+    max-width: 95%;
+    @media (min-width: 45em) { max-width: 600px; }
+  }
+
+  .products-grid {
+    display: grid;
+    grid-gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-width), 1fr));
+    margin-bottom: 2rem;
+  }
+  .product-item img { height: auto; width: 100%; }
+
+  .product {
+    display: grid;
+    @media (min-width: 45em) {
+      grid-gap: 4rem;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .product h1 { margin-top: 0; }
+
+  .product-image img { height: auto; width: 100%; }
+
+  .product-main {
+    align-self: start;
+    position: sticky;
+    top: 6rem;
+  }
+
+  .product-price-on-sale {
+    display: flex;
+    grid-gap: 0.5rem;
+  }
+  .product-price-on-sale s { opacity: 0.5; }
+
+  .product-options-grid {
+    display: flex;
+    flex-wrap: wrap;
+    grid-gap: 0.75rem;
+  }
+
+  .product-options-item,
+  .product-options-item:disabled {
+    background-color: transparent;
+    font-family: inherit;
+    font-size: 1rem;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .product-option-label-swatch {
+    height: 1.25rem;
+    margin: 0.25rem 0;
+    width: 1.25rem;
+  }
+  .product-option-label-swatch img { width: 100%; }
+
+  .blog-grid {
+    display: grid;
+    grid-gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(var(--grid-item-width), 1fr));
+    margin-bottom: 2rem;
+  }
+  .blog-article-image {
+    aspect-ratio: 3/2;
+    display: block;
+  }
+  .blog-article-image img { height: 100%; }
+
+  .article img { height: auto; width: 100%; }
+
+
+  /* === 6.8 ACCOUNT ======================================================= */
+  .account-logout { display: inline-block; }
+
+
+  /* === 6.9 MOCK SHOP NOTICE (aviso de tienda no-conectada en home) ====== */
+  .mock-shop-notice {
+    background: var(--color-light);
+    border: 1px solid var(--color-dark);
+    border-left-width: 0.5rem;
+    margin: 1rem 0;
+    padding: 0;
+  }
+  .mock-shop-notice .inner { padding: 0.875rem 1rem; }
+  .mock-shop-notice h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .mock-shop-notice p {
+    font-size: 1rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+  }
+  .mock-shop-notice footer {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 0.5rem 1rem;
+  }
+  .mock-shop-notice .small {
+    font-size: 0.875rem;
+    line-height: 1.4;
+    margin-bottom: 0.5rem;
+  }
+  .mock-shop-notice code {
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 0.25rem;
+    padding: 0.1em 0.3em;
+  }
+  .mock-shop-notice a {
+    text-decoration: underline;
+    text-underline-offset: 6px;
+  }
+
+
+  /* === 6.10 ORDER SEARCH FORM (account) ================================ */
+  .order-search-form     { margin-bottom: 1.5rem; }
+
+  .order-search-fieldset {
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    padding: 1rem;
+  }
+
+  .order-search-legend {
+    font-weight: 600;
+    padding: 0 0.5rem;
+  }
+  .order-search-active {
+    font-weight: normal;
+    margin-left: 0.5rem;
+    opacity: 0.7;
+  }
+
+  .order-search-inputs {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+    margin: 0.25rem 0 1rem;
+  }
+  @media (min-width: 640px) {
+    .order-search-inputs { grid-template-columns: 1fr 1fr; }
+  }
+
+  .order-search-input {
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 1rem;
+    padding: 0.5rem;
+    width: 100%;
+  }
+
+  .order-search-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+
+  /* === 6.11 SHARED TOPBAR + FOOTER (componentes vivos de shared.tsx) === */
+
+  /* TopBar
+   *
+   * Tope de página → transparente (deja ver el ivory del body).
+   * Al hacer scroll, React le añade `.is-scrolled` y pasa a fondo oscuro
+   * translúcido + backdrop-blur. Los colores de logo/links son adaptivos:
+   * oscuros sobre el ivory del tope, blancos sobre el header oscuro.
+   */
+  .shared-topbar {
+    align-items: center;
+    background: transparent;
+    border-bottom: 1px solid transparent;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr auto 1fr;
+    min-height: 72px;
+    padding: 0.875rem clamp(1rem, 4vw, 3rem);
+    position: sticky;
+    top: 0;
+    transition:
+      background-color 280ms ease,
+      border-color 280ms ease,
+      backdrop-filter 280ms ease;
+    z-index: 5;
+  }
+
+  .shared-topbar.is-scrolled {
+    background: rgba(31, 26, 23, 0.82);
+    backdrop-filter: blur(12px);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .shared-topbar-logo {
+    align-items: center;
+    color: #1f1a17;
+    display: inline-flex;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(1.25rem, 2.4vw, 1.875rem);
+    font-weight: 700;
+    gap: 0.75rem;
+    line-height: 1;
+    text-decoration: none;
+    transition: color 280ms ease;
+  }
+
+  .shared-topbar.is-scrolled .shared-topbar-logo {
+    color: #fff;
+  }
+
+  .shared-topbar-logo-image {
+    background: #050505;
+    border-radius: 4px;
+    display: block;
+    height: 3rem;
+    object-fit: contain;
+    width: 3rem;
+  }
+
+  .shared-topbar-nav {
+    align-items: center;
+    display: flex;
+    gap: clamp(0.75rem, 3vw, 2rem);
+    justify-content: center;
+  }
+
+  .shared-topbar-link {
+    color: #312923;
+    font-size: 0.95rem;
+    /* Padding vertical → área táctil cómoda en móvil (≥44px de alto con
+       el line-height del topbar). */
+    padding: 0.6rem 0.15rem;
+    text-decoration: none;
+    transition: color 200ms ease;
+  }
+  .shared-topbar-link:hover,
+  .shared-topbar-link-active { color: var(--color-turq); }
+  .shared-topbar-link-active { font-weight: 700; }
+
+  /* Scrolled: links blancos, hover/active turquesa. */
+  .shared-topbar.is-scrolled .shared-topbar-link { color: #fff; }
+  .shared-topbar.is-scrolled .shared-topbar-link:hover,
+  .shared-topbar.is-scrolled .shared-topbar-link-active {
+    color: var(--color-turq);
+  }
+
+  .shared-topbar-actions {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+  }
+
+  .shared-language select {
+    background: #fff;
+    border: 1px solid #cfc7bd;
+    border-radius: 4px;
+    color: #1f1a17;
+    font: inherit;
+    min-height: 2.75rem; /* 44px — target táctil mínimo */
+    padding: 0.375rem 0.625rem;
+  }
+
+  /* Selector de moneda USD/EUR (PR #12). Targets a 44px (T-A7). */
+  .shared-currency {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cfc7bd;
+    border-radius: 4px;
+    display: inline-flex;
+    gap: 0.125rem;
+    min-height: 2.75rem;
+    padding: 0 0.25rem;
+  }
+  .shared-currency-option {
+    background: transparent;
+    border: 0;
+    color: #6f655c;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8rem;
+    min-height: 2.25rem;
+    padding: 0.375rem 0.6rem;
+  }
+  .shared-currency-option:hover { color: #1f1a17; }
+  .shared-currency-option-active { color: #1f1a17; font-weight: 700; }
+  .shared-currency-divider { color: #cfc7bd; }
+
+  .shared-cart-button {
+    align-items: center;
+    background: #1f1a17;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #fff;
+    display: inline-flex;
+    gap: 0.5rem;
+    min-height: 2.75rem; /* 44px — target táctil mínimo */
+    padding: 0.375rem 0.875rem;
+    text-decoration: none;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .shared-cart-button:hover { background: #312923; }
+
+  /* Scrolled: borde claro para separar el botón del header oscuro. */
+  .shared-topbar.is-scrolled .shared-cart-button {
+    border-color: rgba(255, 255, 255, 0.22);
+  }
+
+  .shared-cart-badge {
+    align-items: center;
+    background: #d4148e;
+    border-radius: 999px;
+    color: #fff;
+    display: inline-flex;
+    font-size: 0.75rem;
+    font-weight: 700;
+    justify-content: center;
+    min-height: 1.375rem;
+    min-width: 1.375rem;
+    padding: 0 0.35rem;
+  }
+
+  /* Footer */
+  .shared-footer {
+    background: #1f1a17;
+    color: #f8f3ed;
+    margin-top: 4rem;
+    padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 4vw, 3rem) 1rem;
+  }
+
+  .shared-footer-grid {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr));
+  }
+
+  .shared-footer-brand {
+    color: #fff;
+    display: inline-block;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    font-weight: 700;
+    line-height: 0.95;
+    max-width: 12ch;
+    text-decoration: none;
+  }
+
+  .shared-footer-column h2 {
+    color: #fff;
+    font-size: 0.85rem;
+    letter-spacing: 0;
+    margin: 0 0 1rem;
+    text-transform: uppercase;
+  }
+
+  .shared-footer-links {
+    display: grid;
+    gap: 0.625rem;
+  }
+
+  .shared-footer a,
+  .shared-footer p {
+    color: #f8f3ed;
+    margin: 0;
+    text-decoration: none;
+  }
+  .shared-footer a:hover { color: #21b8b8; }
+
+  .shared-footer-copy {
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    color: rgba(248, 243, 237, 0.7);
+    font-size: 0.8rem;
+    margin: 2.5rem 0 0;
+    padding-top: 1rem;
+  }
+
+  /* Responsive shared TopBar/Footer */
+  @media (max-width: 760px) {
+    .shared-topbar {
+      grid-template-columns: 1fr;
+    }
+    .shared-topbar-nav,
+    .shared-topbar-actions {
+      justify-content: flex-start;
+    }
+    .shared-topbar-nav { flex-wrap: wrap; }
+    .shared-footer-grid { grid-template-columns: 1fr; }
+  }
+
+
+  /* === 6.12 HOME EDITORIAL — CTAs ======================================= */
+
+  /* Primary: bg negro → hover turquesa. */
+  .home-cta-primary,
+  .home-cta-primary:visited,
+  .home-cta-primary:hover,
+  .home-cta-primary:active {
+    color: #fff !important;
+    text-decoration: none !important;
+  }
+
+  /* Outline / Ghost / Link: deshabilitar subrayado heredado. */
+  .home-cta-outline,
+  .home-cta-outline:visited,
+  .home-cta-outline:hover,
+  .home-cta-outline:active,
+  .home-cta-ghost,
+  .home-cta-ghost:visited,
+  .home-cta-ghost:hover,
+  .home-cta-ghost:active,
+  .home-cta-link,
+  .home-cta-link:visited,
+  .home-cta-link:hover,
+  .home-cta-link:active {
+    text-decoration: none !important;
+  }
+
+  /* Outline: borde + texto char → hover turquesa. */
+  .home-cta-outline,
+  .home-cta-outline:visited { color: #232327 !important; }
+
+  .home-cta-outline:hover,
+  .home-cta-outline:active,
+  .home-cta-link:hover,
+  .home-cta-link:active {
+    border-color: var(--color-turq) !important;
+    color: var(--color-turq) !important;
+    text-decoration: none !important;
+  }
+
+  /* Ghost: borde turquesa → hover relleno turquesa con texto blanco. */
+  .home-cta-ghost,
+  .home-cta-ghost:visited { color: var(--color-turq) !important; }
+
+  .home-cta-ghost:hover,
+  .home-cta-ghost:active {
+    background-color: var(--color-turq) !important;
+    color: #fff !important;
+  }
+
+
+  /* === 6.13 EDITORIAL PAGES (artista / envios / contacto) =============== */
+
+  /* --- Shell común ------------------------------------------------------ */
+  .editorial-page {
+    color: var(--color-char);
+    display: grid;
+    /* Gap entre secciones: reducido para una narrativa más fluida
+     * (antes clamp(3rem,7vw,6rem) → hasta 96px se sentía desconectado). */
+    gap: clamp(2rem, 4vw, 3.25rem);
+    padding: clamp(1.5rem, 3vw, 2.5rem)
+             clamp(1rem, 4vw, 3rem)
+             clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .editorial-page h1,
+  .editorial-page h2,
+  .editorial-page h3 {
+    color: var(--color-ink);
+    font-family: var(--serif);
+    letter-spacing: 0;
+    margin: 0;
+  }
+  .editorial-page h1 { font-size: clamp(3rem, 6vw, 5.5rem); line-height: 0.98; }
+  .editorial-page h2 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; }
+  .editorial-page h3 { font-size: clamp(1.4rem, 2vw, 1.8rem); line-height: 1.2; }
+  .editorial-page p  { margin: 0; }
+
+  /* --- Tipografía editorial reutilizable -------------------------------- */
+  .editorial-kicker {
+    color: var(--color-mag);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    margin-bottom: 1rem !important;
+    text-transform: uppercase;
+  }
+
+  .editorial-lede {
+    color: var(--muted-2);
+    font-size: 1.05rem;
+    line-height: 1.75;
+    margin-top: 1.25rem !important;
+    max-width: 48ch;
+  }
+
+  /* --- Contenedores horizontales con max-width centrado ---------------- */
+  .editorial-section,
+  .editorial-page-header,
+  .editorial-hero,
+  .contact-layout {
+    margin-inline: auto;
+    max-width: 1440px;
+    width: 100%;
+  }
+
+  /* --- Hero del artista ------------------------------------------------- */
+  .editorial-hero {
+    align-items: center;
+    display: grid;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .artist-placeholder {
+    margin: 0;
+    max-width: 34rem;
+    width: 100%;
+  }
+
+  .artist-hero-image {
+    aspect-ratio: 4 / 5;
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: block;
+    height: auto;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .artist-placeholder-frame {
+    align-items: stretch;
+    aspect-ratio: 4 / 5;
+    background:
+      repeating-linear-gradient(
+        135deg,
+        rgba(35, 35, 39, 0.04) 0 1px,
+        transparent 1px 10px
+      ),
+      #e1d5c6;
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem;
+  }
+
+  .artist-placeholder-frame span,
+  .artist-placeholder-frame strong {
+    color: rgba(35, 35, 39, 0.6);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* --- Bloques editoriales (cajas con fondo crema y borde fino) -------- */
+  .artist-statement,
+  .artist-biography,
+  .artist-facts-section,
+  .artist-trajectory,
+  .galapagos-section,
+  .returns-section,
+  .payments-section,
+  .shipping-table-section,
+  .shipping-national-section {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .artist-statement,
+  .artist-biography,
+  .artist-facts-section,
+  .artist-trajectory,
+  .galapagos-section {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.34)),
+      #f2ece3;
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  .artist-statement      > div:first-child,
+  .artist-biography      > div:first-child,
+  .artist-facts-section  > div:first-child,
+  .artist-trajectory     > div:first-child,
+  .galapagos-section     > div:first-child {
+    align-content: start;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  /* --- Cuerpo editorial: dos columnas opcionales ----------------------- */
+  .editorial-two-column-copy {
+    color: var(--muted-2);
+    display: grid;
+    font-size: 1rem;
+    gap: 1rem;
+    line-height: 1.85;
+  }
+  .editorial-two-column-copy p + p { margin-top: 0; }
+
+  .artist-statement-content {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  /* Cada párrafo en card blanca translúcida. */
+  .artist-statement .editorial-two-column-copy p,
+  .artist-biography .editorial-two-column-copy p,
+  .editorial-single-copy p {
+    background: rgba(255, 255, 255, 0.64);
+    border: 1px solid rgba(35, 35, 39, 0.06);
+    padding: 1.1rem 1.2rem;
+  }
+
+  .editorial-single-copy {
+    color: var(--muted-2);
+    display: grid;
+    font-size: 1rem;
+    gap: 1.5rem;
+    line-height: 1.85;
+    max-width: 70ch;
+  }
+
+  /* --- Galería de obras del statement ---------------------------------- */
+  .statement-works-gallery {
+    display: grid;
+    gap: 1rem;
+  }
+  .statement-works-gallery figure {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: grid;
+    grid-template-rows: auto auto;
+    margin: 0;
+    overflow: hidden;
+  }
+  .statement-works-gallery img {
+    aspect-ratio: 4 / 5;
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+  }
+  .statement-works-gallery figcaption {
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.06em;
+    line-height: 1.65;
+    padding: 0.72rem 0.8rem 0.84rem;
+    width: 100%;
+  }
+
+  /* --- Sección Galápagos ----------------------------------------------- */
+  .galapagos-header {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .galapagos-intro {
+    display: grid;
+    gap: 0.85rem;
+    max-width: 70ch;
+  }
+  .galapagos-intro p {
+    color: rgba(35, 35, 39, 0.76);
+    font-size: 1.02rem;
+    line-height: 1.9;
+    margin: 0;
+  }
+  .galapagos-intro p + p { padding-top: 0.15rem; }
+
+  .galapagos-gallery {
+    display: grid;
+    gap: 1rem;
+  }
+  .galapagos-gallery figure {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: grid;
+    grid-template-rows: auto auto;
+    margin: 0;
+    overflow: hidden;
+  }
+  .galapagos-gallery img {
+    aspect-ratio: 4 / 3;
+    display: block;
+    height: auto;
+    object-fit: cover;
+    width: 100%;
+  }
+  .galapagos-gallery figcaption {
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.06em;
+    line-height: 1.65;
+    padding: 0.68rem 0.78rem 0.8rem;
+    text-transform: none;
+    width: 100%;
+  }
+
+  /* --- Timeline de trayectoria ---------------------------------------- */
+  .trajectory-timeline {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .trajectory-timeline li {
+    align-content: start;
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: grid;
+    gap: 0.75rem;
+    min-height: 11.5rem;
+    padding: 1rem 1.05rem;
+    position: relative;
+  }
+
+  /* Barra vertical turquesa a la izquierda de cada hito. */
+  .trajectory-timeline li::before {
+    background: var(--color-turq);
+    content: '';
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 4px;
+  }
+  .trajectory-timeline li::after { content: none; }
+
+  .trajectory-timeline span {
+    color: var(--color-mag);
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .trajectory-timeline p {
+    color: rgba(35, 35, 39, 0.76);
+    font-size: 0.93rem;
+    line-height: 1.7;
+  }
+
+  /* --- Galería trayectoria (fotos archivo) ----------------------------- */
+  .trajectory-gallery {
+    display: grid;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .trajectory-gallery figure {
+    background: rgba(255, 255, 255, 0.74);
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    margin: 0;
+    overflow: hidden;
+  }
+  .trajectory-gallery img {
+    aspect-ratio: 4 / 3;
+    display: block;
+    height: auto;
+    object-fit: cover;
+    width: 100%;
+  }
+  .trajectory-gallery figcaption {
+    color: var(--color-mag);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    line-height: 1.7;
+    padding: 0.9rem 1rem 1rem;
+    text-transform: uppercase;
+  }
+
+  /* --- Perfil del artista + facts grid -------------------------------- */
+  .artist-facts-grid {
+    display: grid;
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .artist-profile-story {
+    align-content: stretch;
+    background: linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.76),
+      rgba(255, 255, 255, 0.42)
+    );
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: grid;
+    gap: 0;
+    overflow: hidden;
+  }
+
+  .artist-profile-intro {
+    align-content: start;
+    display: grid;
+    gap: 0.85rem;
+    justify-items: start;
+    padding: 1.35rem 1.4rem 1.45rem;
+    position: relative;
+    text-align: left;
+  }
+  .artist-profile-intro h2 { line-height: 1.08; margin: 0; }
+  /* Barra superior decorativa con gradiente turquesa→magenta. */
+  .artist-profile-intro::before {
+    background: linear-gradient(90deg, var(--color-turq), var(--color-mag));
+    content: '';
+    height: 3px;
+    left: 1.4rem;
+    position: absolute;
+    top: 0;
+    width: 5rem;
+  }
+
+  .artist-profile-summary {
+    color: var(--muted-2);
+    font-size: 1.02rem;
+    line-height: 1.8;
+    margin: 0;
+    max-width: 30ch;
+  }
+
+  .artist-profile-media {
+    margin: 0;
+    overflow: hidden;
+    width: 100%;
+  }
+  .artist-profile-media img {
+    aspect-ratio: 4 / 4.25;
+    display: block;
+    height: auto;
+    object-fit: cover;
+    object-position: center center;
+    width: 100%;
+  }
+
+  .artist-profile-details {
+    align-content: stretch;
+    display: grid;
+  }
+
+  /* Cada fact card alterna turquesa/magenta en su barra superior. */
+  .artist-facts-grid div {
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(35, 35, 39, 0.08);
+    display: grid;
+    gap: 0.5rem;
+    min-height: 9.25rem;
+    overflow: hidden;
+    padding: 1.25rem 1.35rem 1.4rem;
+    position: relative;
+  }
+  .artist-facts-grid div::before {
+    background: var(--color-turq);
+    content: '';
+    height: 3px;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+  .artist-facts-grid div:nth-child(even)::before {
+    background: var(--color-mag);
+  }
+
+  .artist-facts-grid dt {
+    color: var(--color-mag);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .artist-facts-grid dd {
+    color: var(--color-ink);
+    font-family: var(--serif);
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    line-height: 1.45;
+    margin: 0;
+  }
+
+  /* --- Timeline simple (artist-timeline, layout vertical lineal) ------- */
+  .timeline-section {
+    display: grid;
+    gap: 2rem;
+  }
+
+  .artist-timeline {
+    border-left: 2px solid var(--color-turq);
+    display: grid;
+    gap: 1.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0 0 0 2rem;
+  }
+
+  .artist-timeline li {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(5rem, 6rem) 1fr;
+    position: relative;
+  }
+  .artist-timeline li::before {
+    background: var(--color-turq);
+    border-radius: 999px;
+    content: '';
+    height: 0.9rem;
+    left: -2.5rem;
+    position: absolute;
+    top: 0.35rem;
+    width: 0.9rem;
+  }
+
+  .timeline-year {
+    color: var(--color-turq);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /* Estilo común para párrafos secundarios de editorial. */
+  .artist-timeline p,
+  .process-copy p,
+  .returns-section > p,
+  .payment-card p,
+  .contact-details p {
+    color: var(--muted-2);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  /* --- Sección proceso creativo (4 pasos numerados) ------------------- */
+  .process-section {
+    align-items: center;
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 3rem);
+  }
+
+  .process-media { overflow: hidden; }
+  .process-media img {
+    aspect-ratio: 16 / 10;
+    display: block;
+    height: auto;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .process-copy {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .creative-process-flow {
+    display: grid;
+    gap: 1.4rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .creative-process-step {
+    display: grid;
+    gap: 0.8rem;
+    padding-left: 2.2rem;
+    position: relative;
+  }
+  /* Punto turquesa al inicio de cada paso. */
+  .creative-process-step::before {
+    background: var(--color-turq);
+    border-radius: 999px;
+    content: '';
+    height: 0.8rem;
+    left: 0.15rem;
+    position: absolute;
+    top: 0.3rem;
+    width: 0.8rem;
+  }
+  /* Conector vertical + flecha hacia el siguiente paso. */
+  .creative-process-step::after {
+    background:
+      linear-gradient(var(--color-turq), var(--color-turq))
+        center / 2px 100% no-repeat,
+      linear-gradient(
+        135deg,
+        transparent 48%,
+        var(--color-turq) 49% 58%,
+        transparent 59%
+      ) center bottom 0.2rem / 0.7rem 0.7rem no-repeat;
+    content: '';
+    height: calc(100% + 1.4rem);
+    left: 0.53rem;
+    position: absolute;
+    top: 1.1rem;
+    width: 0.9rem;
+  }
+  .creative-process-step:last-child::after { content: none; }
+
+  .creative-process-step span {
+    color: var(--color-turq);
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .creative-process-step h3 {
+    font-size: clamp(1.25rem, 2vw, 1.6rem);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .creative-process-step p {
+    color: var(--muted-2);
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+
+  /* --- Tabla de envíos ------------------------------------------------- */
+  .shipping-table-wrap {
+    border: 1px solid rgba(35, 35, 39, 0.1);
+    overflow-x: auto;
+  }
+
+  .shipping-table {
+    border-collapse: collapse;
+    min-width: 42rem;
+    width: 100%;
+  }
+
+  .shipping-table th,
+  .shipping-table td {
+    border-bottom: 1px solid rgba(35, 35, 39, 0.1);
+    padding: 1rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  .shipping-table thead th {
+    background: rgba(47, 158, 160, 0.08);
+    color: var(--color-ink);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .shipping-table tbody th {
+    color: var(--color-ink);
+    font-family: var(--serif);
+    font-size: 1.35rem;
+  }
+  .shipping-table tbody td {
+    color: var(--muted-2);
+    line-height: 1.7;
+  }
+
+  /* --- Tarjetas de pago ----------------------------------------------- */
+  .payment-grid {
+    display: grid;
+    gap: 1rem;
+  }
+  .payment-card {
+    border: 1px solid rgba(35, 35, 39, 0.1);
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.5rem;
+  }
+  .payment-note {
+    border-left: 4px solid var(--color-mag);
+    color: var(--color-ink);
+    font-weight: 600;
+    margin-top: 1rem !important;
+    padding-left: 1rem;
+  }
+
+  /* Detalle de pagos / envío nacional (PR #12). */
+  .payment-detail {
+    display: grid;
+    gap: 0.85rem;
+    margin: 0.25rem 0 0;
+  }
+  .payment-detail > div {
+    display: grid;
+    gap: 0.2rem;
+  }
+  .payment-detail dt {
+    color: rgba(35, 35, 39, 0.55);
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .payment-detail dd {
+    color: #111111;
+    font-size: 1rem;
+    margin: 0;
+  }
+  .payment-detail dd a { color: #2f9ea0; }
+  .payment-detail-pending {
+    color: rgba(35, 35, 39, 0.5) !important;
+    font-style: italic;
+  }
+
+  .shipping-national-info {
+    display: grid;
+    gap: 1rem;
+  }
+  .shipping-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  .shipping-fields li {
+    border: 1px solid rgba(35, 35, 39, 0.18);
+    color: #111111;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    padding: 0.55rem 0.95rem;
+    text-transform: uppercase;
+  }
+
+  /* --- Formulario de contacto ----------------------------------------- */
+  .contact-layout {
+    display: grid;
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .contact-form,
+  .contact-details {
+    background: rgba(255, 255, 255, 0.46);
+    border: 1px solid rgba(35, 35, 39, 0.1);
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .contact-form {
+    display: grid;
+    gap: 1.25rem;
+    min-height: 100%;
+  }
+  .contact-form-grid {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .contact-form label {
+    display: grid;
+    gap: 0.65rem;
+  }
+  .contact-form label span {
+    color: var(--color-ink);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .contact-form input,
+  .contact-form textarea {
+    background: #fff;
+    border: 1px solid rgba(35, 35, 39, 0.18);
+    border-radius: 2px;
+    color: var(--color-char);
+    font: inherit;
+    padding: 0.9rem 1rem;
+    resize: vertical;
+    width: 100%;
+  }
+  .contact-form input:focus,
+  .contact-form textarea:focus {
+    border-color: var(--color-turq);
+    outline: 2px solid rgba(47, 158, 160, 0.16);
+  }
+
+  .contact-submit {
+    align-items: center;
+    background: var(--color-ink);
+    border: 0;
+    border-radius: 2px;
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    justify-content: center;
+    letter-spacing: 0.18em;
+    min-height: 3rem;
+    padding: 0 1.5rem;
+    text-transform: uppercase;
+    width: fit-content;
+  }
+  .contact-submit:hover { background: var(--color-turq); }
+
+  /* Estados del formulario de contacto con envío real vía Resend (PR #12). */
+  .contact-submit:disabled {
+    background: rgba(35, 35, 39, 0.45);
+    cursor: not-allowed;
+  }
+  .contact-field-error {
+    color: #c84d92;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    margin-top: 0.35rem;
+  }
+  .contact-form input[aria-invalid='true'],
+  .contact-form textarea[aria-invalid='true'] {
+    border-color: #c84d92;
+  }
+  .contact-form-feedback {
+    border-radius: 2px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0.85rem 1rem;
+    text-transform: uppercase;
+  }
+  .contact-form-feedback--success {
+    background: rgba(47, 158, 160, 0.12);
+    border: 1px solid rgba(47, 158, 160, 0.4);
+    color: #1f7172;
+  }
+  .contact-form-feedback--error {
+    background: rgba(200, 77, 146, 0.1);
+    border: 1px solid rgba(200, 77, 146, 0.4);
+    color: #a83c7a;
+  }
+
+  .contact-details {
+    align-content: start;
+    display: grid;
+    gap: 1.75rem;
+  }
+  .contact-details a {
+    color: var(--color-ink);
+    font-size: 1.05rem;
+    text-decoration: none;
+  }
+  .contact-details a:hover { color: var(--color-turq); }
+
+
+  /* === 6.14 FLOATING WHATSAPP ==========================================
+   *
+   * El botón se renderiza plegado por defecto como un círculo turquesa
+   * que solo muestra el ícono de WhatsApp. Al recibir hover/focus se
+   * expande hacia la izquierda revelando la etiqueta "Chatear" con un
+   * fade-in. Está anclado a `right`/`bottom`, por lo que el crecimiento
+   * a la izquierda mantiene el ícono fijo bajo el cursor.
+   *
+   * El orden en el DOM es <strong> + <span icon>; el ícono queda a la
+   * derecha y el texto desliza hacia afuera al expandirse.
+   */
+
+  /* Contenedor ─ círculo plegado por defecto. */
+  .floating-whatsapp {
+    align-items: center;
+    background: var(--color-turq);
+    border-radius: 999px;
+    bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(47, 158, 160, 0.32);
+    color: #fff;
+    display: inline-flex;
+    height: 3.5rem;
+    position: fixed;
+    right: 1.5rem;
+    text-decoration: none;
+    transition: box-shadow 240ms ease;
+    z-index: 20;
+  }
+
+  .floating-whatsapp:hover,
+  .floating-whatsapp:focus-visible {
+    box-shadow: 0 12px 30px rgba(47, 158, 160, 0.45);
+    outline: none;
+  }
+
+  /* Ícono ─ tamaño fijo, define el lado del círculo plegado. */
+  .floating-whatsapp-icon {
+    align-items: center;
+    display: inline-flex;
+    flex-shrink: 0;
+    height: 3.5rem;
+    justify-content: center;
+    width: 3.5rem;
+  }
+  .floating-whatsapp-icon svg {
+    color: #fff;
+    display: block;
+    height: 1.4rem;
+    width: 1.4rem;
+  }
+
+  /* Etiqueta ─ colapsada (max-width 0) por defecto; se expande en hover. */
+  .floating-whatsapp-label {
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    margin: 0;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding-left: 0;
+    text-transform: uppercase;
+    transition:
+      max-width 280ms ease,
+      opacity 200ms ease 60ms,
+      padding-left 280ms ease;
+    white-space: nowrap;
+  }
+
+  .floating-whatsapp:hover .floating-whatsapp-label,
+  .floating-whatsapp:focus-visible .floating-whatsapp-label {
+    max-width: 8rem;
+    opacity: 1;
+    padding-left: 1.1rem;
+  }
+
+  /* Accesibilidad: respeta la preferencia de movimiento reducido. */
+  @media (prefers-reduced-motion: reduce) {
+    .floating-whatsapp,
+    .floating-whatsapp-label {
+      transition: none;
+    }
+  }
+
+
+  /* === 6.16 SCROLL REVEAL ===============================================
+   *
+   * Animación de entrada al hacer scroll. La clase `.reveal` la añade el
+   * componente `ScrollReveal` en cliente (vía layout-effect, antes del
+   * primer paint → sin parpadeo). `is-revealed` se alterna según la
+   * intersección con el viewport, por lo que anima al bajar y al subir.
+   * Sin JS, el contenido nunca recibe `.reveal` y se ve normal.
+   */
+  .reveal {
+    opacity: 0;
+    /* Desplazamiento + leve escala para que la entrada se note claramente. */
+    transform: translateY(56px) scale(0.97);
+    transition:
+      opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reveal.is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal,
+    .reveal.is-revealed {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
+
+  /* === 6.15 BREAKPOINTS EDITORIALES ==================================== */
+
+  /* Desktop (≥ 900px): layouts en dos columnas para hero, proceso,
+   * contacto, sección artista, payments, shipping. */
+  @media (min-width: 900px) {
+    .editorial-hero {
+      grid-template-columns: minmax(0, 1fr) minmax(20rem, 34rem);
+    }
+
+    .process-section,
+    .contact-layout {
+      grid-template-columns: minmax(32rem, 1.6fr) minmax(20rem, 0.8fr);
+    }
+
+    .artist-biography,
+    .artist-statement,
+    .artist-facts-section,
+    .artist-trajectory,
+    .galapagos-section,
+    .returns-section,
+    .payments-section,
+    .shipping-table-section,
+    .shipping-national-section {
+      align-items: start;
+      grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
+    }
+
+    .artist-facts-section {
+      align-items: stretch;
+      gap: clamp(1.75rem, 3vw, 2.75rem);
+      grid-template-columns: minmax(20rem, 0.86fr) minmax(0, 1.14fr);
+    }
+
+    .artist-profile-story {
+      grid-template-columns: minmax(10rem, 0.9fr) minmax(11rem, 1.1fr);
+    }
+    .artist-profile-media img {
+      aspect-ratio: auto;
+      height: 100%;
+      object-position: center center;
+    }
+
+    .artist-statement .editorial-two-column-copy,
+    .artist-biography .editorial-two-column-copy {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .statement-works-gallery {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    /* Último párrafo del cuerpo editorial ocupa ancho completo. */
+    .artist-statement .editorial-two-column-copy p:last-child,
+    .artist-biography .editorial-two-column-copy p:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .artist-facts-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    /* La última fact card ocupa la fila completa. */
+    .artist-facts-grid div:last-child {
+      grid-column: 1 / -1;
+      min-height: 7.5rem;
+    }
+
+    .galapagos-section { grid-template-columns: 1fr; }
+    .galapagos-header {
+      align-items: start;
+      gap: clamp(1.5rem, 3vw, 2.75rem);
+      grid-template-columns: minmax(18rem, 0.95fr) minmax(0, 1.05fr);
+    }
+    .galapagos-gallery {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .galapagos-gallery figure { min-height: 0; }
+
+    .trajectory-gallery  { grid-template-columns: 1fr; }
+    .trajectory-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .payment-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .contact-form-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Mobile (< 900px): timeline a una columna, floating WhatsApp más bajo. */
+  @media (max-width: 899px) {
+    .artist-timeline li { grid-template-columns: 1fr; }
+
+    .floating-whatsapp {
+      bottom: 1rem;
+      right: 1rem;
+    }
+  }
+
+  /* Desktop ancho (≥ 1280px): timeline trajectory en 4 columnas. */
+  @media (min-width: 1280px) {
+    .trajectory-timeline {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+
+  /* < 1280px: relaja la altura mínima del timeline. */
+  @media (max-width: 1279px) {
+    .trajectory-timeline li { min-height: auto; }
+  }
+}
+
+
+/* =============================================================================
+ * 7. CAPA DE UTILIDADES
+ * ========================================================================== */
+@layer utilities {
+  /* Screen-reader only (visualmente oculto, accesible por A11y). */
+  .sr-only {
+    border-width: 0;
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+}

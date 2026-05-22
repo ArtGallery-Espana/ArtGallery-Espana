@@ -13,10 +13,9 @@ import {
 import type {Route} from './+types/root';
 import favicon from '~/assets/favicon.svg';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
-import resetStyles from '~/styles/reset.css?url';
-import appStyles from '~/styles/app.css?url';
-import tailwindCss from './styles/tailwind.css?url';
+import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
+import {countryToCurrency} from '~/lib/i18n';
 
 export type RootLoader = typeof loader;
 
@@ -79,6 +78,7 @@ export async function loader(args: Route.LoaderArgs) {
     ...deferredData,
     ...criticalData,
     publicStoreDomain: env.PUBLIC_STORE_DOMAIN,
+    selectedCurrency: countryToCurrency(storefront.i18n.country),
     shop: getShopAnalytics({
       storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
@@ -150,9 +150,7 @@ export function Layout({children}: {children?: React.ReactNode}) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <link rel="stylesheet" href={resetStyles}></link>
-        <link rel="stylesheet" href={appStyles}></link>
-        <link rel="stylesheet" href={tailwindCss}></link>
+        <link rel="stylesheet" href={tailwindCss} />
         <Meta />
         <Links />
       </head>

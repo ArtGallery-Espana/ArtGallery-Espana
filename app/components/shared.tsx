@@ -1,5 +1,7 @@
 import type {ReactNode} from 'react';
-import {Link, NavLink} from 'react-router';
+import {useEffect, useState} from 'react';
+import {Form, Link, NavLink, useLocation} from 'react-router';
+import type {CurrencyChoice} from '~/lib/i18n';
 
 type NavItem = {
   label: string;
@@ -23,6 +25,7 @@ type TopBarProps = {
   navItems?: NavItem[];
   languages?: LanguageItem[];
   currentLanguage?: string;
+  currency?: CurrencyChoice;
   cartCount?: number;
   cartHref?: string;
   onLanguageChange?: (language: string) => void;
@@ -59,18 +62,41 @@ const DEFAULT_CONTACT = {
   address: 'Taller Galeria J España',
 };
 
+/**
+ * Indica si la página ha hecho scroll más allá de `threshold` px.
+ *
+ * Alterna el header entre transparente (en el tope) y sólido (al
+ * scrollear). Usa un listener pasivo y calcula el estado inicial en el
+ * mount para cubrir el caso de recargar con la página ya desplazada.
+ */
+function useHasScrolled(threshold = 8): boolean {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const update = () => setScrolled(window.scrollY > threshold);
+    update();
+    window.addEventListener('scroll', update, {passive: true});
+    return () => window.removeEventListener('scroll', update);
+  }, [threshold]);
+
+  return scrolled;
+}
+
 export function TopBar({
   logoText = 'Galeria Taller J España',
-  logoSrc = '/logo-j-esparza.svg',
+  logoSrc = '/logo-j-espana.jpeg',
   navItems = DEFAULT_NAV_ITEMS,
   languages = DEFAULT_LANGUAGES,
   currentLanguage = 'ES',
+  currency = 'USD',
   cartCount = 0,
   cartHref = '/cart',
   onLanguageChange,
 }: TopBarProps) {
+  const scrolled = useHasScrolled();
+
   return (
-    <header className="shared-topbar">
+    <header className={`shared-topbar${scrolled ? ' is-scrolled' : ''}`}>
       <Link className="shared-topbar-logo" to="/" aria-label={logoText}>
         {logoSrc && (
           <img
@@ -115,6 +141,8 @@ export function TopBar({
           </select>
         </label>
 
+        <CurrencySelector currency={currency} />
+
         <Link className="shared-cart-button" to={cartHref} aria-label="Carrito">
           <span>Carrito</span>
           <span className="shared-cart-badge" aria-label={`${cartCount} items`}>
@@ -123,6 +151,46 @@ export function TopBar({
         </Link>
       </div>
     </header>
+  );
+}
+
+function CurrencySelector({currency}: {currency: CurrencyChoice}) {
+  const location = useLocation();
+  const redirectTo = location.pathname + location.search;
+
+  return (
+    <Form method="post" action="/currency" className="shared-currency">
+      <input type="hidden" name="redirectTo" value={redirectTo} />
+      <button
+        type="submit"
+        name="currency"
+        value="USD"
+        aria-pressed={currency === 'USD'}
+        className={
+          currency === 'USD'
+            ? 'shared-currency-option shared-currency-option-active'
+            : 'shared-currency-option'
+        }
+      >
+        USD $
+      </button>
+      <span className="shared-currency-divider" aria-hidden="true">
+        |
+      </span>
+      <button
+        type="submit"
+        name="currency"
+        value="EUR"
+        aria-pressed={currency === 'EUR'}
+        className={
+          currency === 'EUR'
+            ? 'shared-currency-option shared-currency-option-active'
+            : 'shared-currency-option'
+        }
+      >
+        EUR €
+      </button>
+    </Form>
   );
 }
 
