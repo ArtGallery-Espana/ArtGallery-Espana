@@ -34,7 +34,7 @@ export const WHATSAPP_PHONE_DISPLAY = '+593 99 807 3728';
 // destinatario (no solo al correo de la cuenta). `api.consultation.tsx` usa
 // `CONTACT_FROM_EMAIL` si está definido en el entorno; si no, este valor.
 export const EMAIL_FROM =
-  'Galería Taller J España <no-reply@notifications.artgalleryjorgeespana.com>';
+  'Galería J. España <no-reply@notifications.artgalleryjorgeespana.com>';
 
 // ── Builders de URL ────────────────────────────────────────────────────────
 
@@ -136,7 +136,7 @@ export function renderConsultationEmail(payload: ConsultationPayload): string {
       </div>
 
       <p style="margin:32px 0 0;padding-top:16px;border-top:1px solid #e8e3dc;font-size:11px;color:rgba(35,35,39,0.55);">
-        Enviado desde el storefront de Galería Taller J España.
+        Enviado desde el storefront de Galería J. España.
       </p>
     </div>
   </body>

@@ -5,7 +5,7 @@ import {Image, Money} from '@shopify/hydrogen';
 import type {CatalogProductFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = () => [
-  {title: 'Galería Taller J España | Catálogo'},
+  {title: 'Galería J. España | Catálogo'},
 ];
 
 export async function loader({context}: Route.LoaderArgs) {

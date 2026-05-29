@@ -27,7 +27,7 @@ import {
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [
-    {title: `${data?.product.title ?? 'Obra'} | Galería Taller J España`},
+    {title: `${data?.product.title ?? 'Obra'} | Galería J. España`},
     {
       rel: 'canonical',
       href: `/products/${data?.product.handle}`,

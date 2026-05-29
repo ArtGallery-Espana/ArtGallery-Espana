@@ -7,7 +7,7 @@ import {FeaturedWorksCarousel} from '~/components/FeaturedWorksCarousel';
 import {buildFeaturedSlides} from '~/lib/featuredWorks';
 
 export const meta: Route.MetaFunction = () => {
-  return [{title: 'Galeria Taller J España | Home'}];
+  return [{title: 'Galería J. España | Inicio'}];
 };
 
 export async function loader({context}: Route.LoaderArgs) {

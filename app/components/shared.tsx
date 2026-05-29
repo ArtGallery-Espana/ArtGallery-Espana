@@ -56,10 +56,12 @@ const DEFAULT_LANGUAGES = [
   {label: 'EN', value: 'EN'},
 ];
 
+// Datos de contacto visibles en el footer y la página de Contacto.
+// El dominio del email es fijo (verificado en Resend); solo cambia el nombre del remitente.
 const DEFAULT_CONTACT = {
   email: 'contacto@galeriatallerjespana.com',
   whatsapp: '+593 000 000 000',
-  address: 'Taller Galeria J España',
+  address: 'Galería J. España',
 };
 
 /**
@@ -83,7 +85,7 @@ function useHasScrolled(threshold = 8): boolean {
 }
 
 export function TopBar({
-  logoText = 'Galeria Taller J España',
+  logoText = 'Galería J. España',
   logoSrc = '/logo-j-espana.jpeg',
   navItems = DEFAULT_NAV_ITEMS,
   languages = DEFAULT_LANGUAGES,
@@ -195,7 +197,7 @@ function CurrencySelector({currency}: {currency: CurrencyChoice}) {
 }
 
 export function Footer({
-  brandName = 'Galeria Taller J España',
+  brandName = 'Galería J. España',
   navItems = DEFAULT_NAV_ITEMS,
   contact = DEFAULT_CONTACT,
   legalItems = [
