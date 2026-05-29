@@ -729,17 +729,26 @@
     padding: 0.875rem clamp(1rem, 4vw, 3rem);
     position: sticky;
     top: 0;
+    /* Se animan fondo, borde, altura y padding al hacer scroll */
     transition:
       background-color 280ms ease,
       border-color 280ms ease,
-      backdrop-filter 280ms ease;
-    z-index: 5;
+      backdrop-filter 280ms ease,
+      min-height 280ms ease,
+      padding-top 280ms ease,
+      padding-bottom 280ms ease;
+    /* z-index alto para quedar sobre el panel móvil (z:45) y overlays de contenido */
+    z-index: 50;
   }
 
+  /* Estado scrolled: fondo translúcido + altura comprimida para liberar pantalla */
   .shared-topbar.is-scrolled {
-    background: rgba(31, 26, 23, 0.82);
-    backdrop-filter: blur(12px);
+    background: rgba(26, 26, 31, 0.92);
+    backdrop-filter: blur(16px);
     border-bottom-color: rgba(255, 255, 255, 0.1);
+    min-height: 52px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .shared-topbar-logo {
@@ -755,9 +764,7 @@
     transition: color 280ms ease;
   }
 
-  .shared-topbar.is-scrolled .shared-topbar-logo {
-    color: #fff;
-  }
+  .shared-topbar.is-scrolled .shared-topbar-logo { color: #fff; }
 
   .shared-topbar-logo-image {
     background: #050505;
@@ -765,7 +772,13 @@
     display: block;
     height: 3rem;
     object-fit: contain;
+    /* La imagen se encoge proporcionalmente cuando el header se comprime */
+    transition: height 280ms ease, width 280ms ease;
     width: 3rem;
+  }
+  .shared-topbar.is-scrolled .shared-topbar-logo-image {
+    height: 2rem;
+    width: 2rem;
   }
 
   .shared-topbar-nav {
@@ -858,6 +871,19 @@
     border-color: rgba(255, 255, 255, 0.22);
   }
 
+  /* Scrolled: adaptar selectores de idioma y moneda al fondo oscuro.
+   * Sin esto aparecen como recuadros blancos sobre el header translúcido. */
+  .shared-topbar.is-scrolled .shared-language select,
+  .shared-topbar.is-scrolled .shared-currency {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .shared-topbar.is-scrolled .shared-currency-option { color: rgba(255, 255, 255, 0.65); }
+  .shared-topbar.is-scrolled .shared-currency-option:hover,
+  .shared-topbar.is-scrolled .shared-currency-option-active { color: #fff; }
+  .shared-topbar.is-scrolled .shared-currency-divider { color: rgba(255, 255, 255, 0.25); }
+
   .shared-cart-badge {
     align-items: center;
     background: #d4148e;
@@ -926,16 +952,140 @@
     padding-top: 1rem;
   }
 
-  /* Responsive shared TopBar/Footer */
+  /* ─── Hamburguesa y menú móvil ──────────────────────────────────────────
+   * El botón hamburguesa convierte sus tres barras en una X animada.
+   * Cada <span> es una barra horizontal que rota o desaparece al abrir.
+   * ──────────────────────────────────────────────────────────────────── */
+  .shared-hamburger {
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: #1f1a17;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    height: 44px;
+    justify-content: center;
+    padding: 0;
+    width: 44px;
+  }
+  /* Color blanco cuando el header está oscuro (scrolled o menú abierto) */
+  .shared-topbar.is-scrolled .shared-hamburger,
+  .shared-topbar.menu-open .shared-hamburger { color: #fff; }
+
+  .shared-hamburger span {
+    background: currentColor;
+    border-radius: 2px;
+    display: block;
+    height: 1.5px;
+    transition: transform 280ms ease, opacity 280ms ease, width 280ms ease;
+    width: 22px;
+  }
+  /* Las tres barras se convierten en X al abrir el menú */
+  .shared-topbar.menu-open .shared-hamburger span:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+  }
+  .shared-topbar.menu-open .shared-hamburger span:nth-child(2) {
+    opacity: 0;
+    width: 0;
+  }
+  .shared-topbar.menu-open .shared-hamburger span:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+  }
+
+  /* ─── Panel de menú móvil ────────────────────────────────────────────────
+   * Overlay de pantalla completa que aparece sobre el contenido.
+   * z-index: 45 → queda debajo del header (z:50) pero sobre todo lo demás,
+   * así la hamburguesa/X siempre es visible y accesible.
+   * ──────────────────────────────────────────────────────────────────── */
+  .shared-mobile-menu {
+    align-items: flex-start;
+    background: var(--color-tinta);
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    inset: 0;
+    justify-content: center;
+    opacity: 0;
+    padding: clamp(5rem, 12vw, 7rem) clamp(1.5rem, 6vw, 3rem) clamp(2rem, 6vw, 3rem);
+    pointer-events: none;
+    position: fixed;
+    transform: translateY(-12px);
+    transition: opacity 260ms ease, transform 260ms ease;
+    z-index: 45;
+  }
+  .shared-mobile-menu.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  /* Cada enlace del menú: Playfair Display grande, con subrayado sutil */
+  .shared-mobile-menu nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+  }
+  .shared-mobile-menu nav a {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: rgba(246, 241, 234, 0.8);
+    display: block;
+    font-family: var(--font-serif);
+    font-size: clamp(1.75rem, 7vw, 2.75rem);
+    font-weight: 400;
+    line-height: 1.2;
+    padding: 0.75rem 0;
+    text-decoration: none;
+    transition: color 180ms ease, padding-left 180ms ease;
+  }
+  .shared-mobile-menu nav a:first-child { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .shared-mobile-menu nav a:hover { color: var(--color-ivory); padding-left: 0.4rem; }
+  .shared-mobile-menu nav a.active { color: var(--color-mag); }
+
+  /* Selector de moneda al pie del menú móvil */
+  .shared-mobile-menu-footer { opacity: 0.55; }
+  .shared-mobile-menu-footer .shared-currency {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .shared-mobile-menu-footer .shared-currency-option { color: rgba(255, 255, 255, 0.7); }
+  .shared-mobile-menu-footer .shared-currency-option-active,
+  .shared-mobile-menu-footer .shared-currency-option:hover { color: #fff; }
+  .shared-mobile-menu-footer .shared-currency-divider { color: rgba(255, 255, 255, 0.2); }
+
+  /* ─── Responsive: escritorio vs móvil ───────────────────────────────── */
+
+  /* Escritorio (> 760px): nav + acciones visibles, hamburguesa y menú ocultos */
+  @media (min-width: 761px) {
+    .shared-topbar-mobile-actions { display: none; }
+    /* El menú móvil nunca debe aparecer en escritorio */
+    .shared-mobile-menu { display: none !important; }
+  }
+
+  /* Móvil (≤ 760px): layout compacto — logo a la izquierda, acciones a la derecha */
   @media (max-width: 760px) {
     .shared-topbar {
-      grid-template-columns: 1fr;
+      /* Dos columnas: logo ocupa el espacio libre, acciones a la derecha */
+      grid-template-columns: 1fr auto;
+      min-height: 60px;
+      padding: 0.625rem clamp(1rem, 4vw, 1.5rem);
     }
+    .shared-topbar.is-scrolled {
+      min-height: 52px;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    /* Ocultar nav y utilidades de escritorio */
     .shared-topbar-nav,
-    .shared-topbar-actions {
-      justify-content: flex-start;
+    .shared-topbar-actions { display: none; }
+    /* Mostrar acciones móviles (carrito + hamburguesa) */
+    .shared-topbar-mobile-actions {
+      align-items: center;
+      display: flex;
+      gap: 0.5rem;
     }
-    .shared-topbar-nav { flex-wrap: wrap; }
     .shared-footer-grid { grid-template-columns: 1fr; }
   }
 
