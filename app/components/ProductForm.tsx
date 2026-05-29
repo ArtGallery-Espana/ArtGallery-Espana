@@ -44,7 +44,7 @@ export function ProductForm({
                 const baseClassName = `inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2 text-[11px] uppercase tracking-[0.16em] transition ${
                   selected
                     ? 'border-[#111111] bg-[#111111] text-white'
-                    : 'border-[rgba(35,35,39,.18)] text-[#232327] hover:border-[#2F9EA0] hover:text-[#2F9EA0]'
+                    : 'border-[rgba(35,35,39,.18)] text-[#232327] hover:border-[#C84D92] hover:text-[#C84D92]'
                 }`;
 
                 if (isDifferentProduct) {
@@ -88,7 +88,7 @@ export function ProductForm({
         );
       })}
       <AddToCartButton
-        className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
         disabled={!selectedVariant || !selectedVariant.availableForSale}
         onClick={() => {
           open('cart');

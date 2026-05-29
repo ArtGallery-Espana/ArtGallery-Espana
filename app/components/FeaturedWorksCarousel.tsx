@@ -150,7 +150,7 @@ function CarouselSlideView({slide, eager}: CarouselSlideViewProps) {
               </span>
             ) : null}
             {/* Pista visual (no es un <Link> anidado: toda la slide ya enlaza). */}
-            <span className="inline-flex items-center gap-2 border-b border-[rgba(246,241,234,.5)] pb-1 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#F6F1EA] transition group-hover:border-[#2F9EA0] group-hover:text-[#2F9EA0]">
+            <span className="inline-flex items-center gap-2 border-b border-[rgba(246,241,234,.5)] pb-1 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#F6F1EA] transition group-hover:border-[#C84D92] group-hover:text-[#C84D92]">
               Ver obra →
             </span>
           </div>

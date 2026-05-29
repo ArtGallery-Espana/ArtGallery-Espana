@@ -33,7 +33,7 @@
 /* =============================================================================
  * 1. FUENTES EXTERNAS
  * ========================================================================== */
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
 
 /* =============================================================================
@@ -50,18 +50,28 @@
  *   - Utilidad Tailwind            → bg-ivory, text-ivory, border-ivory…
  * ========================================================================== */
 @theme {
-  /* --- Colores de marca ---------------------------------------------------- */
-  --color-ivory: #f6f1ea;       /* Fondo general              */
-  --color-char:  #232327;       /* Texto principal            */
-  --color-ink:   #111111;       /* Titulares                  */
-  --color-turq:  #2f9ea0;       /* Acento turquesa            */
-  --color-mag:   #c84d92;       /* Acento magenta             */
-  --color-dark:  #000000;       /* Skeleton (legacy)          */
-  --color-light: #ffffff;       /* Skeleton (legacy)          */
+  /* --- Paleta Curaduría Magenta -------------------------------------------- */
+  /* Base */
+  --color-ivory:    #f6f1ea;   /* Marfil — fondo principal del sitio    */
+  --color-papel:    #ffffff;   /* Papel — tarjetas de obra, formularios */
+  --color-piedra:   #eee8e1;   /* Piedra — secciones secundarias        */
+  --color-niebla:   #d9d4cf;   /* Niebla — bordes, separadores          */
+  --color-carbon:   #1a1a1f;   /* Carbón — texto de cuerpo              */
+  --color-tinta:    #0f0f12;   /* Tinta — titulares, botón primario     */
+  /* Acentos curatoriales */
+  --color-mag:      #c84d92;   /* Magenta — kickers, énfasis, CTA       */
+  --color-mag-deep: #a23a76;   /* Magenta profundo — hover/activo       */
+  --color-mag-soft: #e5bbd5;   /* Magenta suave — fondos delicados      */
+  --color-lavanda:  #d7c8e8;   /* Lavanda — apoyo curatorial            */
+  /* Aliases legacy (mantienen compatibilidad con código existente) */
+  --color-char:  #1a1a1f;
+  --color-ink:   #0f0f12;
+  --color-dark:  #000000;
+  --color-light: #ffffff;
 
-  /* --- Familias tipográficas ---------------------------------------------- */
-  --font-serif: "Cormorant Garamond", "EB Garamond", Georgia, serif;
-  --font-sans:  "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* --- Tipografía Curaduría Magenta --------------------------------------- */
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans:  "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
@@ -74,12 +84,21 @@
  * Estos aliases mantienen ese contrato sin tocar los TSX.
  * ========================================================================== */
 :root {
-  /* Colores (alias cortos) */
-  --ivory: var(--color-ivory);
-  --char:  var(--color-char);
-  --ink:   var(--color-ink);
-  --turq:  var(--color-turq);
-  --mag:   var(--color-mag);
+  /* Colores Curaduría Magenta */
+  --ivory:    var(--color-ivory);
+  --papel:    var(--color-papel);
+  --piedra:   var(--color-piedra);
+  --niebla:   var(--color-niebla);
+  --carbon:   var(--color-carbon);
+  --tinta:    var(--color-tinta);
+  --mag:      var(--color-mag);
+  --mag-deep: var(--color-mag-deep);
+  --mag-soft: var(--color-mag-soft);
+  --lavanda:  var(--color-lavanda);
+  /* Aliases legacy */
+  --char: var(--color-carbon);
+  --ink:  var(--color-tinta);
+  --turq: var(--color-mag);   /* turquesa redirigido a magenta */
 
   /* Tipografía (alias cortos) */
   --serif: var(--font-serif);
@@ -87,8 +106,8 @@
   --mono:  var(--font-mono);
 
   /* Acentos derivados del texto principal */
-  --muted:   rgba(35, 35, 39, 0.55);
-  --muted-2: rgba(35, 35, 39, 0.72);
+  --muted:   rgba(26, 26, 31, 0.55);
+  --muted-2: rgba(26, 26, 31, 0.72);
 
   /* Layout (skeleton: aside, header, grids, cart drawer) */
   --aside-width: 400px;
@@ -105,7 +124,7 @@
 @layer base {
   /* --- Body ---------------------------------------------------------------
    * Combina el reset del skeleton (flex-column min-height) con la identidad
-   * editorial (fondo ivory, tipografía Inter, antialiasing).
+   * editorial (fondo ivory, tipografía Manrope, antialiasing).
    */
   body {
     background: var(--ivory);
@@ -261,7 +280,9 @@
     html:has(.overlay.expanded) { overflow: hidden; }
   }
 
-  aside {
+  /* Drawer del overlay (cart/search) — acotado a .overlay para no
+   * contaminar elementos <aside> editoriales como .contact-details. */
+  .overlay aside {
     background: var(--color-light);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
     height: 100vh;
@@ -272,7 +293,7 @@
     transition: transform 200ms ease-in-out;
   }
 
-  aside header {
+  .overlay aside header {
     align-items: center;
     border-bottom: 1px solid var(--color-dark);
     display: flex;
@@ -281,22 +302,22 @@
     padding: 0 20px;
   }
 
-  aside header h2 { margin-top: 0; margin-bottom: 0.6rem; }
-  aside header h3 { margin: 0; }
+  .overlay aside header h2 { margin-top: 0; margin-bottom: 0.6rem; }
+  .overlay aside header h3 { margin: 0; }
 
-  aside header .close {
+  .overlay aside header .close {
     font-weight: bold;
     opacity: 0.8;
     text-decoration: none;
     transition: all 200ms;
     width: 20px;
   }
-  aside header .close:hover { opacity: 1; }
+  .overlay aside header .close:hover { opacity: 1; }
 
-  aside main { margin: 1rem; }
-  aside p { margin: 0 0 0.25rem; }
-  aside p:last-child { margin: 0; }
-  aside li { margin-bottom: 0.125rem; }
+  .overlay aside main { margin: 1rem; }
+  .overlay aside p { margin: 0 0 0.25rem; }
+  .overlay aside p:last-child { margin: 0; }
+  .overlay aside li { margin-bottom: 0.125rem; }
 
   .overlay {
     background: rgba(0, 0, 0, 0.2);
@@ -725,7 +746,7 @@
     align-items: center;
     color: #1f1a17;
     display: inline-flex;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: clamp(1.25rem, 2.4vw, 1.875rem);
     font-weight: 700;
     gap: 0.75rem;
@@ -764,14 +785,14 @@
     transition: color 200ms ease;
   }
   .shared-topbar-link:hover,
-  .shared-topbar-link-active { color: var(--color-turq); }
+  .shared-topbar-link-active { color: var(--color-mag); }
   .shared-topbar-link-active { font-weight: 700; }
 
-  /* Scrolled: links blancos, hover/active turquesa. */
+  /* Scrolled: links blancos, hover/active magenta. */
   .shared-topbar.is-scrolled .shared-topbar-link { color: #fff; }
   .shared-topbar.is-scrolled .shared-topbar-link:hover,
   .shared-topbar.is-scrolled .shared-topbar-link-active {
-    color: var(--color-turq);
+    color: var(--color-mag);
   }
 
   .shared-topbar-actions {
@@ -894,7 +915,7 @@
     margin: 0;
     text-decoration: none;
   }
-  .shared-footer a:hover { color: #21b8b8; }
+  .shared-footer a:hover { color: var(--color-mag-soft); }
 
   .shared-footer-copy {
     border-top: 1px solid rgba(255, 255, 255, 0.16);
@@ -945,26 +966,26 @@
     text-decoration: none !important;
   }
 
-  /* Outline: borde + texto char → hover turquesa. */
+  /* Outline: borde + texto carbon → hover magenta. */
   .home-cta-outline,
-  .home-cta-outline:visited { color: #232327 !important; }
+  .home-cta-outline:visited { color: var(--color-carbon) !important; }
 
   .home-cta-outline:hover,
   .home-cta-outline:active,
   .home-cta-link:hover,
   .home-cta-link:active {
-    border-color: var(--color-turq) !important;
-    color: var(--color-turq) !important;
+    border-color: var(--color-mag) !important;
+    color: var(--color-mag) !important;
     text-decoration: none !important;
   }
 
-  /* Ghost: borde turquesa → hover relleno turquesa con texto blanco. */
+  /* Ghost: borde magenta → hover relleno magenta profundo con texto blanco. */
   .home-cta-ghost,
-  .home-cta-ghost:visited { color: var(--color-turq) !important; }
+  .home-cta-ghost:visited { color: var(--color-mag) !important; }
 
   .home-cta-ghost:hover,
   .home-cta-ghost:active {
-    background-color: var(--color-turq) !important;
+    background-color: var(--color-mag-deep) !important;
     color: #fff !important;
   }
 
@@ -1241,9 +1262,9 @@
     position: relative;
   }
 
-  /* Barra vertical turquesa a la izquierda de cada hito. */
+  /* Barra vertical magenta suave a la izquierda de cada hito. */
   .trajectory-timeline li::before {
-    background: var(--color-turq);
+    background: var(--color-lavanda);
     content: '';
     height: 100%;
     left: 0;
@@ -1325,9 +1346,9 @@
     text-align: left;
   }
   .artist-profile-intro h2 { line-height: 1.08; margin: 0; }
-  /* Barra superior decorativa con gradiente turquesa→magenta. */
+  /* Barra superior decorativa con gradiente lavanda→magenta. */
   .artist-profile-intro::before {
-    background: linear-gradient(90deg, var(--color-turq), var(--color-mag));
+    background: linear-gradient(90deg, var(--color-lavanda), var(--color-mag));
     content: '';
     height: 3px;
     left: 1.4rem;
@@ -1363,7 +1384,7 @@
     display: grid;
   }
 
-  /* Cada fact card alterna turquesa/magenta en su barra superior. */
+  /* Cada fact card alterna lavanda/magenta en su barra superior. */
   .artist-facts-grid div {
     background: rgba(255, 255, 255, 0.72);
     border: 1px solid rgba(35, 35, 39, 0.08);
@@ -1375,7 +1396,7 @@
     position: relative;
   }
   .artist-facts-grid div::before {
-    background: var(--color-turq);
+    background: var(--color-lavanda);
     content: '';
     height: 3px;
     left: 0;
@@ -1409,7 +1430,7 @@
   }
 
   .artist-timeline {
-    border-left: 2px solid var(--color-turq);
+    border-left: 2px solid var(--color-lavanda);
     display: grid;
     gap: 1.75rem;
     list-style: none;
@@ -1424,7 +1445,7 @@
     position: relative;
   }
   .artist-timeline li::before {
-    background: var(--color-turq);
+    background: var(--color-mag);
     border-radius: 999px;
     content: '';
     height: 0.9rem;
@@ -1435,7 +1456,7 @@
   }
 
   .timeline-year {
-    color: var(--color-turq);
+    color: var(--color-mag);
     font-family: var(--mono);
     font-size: 0.78rem;
     letter-spacing: 0.18em;
@@ -1488,9 +1509,9 @@
     padding-left: 2.2rem;
     position: relative;
   }
-  /* Punto turquesa al inicio de cada paso. */
+  /* Punto magenta al inicio de cada paso. */
   .creative-process-step::before {
-    background: var(--color-turq);
+    background: var(--color-mag);
     border-radius: 999px;
     content: '';
     height: 0.8rem;
@@ -1502,12 +1523,12 @@
   /* Conector vertical + flecha hacia el siguiente paso. */
   .creative-process-step::after {
     background:
-      linear-gradient(var(--color-turq), var(--color-turq))
+      linear-gradient(var(--color-mag-soft), var(--color-mag-soft))
         center / 2px 100% no-repeat,
       linear-gradient(
         135deg,
         transparent 48%,
-        var(--color-turq) 49% 58%,
+        var(--color-mag-soft) 49% 58%,
         transparent 59%
       ) center bottom 0.2rem / 0.7rem 0.7rem no-repeat;
     content: '';
@@ -1520,7 +1541,7 @@
   .creative-process-step:last-child::after { content: none; }
 
   .creative-process-step span {
-    color: var(--color-turq);
+    color: var(--color-mag);
     font-family: var(--mono);
     font-size: 0.75rem;
     letter-spacing: 0.18em;
@@ -1615,7 +1636,7 @@
     font-size: 1rem;
     margin: 0;
   }
-  .payment-detail dd a { color: #2f9ea0; }
+  .payment-detail dd a { color: var(--color-mag); }
   .payment-detail-pending {
     color: rgba(35, 35, 39, 0.5) !important;
     font-style: italic;
@@ -1688,8 +1709,8 @@
   }
   .contact-form input:focus,
   .contact-form textarea:focus {
-    border-color: var(--color-turq);
-    outline: 2px solid rgba(47, 158, 160, 0.16);
+    border-color: var(--color-mag);
+    outline: 2px solid rgba(200, 77, 146, 0.16);
   }
 
   .contact-submit {
@@ -1709,7 +1730,7 @@
     text-transform: uppercase;
     width: fit-content;
   }
-  .contact-submit:hover { background: var(--color-turq); }
+  .contact-submit:hover { background: var(--color-mag-deep); }
 
   /* Estados del formulario de contacto con envío real vía Resend (PR #12). */
   .contact-submit:disabled {
@@ -1758,7 +1779,7 @@
     font-size: 1.05rem;
     text-decoration: none;
   }
-  .contact-details a:hover { color: var(--color-turq); }
+  .contact-details a:hover { color: var(--color-mag); }
 
 
   /* === 6.14 FLOATING WHATSAPP ==========================================
@@ -1776,10 +1797,10 @@
   /* Contenedor ─ círculo plegado por defecto. */
   .floating-whatsapp {
     align-items: center;
-    background: var(--color-turq);
+    background: var(--color-mag);
     border-radius: 999px;
     bottom: 1.5rem;
-    box-shadow: 0 8px 24px rgba(47, 158, 160, 0.32);
+    box-shadow: 0 8px 24px rgba(200, 77, 146, 0.32);
     color: #fff;
     display: inline-flex;
     height: 3.5rem;
@@ -1792,7 +1813,7 @@
 
   .floating-whatsapp:hover,
   .floating-whatsapp:focus-visible {
-    box-shadow: 0 12px 30px rgba(47, 158, 160, 0.45);
+    box-shadow: 0 12px 30px rgba(200, 77, 146, 0.45);
     outline: none;
   }
 

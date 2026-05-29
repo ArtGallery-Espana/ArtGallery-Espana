@@ -74,13 +74,13 @@ export default function Homepage() {
               </p>
               <div className="mb-14 mt-4 flex flex-wrap items-start gap-4">
               <Link
-                className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#2F9EA0] hover:text-white hover:no-underline"
+                className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#0F0F12] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76] hover:text-white hover:no-underline"
                 to="/collections/all"
               >
                 Ver catálogo
               </Link>
               <Link
-                className="home-cta-link group relative flex h-12 w-[182px] items-center text-[11px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:text-[#2F9EA0] hover:no-underline"
+                className="home-cta-link group relative flex h-12 w-[182px] items-center text-[11px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:text-[#C84D92] hover:no-underline"
                 to={
                   heroProduct
                     ? getProductPath(heroProduct.handle)
@@ -90,7 +90,7 @@ export default function Homepage() {
                   <span className="flex items-center leading-none">
                     {heroProduct ? 'Ver obra →' : 'Sobre el artista →'}
                   </span>
-                  <span className="absolute bottom-0 left-0 block h-px w-full bg-[#232327] transition-colors group-hover:bg-[#2F9EA0]" />
+                  <span className="absolute bottom-0 left-0 block h-px w-full bg-[#232327] transition-colors group-hover:bg-[#C84D92]" />
                 </Link>
               </div>
               <div className="flex flex-wrap gap-x-6 gap-y-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
@@ -128,7 +128,7 @@ export default function Homepage() {
                     <Money data={heroProduct.priceRange.minVariantPrice} />
                   </div>
                   <Link
-                    className="home-cta-link mt-4 inline-flex items-end border-b border-[#232327] pb-1 text-[10px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:border-[#2F9EA0] hover:text-[#2F9EA0]"
+                    className="home-cta-link mt-4 inline-flex items-end border-b border-[#232327] pb-1 text-[10px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
                     to={getProductPath(heroProduct.handle)}
                   >
                     Ficha de obra →
@@ -206,7 +206,7 @@ export default function Homepage() {
 
           <div className="mt-16 flex justify-center xl:mt-20">
             <Link
-              className="home-cta-outline inline-flex h-12 items-center justify-center rounded-[2px] border border-[#232327] px-6 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#2F9EA0] hover:!text-[#2F9EA0] hover:no-underline"
+              className="home-cta-outline inline-flex h-12 items-center justify-center rounded-[2px] border border-[#232327] px-6 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#C84D92] hover:!text-[#C84D92] hover:no-underline"
               to="/collections/all"
             >
               Ver catálogo completo
@@ -231,13 +231,13 @@ export default function Homepage() {
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
                 <Link
-                  className="home-cta-ghost inline-flex h-12 items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
+                  className="home-cta-ghost inline-flex h-12 items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
                   to="/pages/contacto"
                 >
                   Solicitar visita
                 </Link>
                 <Link
-                  className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#2F9EA0] hover:!text-[#2F9EA0] hover:no-underline"
+                  className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#C84D92] hover:!text-[#C84D92] hover:no-underline"
                   to="/pages/artista"
                 >
                   Conocer al artista →
@@ -312,7 +312,7 @@ function Kicker({
     accent === 'mag'
       ? '#C84D92'
       : accent === 'turq'
-        ? '#2F9EA0'
+        ? '#C84D92'
         : 'rgba(35,35,39,.55)';
 
   return (
