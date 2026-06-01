@@ -36,19 +36,30 @@ export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
   // Referencia al X del toque inicial para detectar swipe
   const touchStartX = useRef<number | null>(null);
 
+  // Bloquea navegación simultánea: evita que autoplay + swipe incrementen el
+  // índice dos veces en el mismo ciclo, lo que sacaría el índice fuera del
+  // rango válido (0..count+1) y dejaría la pista en blanco.
+  const isTransitioning = useRef(false);
+
   // ── Navegación ───────────────────────────────────────────────────────────
   const next = useCallback(() => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
     setAnimate(true);
     setIndex((i) => i + 1);
   }, []);
 
   const prev = useCallback(() => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
     setAnimate(true);
     setIndex((i) => i - 1);
   }, []);
 
   // goTo recibe el índice real (0-based) y lo ajusta al índice en la pista
   const goTo = useCallback((target: number) => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
     setAnimate(true);
     setIndex(target + 1);
   }, []);
@@ -63,21 +74,33 @@ export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
   // ── Loop infinito bidireccional ───────────────────────────────────────────
   // Al terminar la transición en un extremo (clon), se salta al real opuesto
   // sin animar; el siguiente frame reactiva la animación.
-  const handleTransitionEnd = useCallback(() => {
-    if (index === count + 1) {
-      // Clon del primero al final → salta a la slide real 1
-      setAnimate(false);
-      setIndex(1);
-    } else if (index === 0) {
-      // Clon del último al inicio → salta a la slide real count
-      setAnimate(false);
-      setIndex(count);
-    }
-  }, [index, count]);
+  //
+  // IMPORTANTE: filtramos eventos burbuja (e.target !== e.currentTarget) porque
+  // las transiciones CSS de elementos hijos (p.ej. dots, overlay) también
+  // generan TransitionEnd que sube al contenedor padre. Sin este filtro,
+  // esos eventos espurios podrían disparar saltos de índice en momentos
+  // incorrectos y corromper el estado del carrusel.
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent) => {
+      if (e.target !== e.currentTarget) return; // ignorar eventos burbuja de hijos
+      isTransitioning.current = false;
+      if (index >= count + 1) {
+        setAnimate(false);
+        setIndex(1);
+      } else if (index <= 0) {
+        setAnimate(false);
+        setIndex(count);
+      }
+    },
+    [index, count],
+  );
 
   useEffect(() => {
     if (animate) return;
-    const raf = requestAnimationFrame(() => setAnimate(true));
+    const raf = requestAnimationFrame(() => {
+      setAnimate(true);
+      isTransitioning.current = false; // liberar el bloqueo tras el salto instantáneo
+    });
     return () => cancelAnimationFrame(raf);
   }, [animate]);
 
