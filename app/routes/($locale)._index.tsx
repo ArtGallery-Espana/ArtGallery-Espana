@@ -1,179 +1,57 @@
-import type {ReactNode} from 'react';
+import {useRef, useState, type ReactNode} from 'react';
 import {Image, Money} from '@shopify/hydrogen';
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/_index';
 import {MockShopNotice} from '~/components/MockShopNotice';
 import {FeaturedWorksCarousel} from '~/components/FeaturedWorksCarousel';
-import {buildFeaturedSlides} from '~/lib/featuredWorks';
+import {MANUAL_FEATURED_SLIDES} from '~/lib/featuredWorks';
 
 export const meta: Route.MetaFunction = () => {
-  return [{title: 'Galeria Taller J España | Home'}];
+  return [{title: 'Galería J. España | Inicio'}];
 };
 
 export async function loader({context}: Route.LoaderArgs) {
   const {storefront, env} = context;
-  const {featuredProducts, recentProducts, carouselProducts} =
-    await storefront.query(HOMEPAGE_PRODUCTS_QUERY);
 
-  const recentWorks = recentProducts.nodes;
-  const heroProduct = featuredProducts.nodes[0] ?? recentWorks[0] ?? null;
-
-  // Slides del carrusel: obras manuales + (productos con tag `carrusel` o,
-  // si no hay, los últimos agregados). Se construye en el servidor.
-  const carouselSlides = buildFeaturedSlides(
-    carouselProducts.nodes,
-    recentProducts.nodes,
-  );
+  // Solo consultamos los productos recientes para la sección del catálogo.
+  // Las obras monumentales (carrusel y vitrina) son datos estáticos.
+  const {recentProducts} = await storefront.query(HOMEPAGE_PRODUCTS_QUERY);
 
   return {
     isShopLinked: Boolean(env.PUBLIC_STORE_DOMAIN),
-    heroProduct,
-    // La sección "obra reciente" muestra 3; el carrusel usa hasta 5.
-    recentWorks: recentWorks.slice(0, 3),
-    carouselSlides,
+    recentWorks: recentProducts.nodes.slice(0, 3),
+    // Slides del carrusel: obras monumentales estáticas (featuredWorks.ts)
+    carouselSlides: MANUAL_FEATURED_SLIDES,
   };
 }
 
 export default function Homepage() {
-  const data = useLoaderData<typeof loader>();
-  const heroProduct = data.heroProduct;
-  const heroDescription = getProductDescription(heroProduct);
+  const {isShopLinked, recentWorks, carouselSlides} =
+    useLoaderData<typeof loader>();
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
-      {data.isShopLinked ? null : <MockShopNotice />}
+      {isShopLinked ? null : <MockShopNotice />}
 
-      {/* Carrusel full-bleed: cabecera del home, antes de la obra destacada. */}
-      {data.carouselSlides.length > 0 ? (
-        <FeaturedWorksCarousel slides={data.carouselSlides} />
+      {/* Carrusel full-bleed: obras monumentales (La Familia, Los Estudiantes, Allcamari) */}
+      {carouselSlides.length > 0 ? (
+        <FeaturedWorksCarousel slides={carouselSlides} />
       ) : null}
 
-      <section className="px-6 pb-16 pt-8 md:px-10 xl:px-14 xl:pb-20 xl:pt-12">
-        <div className="mx-auto max-w-360">
-          <div className="grid items-center gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-24">
-            <div>
-              <Kicker accent="mag">
-                {heroProduct ? 'Obra destacada' : 'Obra del mes · Mayo 2026'}
-              </Kicker>
-              <h1 className="mt-10 [font-family:var(--serif)] text-[clamp(3.5rem,7vw,6.5rem)] leading-[0.98] tracking-[-0.015em] text-[#111111]">
-                {heroProduct ? (
-                  heroProduct.title
-                ) : (
-                  <>
-                    Pintar la luz
-                    <br />
-                    <span className="italic text-[rgba(35,35,39,.72)]">
-                      sin levantar la voz.
-                    </span>
-                  </>
-                )}
-              </h1>
-              <p className="mb-11 mt-9 max-w-[44ch] text-[17px] leading-[1.7] text-[rgba(35,35,39,.72)]">
-                {heroDescription ||
-                  'Obra contemporánea de Jorge España, pintor ecuatoriano radicado en Cuenca. Galápagos, paisajes interiores y pequeñas iluminaciones, en óleo y técnica mixta.'}
-              </p>
-              <div className="mb-14 mt-4 flex flex-wrap items-start gap-4">
-              <Link
-                className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#2F9EA0] hover:text-white hover:no-underline"
-                to="/collections/all"
-              >
-                Ver catálogo
-              </Link>
-              <Link
-                className="home-cta-link group relative flex h-12 w-[182px] items-center text-[11px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:text-[#2F9EA0] hover:no-underline"
-                to={
-                  heroProduct
-                    ? getProductPath(heroProduct.handle)
-                    : '/pages/artista'
-                  }
-                >
-                  <span className="flex items-center leading-none">
-                    {heroProduct ? 'Ver obra →' : 'Sobre el artista →'}
-                  </span>
-                  <span className="absolute bottom-0 left-0 block h-px w-full bg-[#232327] transition-colors group-hover:bg-[#2F9EA0]" />
-                </Link>
-              </div>
-              <div className="flex flex-wrap gap-x-6 gap-y-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                <span>
-                  {heroProduct
-                    ? `Publicado ${getPublishedYear(heroProduct.publishedAt)}`
-                    : 'EST. 2009'}
-                </span>
-                <span className="text-[#D9D4CF]">·</span>
-                <span className="text-[#D9D4CF]">·</span>
-              </div>
-            </div>
+      {/* Vitrina de obras monumentales con navegación por flechas */}
+      <MonumentalShowcase />
 
-            <div className="relative mx-auto w-full max-w-[620px] xl:mx-0">
-              <ArtworkProduct product={heroProduct} ratio="4 / 5" />
-              {heroProduct ? (
-                <div className="mt-6 border border-[rgba(35,35,39,.10)] bg-[#F6F1EA] p-6 xl:absolute xl:-bottom-6 xl:-right-6 xl:mt-0 xl:max-w-[280px]">
-                  <div className="mb-2.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">
-                    Obra protagonista
-                  </div>
-                  <div className="mb-1.5 [font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111]">
-                    {heroProduct.title}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
-                    <span>{getPublishedYear(heroProduct.publishedAt)}</span>
-                    <span>·</span>
-                    <span>{getPrimaryTag(heroProduct.tags)}</span>
-                    {getProductDimensions(heroProduct) ? (
-                      <>
-                        <span>·</span>
-                        <span>{getProductDimensions(heroProduct)}</span>
-                      </>
-                    ) : null}
-                    <span>·</span>
-                    <Money data={heroProduct.priceRange.minVariantPrice} />
-                  </div>
-                  <Link
-                    className="home-cta-link mt-4 inline-flex items-end border-b border-[#232327] pb-1 text-[10px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:border-[#2F9EA0] hover:text-[#2F9EA0]"
-                    to={getProductPath(heroProduct.handle)}
-                  >
-                    Ficha de obra →
-                  </Link>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35" data-reveal>
-        <div className="mx-auto max-w-360">
-          <div className="grid border-y border-[rgba(35,35,39,.10)] lg:grid-cols-3">
-            <TrustBlock
-              num="01"
-              title="Autenticidad"
-              body="Cada obra incluye certificado firmado por el artista, archivo fotográfico y registro ICOM."
-            />
-            <TrustBlock
-              num="02"
-              title="Envío internacional"
-              body="DHL Express con embalaje museográfico para coleccionistas en Europa, Asia y Américas."
-              accent
-            />
-            <TrustBlock
-              num="03"
-              title="Asesoría privada"
-              body="Visita virtual al taller, propuestas de adquisición y planes de pago para coleccionistas."
-              last
-            />
-          </div>
-        </div>
-      </section>
-
+      {/* Productos publicados en el catálogo Shopify */}
       <section className="px-6 pt-24 md:px-10 xl:px-14 xl:pt-[160px]" data-reveal>
         <div className="mx-auto max-w-[1440px]">
           <SectionHead
-            num="02 — Obra reciente"
+            num="Productos Publicados"
             title="Últimos productos publicados"
             desc="Descubre las piezas más recientes incorporadas a nuestro catálogo. Arte contemporáneo con alma artesanal."
           />
 
           <div className="grid gap-12 lg:grid-cols-3">
-            {data.recentWorks.map((product) => (
+            {recentWorks.map((product: HomepageProduct) => (
               <Link
                 key={product.id}
                 className="block"
@@ -196,7 +74,8 @@ export default function Homepage() {
                       {getPrimaryTag(product.tags)}
                     </span>
                     <span className="text-[13px] text-[#232327]">
-                      <Money data={product.priceRange.minVariantPrice} />
+                      {/* MoneyV2.currencyCode es un enum; el valor del API siempre es ISO válido */}
+                      <Money data={product.priceRange.minVariantPrice as any} />
                     </span>
                   </div>
                 </div>
@@ -206,7 +85,7 @@ export default function Homepage() {
 
           <div className="mt-16 flex justify-center xl:mt-20">
             <Link
-              className="home-cta-outline inline-flex h-12 items-center justify-center rounded-[2px] border border-[#232327] px-6 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#2F9EA0] hover:!text-[#2F9EA0] hover:no-underline"
+              className="home-cta-outline inline-flex h-12 items-center justify-center rounded-[2px] border border-[#232327] px-6 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#C84D92] hover:!text-[#C84D92] hover:no-underline"
               to="/collections/all"
             >
               Ver catálogo completo
@@ -215,35 +94,34 @@ export default function Homepage() {
         </div>
       </section>
 
-      <section className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]" data-reveal>
+      {/* Sección del taller en Cuenca */}
+      <section
+        className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]"
+        data-reveal
+      >
         <div className="mx-auto max-w-[1440px]">
           <div className="grid gap-14 xl:grid-cols-[1fr_1.35fr] xl:gap-24">
             <div>
               <Kicker>Nuestro taller</Kicker>
               <h2 className="mt-4 [font-family:var(--serif)] text-[clamp(3rem,5vw,4.25rem)] leading-[1.05] tracking-[-0.015em] text-[#111111]">
-                Un espacio íntimo en Cuenca donde la obra se piensa, se prueba y
-                toma forma con calma.
+                Un espacio íntimo en Cuenca donde la obra se piensa, se prueba
+                y toma forma con calma.
               </h2>
               <p className="mt-7 max-w-[42ch] text-[15px] leading-[1.7] text-[rgba(35,35,39,.72)]">
                 Entre herramientas, pigmentos y maquetas, el taller reúne las
                 piezas en proceso, la obra terminada y la conversación que da
                 sentido a cada serie.
               </p>
-              <div className="mt-9 flex flex-wrap gap-4">
+              <div className="mt-9">
                 <Link
-                  className="home-cta-ghost inline-flex h-12 items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
-                  to="/pages/contacto"
-                >
-                  Solicitar visita
-                </Link>
-                <Link
-                  className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#2F9EA0] hover:!text-[#2F9EA0] hover:no-underline"
+                  className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#C84D92] hover:!text-[#C84D92] hover:no-underline"
                   to="/pages/artista"
                 >
                   Conocer al artista →
                 </Link>
               </div>
             </div>
+
             <div className="grid gap-8">
               <figure className="group">
                 <div
@@ -267,30 +145,14 @@ export default function Homepage() {
                   Vista del taller en Cuenca
                 </figcaption>
               </figure>
-              <div className="grid gap-6 border-y border-[rgba(35,35,39,.10)] py-7 sm:grid-cols-3">
-                <div>
-                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                    Ubicación
-                  </div>
-                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
-                    Cuenca, Ecuador
-                  </div>
+
+              {/* Ubicación del taller */}
+              <div className="border-t border-[rgba(35,35,39,.10)] pt-6">
+                <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                  Ubicación
                 </div>
-                <div>
-                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                    Acceso
-                  </div>
-                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
-                    Visita previa agendada
-                  </div>
-                </div>
-                <div>
-                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                    Ritmo
-                  </div>
-                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
-                    Dos miércoles al mes
-                  </div>
+                <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
+                  Cuenca, Ecuador
                 </div>
               </div>
             </div>
@@ -301,6 +163,181 @@ export default function Homepage() {
   );
 }
 
+// ─── Vitrina de obras monumentales ──────────────────────────────────────────
+
+/**
+ * Datos estáticos de las tres obras monumentales principales de Jorge España.
+ * No están en el catálogo Shopify: se gestionan directamente aquí.
+ * Para agregar otra obra, añade una entrada a este arreglo y sube la imagen
+ * a `public/images/`.
+ */
+const MONUMENTAL_WORKS = [
+  {
+    id: 'la-familia',
+    title: 'La Familia',
+    meta: 'Asamblea Nacional del Ecuador · 2008',
+    description:
+      'Obra realizada en 2008, inspirada en el concepto del Sumak Kawsay o Buen Vivir, donde la familia se presenta como símbolo de equilibrio, comunidad y convivencia.',
+    dimensions: '250 cm alto × 400 cm largo',
+    imageUrl: '/images/obra-la-familia.jpeg',
+    imageAlt:
+      'La Familia — obra monumental de Jorge España, Asamblea Nacional del Ecuador',
+  },
+  {
+    id: 'los-estudiantes',
+    title: 'Los Estudiantes',
+    meta: 'Universidad de Cuenca',
+    description:
+      'Conjunto escultórico realizado para los patios de la Facultad de Economía, concebido como una representación de la vida cotidiana de los estudiantes. La obra está compuesta por cinco piezas, entre ellas dos figuras de monjas, en referencia al pasado histórico del lugar.',
+    dimensions: '195 cm alto × 60 cm ancho',
+    imageUrl: '/images/obra-los-estudiantes.jpg',
+    imageAlt:
+      'Los Estudiantes — conjunto escultórico monumental, Universidad de Cuenca',
+  },
+  {
+    id: 'allcamari',
+    title: 'Allcamari',
+    meta: 'Edificio Allcamari',
+    description:
+      'Escultura inspirada en un ave emblemática de la cordillera de los Andes ecuatorianos y peruanos. Instalada en la entrada del edificio que lleva el mismo nombre, estableciendo un vínculo simbólico entre el espacio y la identidad andina.',
+    dimensions: '180 cm alto, ancho proporcional',
+    imageUrl: '/images/obra-allcamari.jpg',
+    imageAlt: 'Allcamari — escultura monumental inspirada en el cóndor andino',
+  },
+];
+
+/**
+ * Muestra las obras monumentales con navegación por flechas y transición suave.
+ *
+ * Animación: al cambiar de obra, el contenido (texto + imagen) hace fade-out
+ * con un leve desplazamiento hacia arriba (260ms ease). Una vez invisible,
+ * se actualiza la obra y se hace fade-in desde abajo. El kicker y las flechas
+ * quedan siempre visibles para que la interacción se sienta inmediata.
+ *
+ * El timer se cancela en cada navegación para evitar acumulación de transiciones
+ * al hacer clic rápido.
+ */
+function MonumentalShowcase() {
+  const [current, setCurrent] = useState(0);
+  // `visible` controla la fase de la animación: false = fade-out, true = fade-in
+  const [visible, setVisible] = useState(true);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const total = MONUMENTAL_WORKS.length;
+  const work = MONUMENTAL_WORKS[current];
+
+  const goTo = (target: number) => {
+    if (target === current) return;
+    // Cancela cualquier transición en vuelo antes de iniciar una nueva
+    clearTimeout(timer.current);
+    setVisible(false);
+    // Espera a que termine el fade-out (260ms) para cambiar el contenido
+    timer.current = setTimeout(() => {
+      setCurrent(target);
+      setVisible(true);
+    }, 260);
+  };
+
+  const prev = () => goTo((current - 1 + total) % total);
+  const next = () => goTo((current + 1) % total);
+
+  // Estilos de la transición: fade + drift vertical
+  const fadeStyle: React.CSSProperties = {
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(10px)',
+    transition: 'opacity 260ms ease, transform 260ms ease',
+  };
+
+  return (
+    <section className="px-6 pb-16 pt-8 md:px-10 xl:px-14 xl:pb-20 xl:pt-12">
+      <div className="mx-auto max-w-360">
+
+        {/* Kicker + controles de navegación: fuera de la animación para respuesta inmediata */}
+        <div className="mb-10 flex items-center justify-between gap-6">
+          <Kicker accent="mag">Obras Monumentales</Kicker>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              aria-label="Obra anterior"
+              onClick={prev}
+              className="flex h-10 w-10 items-center justify-center border border-[rgba(35,35,39,.18)] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
+            >
+              ←
+            </button>
+            <span className="[font-family:var(--mono)] text-[11px] tracking-[0.18em] text-[rgba(35,35,39,.45)]">
+              {current + 1} / {total}
+            </span>
+            <button
+              type="button"
+              aria-label="Obra siguiente"
+              onClick={next}
+              className="flex h-10 w-10 items-center justify-center border border-[rgba(35,35,39,.18)] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
+            >
+              →
+            </button>
+          </div>
+        </div>
+
+        {/* Contenido animado: título, descripción, imagen y tarjeta */}
+        <div style={fadeStyle}>
+          <div className="grid items-center gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-24">
+
+            {/* Columna de texto */}
+            <div>
+              <h1 className="[font-family:var(--serif)] text-[clamp(3.5rem,7vw,6.5rem)] leading-[0.98] tracking-[-0.015em] text-[#111111]">
+                {work.title}
+              </h1>
+              <p className="mb-9 mt-9 max-w-[44ch] text-[17px] leading-[1.7] text-[rgba(35,35,39,.72)]">
+                {work.description}
+              </p>
+              <div className="mb-12 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+                {work.meta}
+                <span className="mx-3 text-[#D9D4CF]">·</span>
+                {work.dimensions}
+              </div>
+            </div>
+
+            {/* Columna de imagen */}
+            <div className="relative mx-auto w-full max-w-[620px] xl:mx-0">
+              <div
+                className="relative overflow-hidden bg-[#EEE8E1]"
+                style={{aspectRatio: '4 / 5'}}
+              >
+                <img
+                  alt={work.imageAlt}
+                  className="h-full w-full object-cover"
+                  src={work.imageUrl}
+                />
+                <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
+                <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
+                  {work.title}
+                </div>
+              </div>
+
+              {/* Tarjeta de información */}
+              <div className="mt-6 border border-[rgba(35,35,39,.10)] bg-[#F6F1EA] p-6 xl:absolute xl:-bottom-6 xl:-right-6 xl:mt-0 xl:max-w-[280px]">
+                <div className="mb-2.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">
+                  Obra monumental
+                </div>
+                <div className="mb-1.5 [font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111]">
+                  {work.title}
+                </div>
+                <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+                  {work.meta}
+                </div>
+                <div className="mt-1 [font-family:var(--mono)] text-[10px] tracking-[0.12em] text-[rgba(35,35,39,.45)]">
+                  {work.dimensions}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ─── Componentes de presentación ──────────────────────────────────────────────
+
 function Kicker({
   children,
   accent,
@@ -309,22 +346,13 @@ function Kicker({
   accent?: 'mag' | 'turq';
 }) {
   const accentColor =
-    accent === 'mag'
-      ? '#C84D92'
-      : accent === 'turq'
-        ? '#2F9EA0'
-        : 'rgba(35,35,39,.55)';
+    accent === 'mag' || accent === 'turq' ? '#C84D92' : 'rgba(35,35,39,.5)';
 
   return (
     <div className="flex items-center gap-3.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
       <span
         className="h-px w-6 shrink-0"
-        style={{
-          backgroundColor:
-            accentColor === 'rgba(35,35,39,.55)'
-              ? 'rgba(35,35,39,.5)'
-              : accentColor,
-        }}
+        style={{backgroundColor: accentColor}}
       />
       <span>{children}</span>
     </div>
@@ -352,42 +380,6 @@ function SectionHead({
       </div>
       <div className="max-w-[46ch] text-[14px] leading-[1.65] text-[rgba(35,35,39,.72)]">
         {desc}
-      </div>
-    </div>
-  );
-}
-
-function TrustBlock({
-  num,
-  title,
-  body,
-  accent,
-  last,
-}: {
-  num: string;
-  title: string;
-  body: string;
-  accent?: boolean;
-  last?: boolean;
-}) {
-  return (
-    <div
-      className="grid items-start gap-5 py-12 pl-4 lg:grid-cols-[18px_1fr] lg:pl-6 lg:pr-8"
-      style={{borderRight: last ? 'none' : '1px solid rgba(35,35,39,.10)'}}
-    >
-      <div
-        className="self-start pt-[4px] [font-family:var(--mono)] text-[10px] leading-none tracking-[0.22em]"
-        style={{color: accent ? '#C84D92' : 'rgba(35,35,39,.55)'}}
-      >
-        {num}
-      </div>
-      <div>
-        <h3 className="mb-2.5 [font-family:var(--serif)] text-[24px] leading-[1.25] text-[#111111]">
-          {title}
-        </h3>
-        <p className="max-w-[38ch] text-[13px] leading-[1.7] text-[rgba(35,35,39,.72)]">
-          {body}
-        </p>
       </div>
     </div>
   );
@@ -495,6 +487,8 @@ function ArtworkPlaceholder({
   );
 }
 
+// ─── Utilidades ───────────────────────────────────────────────────────────────
+
 function getProductPath(handle: string) {
   return `/products/${handle}`;
 }
@@ -515,62 +509,12 @@ function getProductDescription(product?: HomepageProduct | null) {
   return description ? truncate(description, 220) : '';
 }
 
-function getProductDimensions(product?: HomepageProduct | null) {
-  if (!product) return '';
-
-  const alto = formatDecimalMetafield(product.alto?.value);
-  const ancho = formatDecimalMetafield(product.ancho?.value);
-  const profundidad = formatDecimalMetafield(product.profundidad?.value);
-
-  const dimensions = [alto, ancho, profundidad].filter(Boolean);
-  return dimensions.length ? `${dimensions.join(' × ')} cm` : '';
-}
-
-function formatDecimalMetafield(value?: string | null) {
-  const raw = normalizeMetafieldScalar(value);
-  if (!raw) return '';
-
-  const normalized = Number.parseFloat(raw.replace(',', '.'));
-  if (Number.isNaN(normalized)) return raw;
-
-  return new Intl.NumberFormat('es-EC', {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 2,
-  }).format(normalized);
-}
-
-function normalizeMetafieldScalar(value?: string | null) {
-  if (!value) return '';
-
-  const trimmed = value.trim();
-  if (!trimmed) return '';
-
-  if (
-    trimmed.startsWith('[') ||
-    trimmed.startsWith('"') ||
-    trimmed.startsWith("'")
-  ) {
-    try {
-      const parsed = JSON.parse(trimmed) as unknown;
-      if (Array.isArray(parsed)) {
-        return normalizeMetafieldScalar(
-          parsed[0] == null ? '' : String(parsed[0]),
-        );
-      }
-      if (typeof parsed === 'string') return parsed;
-      if (typeof parsed === 'number') return String(parsed);
-    } catch {
-      // Fall through to the raw string.
-    }
-  }
-
-  return trimmed;
-}
-
 function truncate(value: string, maxLength: number) {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, maxLength).trimEnd()}…`;
 }
+
+// ─── Tipos y GraphQL ──────────────────────────────────────────────────────────
 
 type HomepageProduct = {
   id: string;
@@ -591,9 +535,6 @@ type HomepageProduct = {
     width?: number | null;
     height?: number | null;
   } | null;
-  alto?: {value: string} | null;
-  ancho?: {value: string} | null;
-  profundidad?: {value: string} | null;
   priceRange: {
     minVariantPrice: {
       amount: string;
@@ -622,15 +563,6 @@ const HOMEPAGE_PRODUCT_FRAGMENT = `#graphql
       width
       height
     }
-    alto: metafield(namespace: "custom", key: "alto") {
-      value
-    }
-    ancho: metafield(namespace: "custom", key: "ancho") {
-      value
-    }
-    profundidad: metafield(namespace: "custom", key: "profundidad") {
-      value
-    }
     priceRange {
       minVariantPrice {
         amount
@@ -640,30 +572,12 @@ const HOMEPAGE_PRODUCT_FRAGMENT = `#graphql
   }
 ` as const;
 
+// Solo consultamos los productos recientes para la sección "Productos Publicados".
+// El carrusel y la vitrina de obras monumentales usan datos estáticos en featuredWorks.ts.
 const HOMEPAGE_PRODUCTS_QUERY = `#graphql
   query HomepageProducts($country: CountryCode, $language: LanguageCode)
     @inContext(country: $country, language: $language) {
-    featuredProducts: products(
-      first: 1
-      reverse: true
-      sortKey: CREATED_AT
-      query: "tag:destacado"
-    ) {
-      nodes {
-        ...HomepageProduct
-      }
-    }
-    recentProducts: products(first: 5, reverse: true, sortKey: CREATED_AT) {
-      nodes {
-        ...HomepageProduct
-      }
-    }
-    carouselProducts: products(
-      first: 5
-      reverse: true
-      sortKey: CREATED_AT
-      query: "tag:carrusel"
-    ) {
+    recentProducts: products(first: 3, reverse: true, sortKey: CREATED_AT) {
       nodes {
         ...HomepageProduct
       }

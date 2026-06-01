@@ -2,7 +2,7 @@ import * as React from 'react';
 import {useFetcher} from 'react-router';
 
 const formFieldBaseClass =
-  'w-full rounded-[2px] !border !border-[rgba(35,35,39,.14)] bg-white px-4 text-[14px] text-[#111111] outline-none transition placeholder:text-[rgba(35,35,39,.42)] focus:!border-[#2F9EA0]';
+  'w-full rounded-[2px] !border !border-[rgba(35,35,39,.14)] bg-white px-4 text-[14px] text-[#111111] outline-none transition placeholder:text-[rgba(35,35,39,.42)] focus:!border-[#C84D92]';
 
 const formInputClass = `${formFieldBaseClass} h-[54px] !mt-0 !mb-0 !py-0`;
 const formTextareaClass = `${formFieldBaseClass} min-h-[100px] !mt-0 !mb-0 py-3`;
@@ -261,7 +261,7 @@ export function ProductOfferForm({
           ) : null}
 
           <button
-            className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#2F9EA0] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#247D7F] disabled:cursor-not-allowed disabled:opacity-70"
+            className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#C84D92] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-70"
             disabled={isSubmitting || !variantId || Boolean(quantityError) || Boolean(offerError)}
             type="submit"
           >
@@ -299,7 +299,7 @@ export function ProductOfferForm({
             </p>
 
             {discountPct !== null ? (
-              <p className="mt-2 text-[12px] text-[#2F9EA0]">
+              <p className="mt-2 text-[12px] text-[#C84D92]">
                 Tu oferta: {fmt(String(offerNum), currency)}
                 <br />
                 <span className="font-medium">
