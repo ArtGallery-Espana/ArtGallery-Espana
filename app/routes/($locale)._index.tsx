@@ -1,4 +1,4 @@
-import {useState, type ReactNode} from 'react';
+import {useRef, useState, type ReactNode} from 'react';
 import {Image, Money} from '@shopify/hydrogen';
 import {Link, useLoaderData} from 'react-router';
 import type {Route} from './+types/_index';
@@ -207,97 +207,132 @@ const MONUMENTAL_WORKS = [
 ];
 
 /**
- * Muestra las obras monumentales con navegación manual por flechas.
- * Componente cliente (usa useState); SSR renderiza la primera obra.
+ * Muestra las obras monumentales con navegación por flechas y transición suave.
+ *
+ * Animación: al cambiar de obra, el contenido (texto + imagen) hace fade-out
+ * con un leve desplazamiento hacia arriba (260ms ease). Una vez invisible,
+ * se actualiza la obra y se hace fade-in desde abajo. El kicker y las flechas
+ * quedan siempre visibles para que la interacción se sienta inmediata.
+ *
+ * El timer se cancela en cada navegación para evitar acumulación de transiciones
+ * al hacer clic rápido.
  */
 function MonumentalShowcase() {
   const [current, setCurrent] = useState(0);
+  // `visible` controla la fase de la animación: false = fade-out, true = fade-in
+  const [visible, setVisible] = useState(true);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const total = MONUMENTAL_WORKS.length;
   const work = MONUMENTAL_WORKS[current];
 
-  const prev = () => setCurrent((i) => (i - 1 + total) % total);
-  const next = () => setCurrent((i) => (i + 1) % total);
+  const goTo = (target: number) => {
+    if (target === current) return;
+    // Cancela cualquier transición en vuelo antes de iniciar una nueva
+    clearTimeout(timer.current);
+    setVisible(false);
+    // Espera a que termine el fade-out (260ms) para cambiar el contenido
+    timer.current = setTimeout(() => {
+      setCurrent(target);
+      setVisible(true);
+    }, 260);
+  };
+
+  const prev = () => goTo((current - 1 + total) % total);
+  const next = () => goTo((current + 1) % total);
+
+  // Estilos de la transición: fade + drift vertical
+  const fadeStyle: React.CSSProperties = {
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(10px)',
+    transition: 'opacity 260ms ease, transform 260ms ease',
+  };
 
   return (
     <section className="px-6 pb-16 pt-8 md:px-10 xl:px-14 xl:pb-20 xl:pt-12">
       <div className="mx-auto max-w-360">
-        <div className="grid items-center gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-24">
-          {/* Columna de texto */}
-          <div>
-            <Kicker accent="mag">Obras Monumentales</Kicker>
-            <h1 className="mt-10 [font-family:var(--serif)] text-[clamp(3.5rem,7vw,6.5rem)] leading-[0.98] tracking-[-0.015em] text-[#111111]">
-              {work.title}
-            </h1>
-            <p className="mb-9 mt-9 max-w-[44ch] text-[17px] leading-[1.7] text-[rgba(35,35,39,.72)]">
-              {work.description}
-            </p>
-            <div className="mb-10 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
-              {work.meta}
-              <span className="mx-3 text-[#D9D4CF]">·</span>
-              {work.dimensions}
-            </div>
 
-            {/* Flechas de navegación entre obras monumentales */}
-            <div className="mb-14 flex items-center gap-5">
-              <button
-                type="button"
-                aria-label="Obra anterior"
-                onClick={prev}
-                className="flex h-11 w-11 items-center justify-center border border-[rgba(35,35,39,.18)] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
-              >
-                ←
-              </button>
-              <span className="[font-family:var(--mono)] text-[12px] tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                {current + 1} / {total}
-              </span>
-              <button
-                type="button"
-                aria-label="Obra siguiente"
-                onClick={next}
-                className="flex h-11 w-11 items-center justify-center border border-[rgba(35,35,39,.18)] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
-              >
-                →
-              </button>
-            </div>
-
-            <Link
-              className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#0F0F12] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76] hover:text-white hover:no-underline"
-              to="/collections/all"
+        {/* Kicker + controles de navegación: fuera de la animación para respuesta inmediata */}
+        <div className="mb-10 flex items-center justify-between gap-6">
+          <Kicker accent="mag">Obras Monumentales</Kicker>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              aria-label="Obra anterior"
+              onClick={prev}
+              className="flex h-10 w-10 items-center justify-center border border-[rgba(35,35,39,.18)] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
             >
-              Ver catálogo
-            </Link>
+              ←
+            </button>
+            <span className="[font-family:var(--mono)] text-[11px] tracking-[0.18em] text-[rgba(35,35,39,.45)]">
+              {current + 1} / {total}
+            </span>
+            <button
+              type="button"
+              aria-label="Obra siguiente"
+              onClick={next}
+              className="flex h-10 w-10 items-center justify-center border border-[rgba(35,35,39,.18)] text-[#232327] transition-colors hover:border-[#C84D92] hover:text-[#C84D92]"
+            >
+              →
+            </button>
           </div>
+        </div>
 
-          {/* Columna de imagen */}
-          <div className="relative mx-auto w-full max-w-[620px] xl:mx-0">
-            <div
-              className="relative overflow-hidden bg-[#EEE8E1]"
-              style={{aspectRatio: '4 / 5'}}
-            >
-              <img
-                alt={work.imageAlt}
-                className="h-full w-full object-cover"
-                src={work.imageUrl}
-              />
-              <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
-              <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
+        {/* Contenido animado: título, descripción, imagen y tarjeta */}
+        <div style={fadeStyle}>
+          <div className="grid items-center gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-24">
+
+            {/* Columna de texto */}
+            <div>
+              <h1 className="[font-family:var(--serif)] text-[clamp(3.5rem,7vw,6.5rem)] leading-[0.98] tracking-[-0.015em] text-[#111111]">
                 {work.title}
+              </h1>
+              <p className="mb-9 mt-9 max-w-[44ch] text-[17px] leading-[1.7] text-[rgba(35,35,39,.72)]">
+                {work.description}
+              </p>
+              <div className="mb-12 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+                {work.meta}
+                <span className="mx-3 text-[#D9D4CF]">·</span>
+                {work.dimensions}
               </div>
+              <Link
+                className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#0F0F12] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76] hover:text-white hover:no-underline"
+                to="/collections/all"
+              >
+                Ver catálogo
+              </Link>
             </div>
 
-            {/* Tarjeta de información de la obra */}
-            <div className="mt-6 border border-[rgba(35,35,39,.10)] bg-[#F6F1EA] p-6 xl:absolute xl:-bottom-6 xl:-right-6 xl:mt-0 xl:max-w-[280px]">
-              <div className="mb-2.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">
-                Obra monumental
+            {/* Columna de imagen */}
+            <div className="relative mx-auto w-full max-w-[620px] xl:mx-0">
+              <div
+                className="relative overflow-hidden bg-[#EEE8E1]"
+                style={{aspectRatio: '4 / 5'}}
+              >
+                <img
+                  alt={work.imageAlt}
+                  className="h-full w-full object-cover"
+                  src={work.imageUrl}
+                />
+                <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
+                <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
+                  {work.title}
+                </div>
               </div>
-              <div className="mb-1.5 [font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111]">
-                {work.title}
-              </div>
-              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
-                {work.meta}
-              </div>
-              <div className="mt-1 [font-family:var(--mono)] text-[10px] tracking-[0.12em] text-[rgba(35,35,39,.45)]">
-                {work.dimensions}
+
+              {/* Tarjeta de información */}
+              <div className="mt-6 border border-[rgba(35,35,39,.10)] bg-[#F6F1EA] p-6 xl:absolute xl:-bottom-6 xl:-right-6 xl:mt-0 xl:max-w-[280px]">
+                <div className="mb-2.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">
+                  Obra monumental
+                </div>
+                <div className="mb-1.5 [font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111]">
+                  {work.title}
+                </div>
+                <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+                  {work.meta}
+                </div>
+                <div className="mt-1 [font-family:var(--mono)] text-[10px] tracking-[0.12em] text-[rgba(35,35,39,.45)]">
+                  {work.dimensions}
+                </div>
               </div>
             </div>
           </div>

@@ -4,7 +4,7 @@
  * Características:
  *   - Loop infinito BIDIRECCIONAL: clon del último al inicio y clon del
  *     primero al final; al llegar a cada extremo se salta al real sin animar.
- *   - Autoplay cada 5s; se pausa al pasar el cursor (escritorio).
+ *   - Autoplay cada 3s; se pausa al pasar el cursor (escritorio).
  *   - Flechas ← / → para navegación manual en escritorio y móvil.
  *   - Swipe horizontal táctil: umbral de 50px para reconocer el gesto.
  *   - Dots de posición (abajo centrados).
@@ -17,7 +17,7 @@ import {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router';
 import type {CarouselSlide} from '~/lib/featuredWorks';
 
-const AUTOPLAY_MS = 5_000;
+const AUTOPLAY_MS = 3_000;
 const SLIDE_MS = 750;
 // Desplazamiento mínimo (px) para reconocer un swipe como intencional
 const SWIPE_THRESHOLD = 50;

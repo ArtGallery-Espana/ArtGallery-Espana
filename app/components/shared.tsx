@@ -65,21 +65,30 @@ const DEFAULT_CONTACT = {
 };
 
 /**
- * Indica si la página ha hecho scroll más allá de `threshold` px.
+ * Indica si la página ha hecho scroll más allá de un umbral.
  *
- * Alterna el header entre transparente (en el tope) y sólido (al
- * scrollear). Usa un listener pasivo y calcula el estado inicial en el
- * mount para cubrir el caso de recargar con la página ya desplazada.
+ * Usa histéresis para evitar el titilado (flickering) cuando el usuario
+ * frena el scroll cerca del tope:
+ *   - El header pasa a "scrolled" (oscuro/comprimido) al superar `enterAt`.
+ *   - Solo vuelve a "no scrolled" cuando baja de `leaveAt`.
+ * De este modo, entre leaveAt y enterAt el estado no cambia, lo que elimina
+ * los cambios rápidos de clase causados por el momentum del scroll.
  */
-function useHasScrolled(threshold = 8): boolean {
+function useHasScrolled(enterAt = 40, leaveAt = 8): boolean {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > threshold);
+    const update = () => {
+      const y = window.scrollY;
+      setScrolled((prev) => {
+        if (prev) return y > leaveAt;   // ya activo: solo desactiva muy cerca del tope
+        return y > enterAt;             // inactivo: activa al superar el umbral alto
+      });
+    };
     update();
     window.addEventListener('scroll', update, {passive: true});
     return () => window.removeEventListener('scroll', update);
-  }, [threshold]);
+  }, [enterAt, leaveAt]);
 
   return scrolled;
 }
