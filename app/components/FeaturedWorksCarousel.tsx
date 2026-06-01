@@ -110,7 +110,9 @@ export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
       aria-label="Obras monumentales — carrusel"
       aria-roledescription="carrusel"
       // Márgenes negativos rompen el contenedor para llegar al borde del viewport
-      className="relative -mx-3 -mt-3 h-[68vh] min-h-[460px] overflow-hidden bg-[#EEE8E1] sm:h-[78vh] md:-mx-4 md:-mt-4 lg:h-[86vh]"
+      // h-[56vh] en móvil: proporción más baja que evita que imágenes landscape
+      // queden muy recortadas. sm/lg recuperan la altura editorial de escritorio.
+      className="relative -mx-3 -mt-3 h-[56vh] min-h-[280px] overflow-hidden bg-[#EEE8E1] sm:h-[72vh] sm:min-h-[400px] md:-mx-4 md:-mt-4 lg:h-[86vh]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchEnd={handleTouchEnd}

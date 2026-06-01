@@ -66,6 +66,9 @@ export const MANUAL_FEATURED_SLIDES: CarouselSlide[] = [
     imageAlt:
       'La Familia — obra monumental de Jorge España, Asamblea Nacional del Ecuador',
     meta: 'Asamblea Nacional del Ecuador · 2008',
+    // Imagen horizontal (landscape) en un carrusel de altura variable; contain
+    // garantiza ver la obra completa en cualquier tamaño de pantalla.
+    imageFit: 'contain',
   },
   {
     id: 'los-estudiantes',
