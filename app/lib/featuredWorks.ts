@@ -39,6 +39,13 @@ export type CarouselSlide = {
   href?: string;
   /** Precio para mostrar con <Money>. Ausente en obras manuales. */
   price?: {amount: string; currencyCode: string} | null;
+  /**
+   * Ajuste de la imagen en el carrusel.
+   * - 'cover' (por defecto): llena el viewport; puede recortar imágenes muy verticales.
+   * - 'contain': muestra la obra completa; los bordes laterales quedan con el
+   *   fondo Piedra (#EEE8E1) del contenedor, lo que es coherente con la paleta.
+   */
+  imageFit?: 'cover' | 'contain';
 };
 
 /**
@@ -67,6 +74,9 @@ export const MANUAL_FEATURED_SLIDES: CarouselSlide[] = [
     imageAlt:
       'Los Estudiantes — conjunto escultórico monumental, Universidad de Cuenca',
     meta: 'Universidad de Cuenca · Conjunto escultórico',
+    // La foto es vertical (retrato) en un carrusel apaisado; contain muestra
+    // las esculturas completas sin recortar. El fondo Piedra llena los laterales.
+    imageFit: 'contain',
   },
   {
     id: 'allcamari',

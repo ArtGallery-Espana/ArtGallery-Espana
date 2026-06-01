@@ -134,32 +134,9 @@ export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
         ))}
       </div>
 
-      {/* ── Controles de navegación ─────────────────────────────────────── */}
+      {/* ── Dots de posición ────────────────────────────────────────────── */}
       {count > 1 ? (
-        <>
-          {/* Flecha izquierda */}
-          <button
-            aria-label="Obra anterior"
-            className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[rgba(35,35,39,.22)] bg-[rgba(246,241,234,.85)] text-[#232327] backdrop-blur-sm transition-colors hover:border-[#C84D92] hover:text-[#C84D92] md:left-8"
-            onClick={prev}
-            type="button"
-          >
-            ←
-          </button>
-
-          {/* Flecha derecha */}
-          <button
-            aria-label="Obra siguiente"
-            className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center border border-[rgba(35,35,39,.22)] bg-[rgba(246,241,234,.85)] text-[#232327] backdrop-blur-sm transition-colors hover:border-[#C84D92] hover:text-[#C84D92] md:right-8"
-            onClick={next}
-            type="button"
-          >
-            →
-          </button>
-
-          {/* Dots de posición */}
-          <CarouselDots active={activeDot} count={count} onSelect={goTo} />
-        </>
+        <CarouselDots active={activeDot} count={count} onSelect={goTo} />
       ) : null}
     </section>
   );
@@ -176,18 +153,19 @@ type CarouselSlideViewProps = {
 function CarouselSlideView({slide, eager}: CarouselSlideViewProps) {
   const inner = (
     <>
-      {/* object-cover llena el viewport sin bordes vacíos a los lados */}
+      {/* imageFit controla el recorte: 'cover' (defecto) llena el viewport;
+          'contain' muestra la obra completa con fondo Piedra en los laterales */}
       <img
         alt={slide.imageAlt}
-        className="h-full w-full object-cover"
+        className="h-full w-full"
         loading={eager ? 'eager' : 'lazy'}
         sizes="100vw"
         src={slide.imageUrl}
+        style={{objectFit: slide.imageFit ?? 'cover'}}
       />
 
-      {/* Gradiente marfil desde abajo: mantiene coherencia con la paleta del sitio
-          y asegura legibilidad del título sobre cualquier imagen */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(246,241,234,.92)] via-[rgba(246,241,234,.22)] to-transparent" />
+      {/* Velo sutil desde abajo — solo lo necesario para leer el título */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(246,241,234,.55)] via-[rgba(246,241,234,.08)] to-transparent" />
 
       {/* Título y metadatos superpuestos en la parte inferior */}
       <div className="absolute inset-x-0 bottom-0 p-6 md:p-12 lg:p-16">
