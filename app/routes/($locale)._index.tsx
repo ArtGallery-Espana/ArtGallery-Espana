@@ -294,12 +294,6 @@ function MonumentalShowcase() {
                 <span className="mx-3 text-[#D9D4CF]">·</span>
                 {work.dimensions}
               </div>
-              <Link
-                className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#0F0F12] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76] hover:text-white hover:no-underline"
-                to="/collections/all"
-              >
-                Ver catálogo
-              </Link>
             </div>
 
             {/* Columna de imagen */}
