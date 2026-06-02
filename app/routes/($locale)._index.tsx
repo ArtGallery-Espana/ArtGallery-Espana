@@ -41,13 +41,35 @@ export default function Homepage() {
       {/* Vitrina de obras monumentales con navegación por flechas */}
       <MonumentalShowcase />
 
+      <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35" data-reveal>
+        <div className="mx-auto max-w-360">
+          <div className="grid border-y border-[rgba(35,35,39,.10)] lg:grid-cols-3">
+            <div className="border-b border-[rgba(35,35,39,.10)] px-6 py-8 lg:border-b-0 lg:border-r">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#2F9EA0]">01</div>
+              <h3 className="mt-3 [font-family:var(--serif)] text-[1.4rem] text-[#111111]">Autenticidad</h3>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[rgba(35,35,39,.65)]">Cada obra se entrega con la firma del artista.</p>
+            </div>
+            <div className="border-b border-[rgba(35,35,39,.10)] px-6 py-8 lg:border-b-0 lg:border-r">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">02</div>
+              <h3 className="mt-3 [font-family:var(--serif)] text-[1.4rem] text-[#111111]">Envío internacional</h3>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[rgba(35,35,39,.65)]">DHL Express con embalaje profesional para coleccionistas en Europa, Asia y Américas.</p>
+            </div>
+            <div className="px-6 py-8">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#2F9EA0]">03</div>
+              <h3 className="mt-3 [font-family:var(--serif)] text-[1.4rem] text-[#111111]">Asesoría privada</h3>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[rgba(35,35,39,.65)]">Consulta de obras, propuestas de adquisición y planes de pago para coleccionistas.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Productos publicados en el catálogo Shopify */}
       <section className="px-6 pt-24 md:px-10 xl:px-14 xl:pt-[160px]" data-reveal>
         <div className="mx-auto max-w-[1440px]">
           <SectionHead
             num="Productos Publicados"
             title="Últimos productos publicados"
-            desc="Descubre las piezas más recientes incorporadas a nuestro catálogo. Arte contemporáneo con alma artesanal."
+            desc="Descubre las obras más recientes incorporadas a nuestro catálogo. Arte contemporáneo con identidad propia."
           />
 
           <div className="grid gap-12 lg:grid-cols-3">
@@ -109,12 +131,18 @@ export default function Homepage() {
               </h2>
               <p className="mt-7 max-w-[42ch] text-[15px] leading-[1.7] text-[rgba(35,35,39,.72)]">
                 Entre herramientas, pigmentos y maquetas, el taller reúne las
-                piezas en proceso, la obra terminada y la conversación que da
+                obras en proceso, la obra terminada y la conversación que da
                 sentido a cada serie.
               </p>
               <div className="mt-9">
                 <Link
-                  className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#C84D92] hover:!text-[#C84D92] hover:no-underline"
+                  className="home-cta-ghost inline-flex h-12 items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
+                  to="/pages/contacto"
+                >
+                  Consultar disponibilidad
+                </Link>
+                <Link
+                  className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#2F9EA0] hover:!text-[#2F9EA0] hover:no-underline"
                   to="/pages/artista"
                 >
                   Conocer al artista →
@@ -151,8 +179,21 @@ export default function Homepage() {
                 <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
                   Ubicación
                 </div>
-                <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
-                  Cuenca, Ecuador
+                <div>
+                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                    Atención
+                  </div>
+                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
+                    Consultas en línea
+                  </div>
+                </div>
+                <div>
+                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                    Envíos
+                  </div>
+                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
+                    Nacional e internacional
+                  </div>
                 </div>
               </div>
             </div>

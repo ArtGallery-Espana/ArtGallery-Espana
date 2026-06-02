@@ -1265,7 +1265,8 @@
   .returns-section,
   .payments-section,
   .shipping-table-section,
-  .shipping-national-section {
+  .shipping-national-section,
+  .shipping-international-section {
     display: grid;
     gap: 1.5rem;
   }
@@ -1401,57 +1402,65 @@
     width: 100%;
   }
 
-  /* --- Timeline de trayectoria ---------------------------------------- */
-  .trajectory-timeline {
+  /* --- Timeline de trayectoria (línea horizontal) --------------------- */
+  .trajectory-header { margin-bottom: 2rem; }
+
+  .trajectory-content {
     display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  /* Móvil: apilado vertical simple con punto + texto */
+  .trajectory-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     list-style: none;
     margin: 0;
     padding: 0;
-  }
-
-  .trajectory-timeline li {
-    align-content: start;
-    background: var(--color-papel);
-    border: 1px solid var(--color-niebla);
-    display: grid;
-    gap: 0.75rem;
-    min-height: 11.5rem;
-    padding: 1rem 1.05rem;
     position: relative;
   }
 
-  /* Barra vertical magenta suave a la izquierda de cada hito. */
-  .trajectory-timeline li::before {
-    background: var(--color-lavanda);
-    content: '';
-    height: 100%;
-    left: 0;
-    position: absolute;
-    top: 0;
-    width: 4px;
-  }
-  .trajectory-timeline li::after { content: none; }
+  .trajectory-timeline .tl-line { display: none; }
 
-  .trajectory-timeline span {
+  .trajectory-timeline li {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+  }
+
+  .trajectory-timeline .tl-dot {
+    background: var(--color-turq);
+    border: 2px solid #F6F1EA;
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 10px;
+    margin-top: 0.3rem;
+    outline: 2px solid var(--color-turq);
+    width: 10px;
+  }
+
+  .tl-year {
     color: var(--color-mag);
+    display: block;
     font-family: var(--mono);
     font-size: 0.7rem;
     letter-spacing: 0.18em;
+    margin-bottom: 0.3rem;
     text-transform: uppercase;
   }
-  .trajectory-timeline p {
+  .tl-body {
     color: rgba(35, 35, 39, 0.76);
     font-size: 0.93rem;
-    line-height: 1.7;
+    line-height: 1.65;
+    margin: 0;
   }
 
-  /* --- Galería trayectoria (fotos archivo) ----------------------------- */
+  /* --- Galería trayectoria (fotos archivo en fila) --------------------- */
   .trajectory-gallery {
     display: grid;
     gap: 1rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .trajectory-gallery figure {
     background: var(--color-papel);
@@ -1464,7 +1473,12 @@
     display: block;
     height: auto;
     object-fit: cover;
+    object-position: center center;
     width: 100%;
+  }
+  /* Foto del grupo 1994: centrada para mostrar a todos */
+  .trajectory-gallery figure:nth-child(2) img {
+    object-position: center center;
   }
   .trajectory-gallery figcaption {
     color: var(--color-mag);
@@ -1799,7 +1813,8 @@
     font-style: italic;
   }
 
-  .shipping-national-info {
+  .shipping-national-info,
+  .shipping-international-info {
     display: grid;
     gap: 1rem;
   }
@@ -1928,11 +1943,15 @@
 
   .contact-details {
     align-content: start;
+    /* No estirar a la altura del formulario: la caja toma solo el alto de su
+     * contenido en vez de quedar como un rectángulo blanco casi vacío. */
+    align-self: start;
     display: grid;
     gap: 1.75rem;
   }
   .contact-details a {
     color: var(--color-ink);
+    display: block;
     font-size: 1.05rem;
     text-decoration: none;
   }
@@ -2033,7 +2052,19 @@
    * primer paint → sin parpadeo). `is-revealed` se alterna según la
    * intersección con el viewport, por lo que anima al bajar y al subir.
    * Sin JS, el contenido nunca recibe `.reveal` y se ve normal.
+   *
+   * La regla :not(.reveal) oculta el elemento ANTES de que el JS de
+   * hidratación corra, eliminando el destello visual al cargar la página.
    */
+  /* Solo cuando hay JS activo: sin scripting la animación nunca corre, así que
+   * el contenido debe permanecer visible (no lo ocultamos). */
+  @media (scripting: enabled) {
+    [data-reveal]:not(.reveal) {
+      opacity: 0;
+      transform: translateY(56px) scale(0.97);
+    }
+  }
+
   .reveal {
     opacity: 0;
     /* Desplazamiento + leve escala para que la entrada se note claramente. */
@@ -2075,12 +2106,12 @@
     .artist-biography,
     .artist-statement,
     .artist-facts-section,
-    .artist-trajectory,
     .galapagos-section,
     .returns-section,
     .payments-section,
     .shipping-table-section,
-    .shipping-national-section {
+    .shipping-national-section,
+    .shipping-international-section {
       align-items: start;
       grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
     }
@@ -2116,11 +2147,6 @@
     .artist-facts-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    /* La última fact card ocupa la fila completa. */
-    .artist-facts-grid div:last-child {
-      grid-column: 1 / -1;
-      min-height: 7.5rem;
-    }
 
     .galapagos-section { grid-template-columns: 1fr; }
     .galapagos-header {
@@ -2133,8 +2159,7 @@
     }
     .galapagos-gallery figure { min-height: 0; }
 
-    .trajectory-gallery  { grid-template-columns: 1fr; }
-    .trajectory-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Galería fotos ya tiene 3 cols desde mobile; nada que cambiar en 900px. */
 
     .payment-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2154,16 +2179,75 @@
     }
   }
 
-  /* Desktop ancho (≥ 1280px): timeline trajectory en 4 columnas. */
-  @media (min-width: 1280px) {
+  /* Desktop (≥ 768px): timeline horizontal con barra central y alternancia */
+  @media (min-width: 768px) {
+    /* Contenedor: altura fija para que el 50% sea siempre la línea central */
     .trajectory-timeline {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: stretch;
+      flex-direction: row;
+      gap: 0;
+      min-height: 14rem;
+      padding: 0;
+      position: relative;
     }
-  }
 
-  /* < 1280px: relaja la altura mínima del timeline. */
-  @media (max-width: 1279px) {
-    .trajectory-timeline li { min-height: auto; }
+    /* Barra horizontal exactamente en el medio */
+    .trajectory-timeline .tl-line {
+      background: linear-gradient(90deg, var(--color-turq), var(--color-mag));
+      display: block;
+      height: 3px;
+      left: 0;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 100%;
+      z-index: 0;
+    }
+
+    /* Cada hito ocupa su columna y usa position relative para anclar texto y punto */
+    .trajectory-timeline li {
+      align-items: center;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Punto siempre en la línea central */
+    .trajectory-timeline .tl-dot {
+      background: #F6F1EA;
+      border: 3px solid var(--color-turq);
+      border-radius: 50%;
+      height: 14px;
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      z-index: 2;
+    }
+
+    .trajectory-timeline li.tl-below .tl-dot {
+      border-color: var(--color-mag);
+    }
+
+    /* Texto arriba: anclado al borde inferior del espacio superior (encima de la línea) */
+    .trajectory-timeline li.tl-above .tl-text {
+      bottom: calc(50% + 1.25rem);
+      position: absolute;
+      text-align: center;
+      width: 88%;
+    }
+
+    /* Texto abajo: anclado al borde superior del espacio inferior (debajo de la línea) */
+    .trajectory-timeline li.tl-below .tl-text {
+      position: absolute;
+      text-align: center;
+      top: calc(50% + 1.25rem);
+      width: 88%;
+    }
   }
 }
 

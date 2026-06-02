@@ -23,6 +23,13 @@ export function ProductForm({
       {productOptions.map((option) => {
         if (option.optionValues.length === 1) return null;
 
+        // Se activa el selector de color cuando los valores traen swatch
+        // (color o imagen) desde Shopify. El resto de opciones (p. ej. tamaño)
+        // se muestran como botones de texto.
+        const isColorOption = option.optionValues.some(
+          (value) => value.swatch?.color || value.swatch?.image,
+        );
+
         return (
           <div key={option.name}>
             <h5 className="mb-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
@@ -41,16 +48,24 @@ export function ProductForm({
                   swatch,
                 } = value;
 
-                const baseClassName = `inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2 text-[11px] uppercase tracking-[0.16em] transition ${
-                  selected
-                    ? 'border-[#111111] bg-[#111111] text-white'
-                    : 'border-[rgba(35,35,39,.18)] text-[#232327] hover:border-[#C84D92] hover:text-[#C84D92]'
-                }`;
+                const inner = isColorOption ? (
+                  <ColorSwatch swatch={swatch} name={name} selected={selected} />
+                ) : (
+                  <ProductOptionSwatch swatch={swatch} name={name} />
+                );
+
+                const className = isColorOption
+                  ? 'inline-flex flex-col items-center gap-2 bg-transparent'
+                  : `inline-flex min-h-11 items-center justify-center gap-2 border px-4 py-2 text-[11px] uppercase tracking-[0.16em] transition ${
+                      selected
+                        ? 'border-[#111111] bg-[#111111] text-white'
+                        : 'border-[rgba(35,35,39,.18)] text-[#232327] hover:border-[#2F9EA0] hover:text-[#2F9EA0]'
+                    }`;
 
                 if (isDifferentProduct) {
                   return (
                     <Link
-                      className={baseClassName}
+                      className={className}
                       key={option.name + name}
                       prefetch="intent"
                       preventScrollReset
@@ -58,7 +73,7 @@ export function ProductForm({
                       to={`/products/${handle}?${variantUriQuery}`}
                       style={{opacity: available ? 1 : 0.35}}
                     >
-                      <ProductOptionSwatch swatch={swatch} name={name} />
+                      {inner}
                     </Link>
                   );
                 }
@@ -66,7 +81,7 @@ export function ProductForm({
                 return (
                   <button
                     type="button"
-                    className={baseClassName}
+                    className={className}
                     key={option.name + name}
                     style={{opacity: available ? 1 : 0.35}}
                     disabled={!exists}
@@ -79,7 +94,7 @@ export function ProductForm({
                       }
                     }}
                   >
-                    <ProductOptionSwatch swatch={swatch} name={name} />
+                    {inner}
                   </button>
                 );
               })}
@@ -110,6 +125,49 @@ export function ProductForm({
           : 'Agotado'}
       </AddToCartButton>
     </div>
+  );
+}
+
+// Swatch grande para el selector de color de las esculturas. Muestra el color
+// (o la foto de la variante cuando esté disponible) y el nombre debajo, con un
+// anillo cuando está seleccionado. Queda listo para cuando se carguen colores y
+// fotos finales en Shopify.
+function ColorSwatch({
+  swatch,
+  name,
+  selected,
+}: {
+  swatch?: Maybe<ProductOptionValueSwatch> | undefined;
+  name: string;
+  selected: boolean;
+}) {
+  const image = swatch?.image?.previewImage?.url;
+  const color = swatch?.color;
+
+  return (
+    <>
+      <span
+        aria-hidden
+        title={name}
+        className={`h-9 w-9 overflow-hidden rounded-full border transition ${
+          selected
+            ? 'border-[#111111] ring-2 ring-[#111111] ring-offset-2 ring-offset-[#F6F1EA]'
+            : 'border-[rgba(35,35,39,.20)] hover:border-[#2F9EA0]'
+        }`}
+        style={{backgroundColor: color || 'transparent'}}
+      >
+        {!!image && (
+          <img alt="" className="h-full w-full object-cover" src={image} />
+        )}
+      </span>
+      <span
+        className={`[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] ${
+          selected ? 'text-[#111111]' : 'text-[rgba(35,35,39,.55)]'
+        }`}
+      >
+        {name}
+      </span>
+    </>
   );
 }
 

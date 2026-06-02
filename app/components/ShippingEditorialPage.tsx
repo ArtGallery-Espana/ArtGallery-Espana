@@ -36,8 +36,8 @@ export function ShippingEditorialPage() {
               </tr>
               <tr>
                 <th scope="row">Internacional</th>
-                <td>Despacho sujeto a coordinacion previa</td>
-                <td>Embalaje reforzado y validacion de tiempos por pais.</td>
+                <td>DHL Express — envíos a todo el mundo</td>
+                <td>Entrega internacional con seguimiento.</td>
               </tr>
             </tbody>
           </table>
@@ -62,6 +62,22 @@ export function ShippingEditorialPage() {
             <li>Dirección</li>
             <li>Referencia</li>
           </ul>
+        </div>
+      </section>
+
+      <section
+        className="editorial-section shipping-international-section"
+        data-reveal
+      >
+        <div>
+          <p className="editorial-kicker">Envío internacional</p>
+          <h2>DHL Express</h2>
+        </div>
+        <div className="shipping-international-info">
+          <p>
+            Trabajamos con DHL Express para envíos internacionales a todo el
+            mundo.
+          </p>
         </div>
       </section>
 

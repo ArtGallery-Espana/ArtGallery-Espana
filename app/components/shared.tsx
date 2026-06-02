@@ -2,6 +2,7 @@ import type {ReactNode} from 'react';
 import {useEffect, useState} from 'react';
 import {Form, Link, NavLink, useLocation} from 'react-router';
 import type {CurrencyChoice} from '~/lib/i18n';
+import {SocialLinks} from '~/components/SocialLinks';
 
 type NavItem = {
   label: string;
@@ -15,8 +16,8 @@ type LanguageItem = {
 
 type ContactInfo = {
   email: string;
+  emailSecondary?: string;
   whatsapp: string;
-  address: string;
 };
 
 type TopBarProps = {
@@ -35,7 +36,6 @@ type FooterProps = {
   brandName?: string;
   navItems?: NavItem[];
   contact?: ContactInfo;
-  legalItems?: NavItem[];
 };
 
 type FooterColumnProps = {
@@ -59,9 +59,9 @@ const DEFAULT_LANGUAGES = [
 // Datos de contacto visibles en el footer y la página de Contacto.
 // El dominio del email es fijo (verificado en Resend); solo cambia el nombre del remitente.
 const DEFAULT_CONTACT = {
-  email: 'contacto@galeriatallerjespana.com',
-  whatsapp: '+593 000 000 000',
-  address: 'Galería J. España',
+  email: 'jespanaa9207@gmail.com',
+  emailSecondary: 'maite.guic2@gmail.com',
+  whatsapp: '+593 99 807 3728',
 };
 
 /**
@@ -283,11 +283,6 @@ export function Footer({
   brandName = 'Galería J. España',
   navItems = DEFAULT_NAV_ITEMS,
   contact = DEFAULT_CONTACT,
-  legalItems = [
-    {label: 'Privacidad', to: '/policies/privacy-policy'},
-    {label: 'Devoluciones', to: '/policies/refund-policy'},
-    {label: 'Terminos', to: '/policies/terms-of-service'},
-  ],
 }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
@@ -310,18 +305,18 @@ export function Footer({
 
         <FooterColumn title="Contacto">
           <a href={`mailto:${contact.email}`}>{contact.email}</a>
+          {contact.emailSecondary && (
+            <a href={`mailto:${contact.emailSecondary}`}>
+              {contact.emailSecondary}
+            </a>
+          )}
           <a href={`https://wa.me/${formatWhatsapp(contact.whatsapp)}`}>
             {contact.whatsapp}
           </a>
-          <p>{contact.address}</p>
         </FooterColumn>
 
-        <FooterColumn title="Legal">
-          {legalItems.map((item) => (
-            <Link key={`${item.label}-${item.to}`} to={item.to}>
-              {item.label}
-            </Link>
-          ))}
+        <FooterColumn title="Redes sociales">
+          <SocialLinks />
         </FooterColumn>
       </div>
 
