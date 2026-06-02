@@ -38,118 +38,27 @@ export default function Homepage() {
         <FeaturedWorksCarousel slides={carouselSlides} />
       ) : null}
 
-      <section className="px-6 pb-16 pt-8 md:px-10 xl:px-14 xl:pb-20 xl:pt-12">
-        <div className="mx-auto max-w-360">
-          <div className="grid items-center gap-14 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:gap-24">
-            <div>
-              <Kicker accent="mag">
-                {heroProduct ? 'Obra destacada' : 'Obra del mes · Mayo 2026'}
-              </Kicker>
-              <h1 className="mt-10 [font-family:var(--serif)] text-[clamp(3.5rem,7vw,6.5rem)] leading-[0.98] tracking-[-0.015em] text-[#111111]">
-                {heroProduct ? (
-                  heroProduct.title
-                ) : (
-                  <>
-                    Pintar la luz
-                    <br />
-                    <span className="italic text-[rgba(35,35,39,.72)]">
-                      sin levantar la voz.
-                    </span>
-                  </>
-                )}
-              </h1>
-              <p className="mb-11 mt-9 max-w-[44ch] text-[17px] leading-[1.7] text-[rgba(35,35,39,.72)]">
-                {heroDescription ||
-                  'Obra contemporánea de Jorge España, pintor ecuatoriano radicado en Cuenca. Galápagos, paisajes interiores y pequeñas iluminaciones, en óleo y técnica mixta.'}
-              </p>
-              <div className="mb-14 mt-4 flex flex-wrap items-start gap-4">
-              <Link
-                className="home-cta-primary inline-flex h-12 items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#2F9EA0] hover:text-white hover:no-underline"
-                to="/collections/all"
-              >
-                Ver catálogo
-              </Link>
-              <Link
-                className="home-cta-link group relative flex h-12 w-[182px] items-center text-[11px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:text-[#2F9EA0] hover:no-underline"
-                to={
-                  heroProduct
-                    ? getProductPath(heroProduct.handle)
-                    : '/pages/artista'
-                  }
-                >
-                  <span className="flex items-center leading-none">
-                    {heroProduct ? 'Ver obra →' : 'Sobre el artista →'}
-                  </span>
-                  <span className="absolute bottom-0 left-0 block h-px w-full bg-[#232327] transition-colors group-hover:bg-[#2F9EA0]" />
-                </Link>
-              </div>
-              <div className="flex flex-wrap gap-x-6 gap-y-3 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                <span>
-                  {heroProduct
-                    ? `Publicado ${getPublishedYear(heroProduct.publishedAt)}`
-                    : 'EST. 2009'}
-                </span>
-                <span className="text-[#D9D4CF]">·</span>
-                <span className="text-[#D9D4CF]">·</span>
-              </div>
-            </div>
-
-            <div className="relative mx-auto w-full max-w-[620px] xl:mx-0">
-              <ArtworkProduct product={heroProduct} ratio="4 / 5" />
-              {heroProduct ? (
-                <div className="mt-6 border border-[rgba(35,35,39,.10)] bg-[#F6F1EA] p-6 xl:absolute xl:-bottom-6 xl:-right-6 xl:mt-0 xl:max-w-[280px]">
-                  <div className="mb-2.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">
-                    Obra protagonista
-                  </div>
-                  <div className="mb-1.5 [font-family:var(--serif)] text-[22px] leading-[1.15] text-[#111111]">
-                    {heroProduct.title}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
-                    <span>{getPublishedYear(heroProduct.publishedAt)}</span>
-                    <span>·</span>
-                    <span>{getPrimaryTag(heroProduct.tags)}</span>
-                    {getProductDimensions(heroProduct) ? (
-                      <>
-                        <span>·</span>
-                        <span>{getProductDimensions(heroProduct)}</span>
-                      </>
-                    ) : null}
-                    <span>·</span>
-                    <Money data={heroProduct.priceRange.minVariantPrice} />
-                  </div>
-                  <Link
-                    className="home-cta-link mt-4 inline-flex items-end border-b border-[#232327] pb-1 text-[10px] uppercase tracking-[0.18em] text-[#232327] transition-colors hover:border-[#2F9EA0] hover:text-[#2F9EA0]"
-                    to={getProductPath(heroProduct.handle)}
-                  >
-                    Ficha de obra →
-                  </Link>
-                </div>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Vitrina de obras monumentales con navegación por flechas */}
+      <MonumentalShowcase />
 
       <section className="px-6 pt-20 md:px-10 xl:px-14 xl:pt-35" data-reveal>
         <div className="mx-auto max-w-360">
           <div className="grid border-y border-[rgba(35,35,39,.10)] lg:grid-cols-3">
-            <TrustBlock
-              num="01"
-              title="Autenticidad"
-              body="Cada obra se entrega con la firma del artista."
-            />
-            <TrustBlock
-              num="02"
-              title="Envío internacional"
-              body="DHL Express con embalaje profesional para coleccionistas en Europa, Asia y Américas."
-              accent
-            />
-            <TrustBlock
-              num="03"
-              title="Asesoría privada"
-              body="Consulta de obras, propuestas de adquisición y planes de pago para coleccionistas."
-              last
-            />
+            <div className="border-b border-[rgba(35,35,39,.10)] px-6 py-8 lg:border-b-0 lg:border-r">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#2F9EA0]">01</div>
+              <h3 className="mt-3 [font-family:var(--serif)] text-[1.4rem] text-[#111111]">Autenticidad</h3>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[rgba(35,35,39,.65)]">Cada obra se entrega con la firma del artista.</p>
+            </div>
+            <div className="border-b border-[rgba(35,35,39,.10)] px-6 py-8 lg:border-b-0 lg:border-r">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#C84D92]">02</div>
+              <h3 className="mt-3 [font-family:var(--serif)] text-[1.4rem] text-[#111111]">Envío internacional</h3>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[rgba(35,35,39,.65)]">DHL Express con embalaje profesional para coleccionistas en Europa, Asia y Américas.</p>
+            </div>
+            <div className="px-6 py-8">
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[#2F9EA0]">03</div>
+              <h3 className="mt-3 [font-family:var(--serif)] text-[1.4rem] text-[#111111]">Asesoría privada</h3>
+              <p className="mt-2 text-[14px] leading-[1.65] text-[rgba(35,35,39,.65)]">Consulta de obras, propuestas de adquisición y planes de pago para coleccionistas.</p>
+            </div>
           </div>
         </div>
       </section>
