@@ -3,12 +3,11 @@ import {useFetcher} from 'react-router';
 import type {ContactActionData} from '~/routes/($locale).pages.$handle';
 
 const CONTACT_DETAILS = {
-  studio: 'Estudio Jorge España',
-  email: 'estudio@jorgeespana.art',
+  studio: 'Galería J. España',
+  email: 'jespanaa9207@gmail.com',
+  emailSecondary: 'maite.guic2@gmail.com',
   whatsappDisplay: '+593 99 807 3728',
   whatsappHref: 'https://wa.me/593998073728',
-  addressLineOne: 'Calle Larga 6-21',
-  addressLineTwo: 'Cuenca, Ecuador',
 };
 
 export function ContactEditorialPage() {
@@ -34,7 +33,11 @@ export function ContactEditorialPage() {
     <article className="editorial-page contact-page">
       <header className="editorial-page-header" data-reveal>
         <p className="editorial-kicker">Contacto</p>
-        <h1>Conversemos sobre una obra, una visita o una consulta.</h1>
+        <h1>Conversemos sobre una obra o una consulta.</h1>
+        <p className="editorial-lede">
+          Escríbenos para consultar por una obra, conocer disponibilidad o
+          recibir información personalizada.
+        </p>
       </header>
 
       <section className="contact-layout" data-reveal>
@@ -136,7 +139,7 @@ export function ContactEditorialPage() {
           </button>
         </fetcher.Form>
 
-        <aside className="contact-details">
+        <div className="contact-details">
           <div>
             <p className="editorial-kicker">Estudio</p>
             <p>{CONTACT_DETAILS.studio}</p>
@@ -144,17 +147,13 @@ export function ContactEditorialPage() {
           <div>
             <p className="editorial-kicker">Email directo</p>
             <a href={`mailto:${CONTACT_DETAILS.email}`}>{CONTACT_DETAILS.email}</a>
+            <a href={`mailto:${CONTACT_DETAILS.emailSecondary}`}>{CONTACT_DETAILS.emailSecondary}</a>
           </div>
           <div>
             <p className="editorial-kicker">WhatsApp</p>
             <a href={CONTACT_DETAILS.whatsappHref}>{CONTACT_DETAILS.whatsappDisplay}</a>
           </div>
-          <div>
-            <p className="editorial-kicker">Direccion del taller</p>
-            <p>{CONTACT_DETAILS.addressLineOne}</p>
-            <p>{CONTACT_DETAILS.addressLineTwo}</p>
-          </div>
-        </aside>
+        </div>
       </section>
     </article>
   );

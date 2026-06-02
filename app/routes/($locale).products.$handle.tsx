@@ -490,7 +490,7 @@ export default function Product() {
                   <InfoBlock
                     title="Incluye"
                     items={[
-                      'Certificado y factura emitida desde la galería.',
+                      'Firma del artista y factura emitida desde la galería.',
                       'Acompañamiento para coordinar envío o entrega.',
                       'Atención directa para resolver dudas sobre la obra.',
                     ]}

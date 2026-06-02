@@ -31,6 +31,7 @@ type EnrichedProduct = RawProduct & {
   categoria: string;
   tamano: string;
   priceVal: number;
+  grupo: number;
 };
 
 type PriceBucket = 'todos' | 'hasta5' | '5a15' | 'mas15' | 'consultar';
@@ -70,6 +71,53 @@ function computeTamano(
 function getCategory(p: RawProduct): string {
   if (p.productType) return p.productType;
   return p.collections?.nodes?.[0]?.title ?? '';
+}
+
+// El catálogo antepone pinturas/cuadros a las esculturas, y deja al final lo
+// que no se reconozca. La clasificación revisa tipo de producto, etiquetas y
+// colecciones (sin distinguir acentos/mayúsculas) para que funcione con los
+// nombres reales que use la tienda.
+const PINTURA_KEYWORDS = [
+  'pintura',
+  'cuadro',
+  'oleo',
+  'lienzo',
+  'acrilico',
+  'acuarela',
+  'dibujo',
+  'tecnica mixta',
+  'encaustica',
+];
+const ESCULTURA_KEYWORDS = [
+  'escultura',
+  'cobre',
+  'repujado',
+  'bronce',
+  'talla',
+  'relieve',
+];
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[áàä]/g, 'a')
+    .replace(/[éèë]/g, 'e')
+    .replace(/[íìï]/g, 'i')
+    .replace(/[óòö]/g, 'o')
+    .replace(/[úùü]/g, 'u');
+}
+
+function getGroupRank(p: RawProduct): number {
+  const haystack = normalizeText(
+    [
+      p.productType ?? '',
+      ...(p.tags ?? []),
+      ...(p.collections?.nodes?.map((c) => c.title) ?? []),
+    ].join(' '),
+  );
+  if (PINTURA_KEYWORDS.some((k) => haystack.includes(k))) return 0;
+  if (ESCULTURA_KEYWORDS.some((k) => haystack.includes(k))) return 1;
+  return 2;
 }
 
 function matchesPriceBucket(priceVal: number, bucket: PriceBucket): boolean {
@@ -204,6 +252,7 @@ export default function CatalogPage() {
         categoria: getCategory(p),
         tamano: computeTamano(p.alto?.value, p.ancho?.value),
         priceVal: parseFloat(p.priceRange.minVariantPrice.amount),
+        grupo: getGroupRank(p),
       })),
     [products],
   );
@@ -228,16 +277,21 @@ export default function CatalogPage() {
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
-    switch (sort) {
-      case 'Precio ↑':
-        return copy.sort((a, b) => a.priceVal - b.priceVal);
-      case 'Precio ↓':
-        return copy.sort((a, b) => b.priceVal - a.priceVal);
-      case 'A–Z':
-        return copy.sort((a, b) => a.title.localeCompare(b.title));
-      default:
-        return copy;
-    }
+    // El orden base siempre antepone pinturas a esculturas; el criterio
+    // elegido (precio, A–Z o recientes) ordena dentro de cada grupo.
+    const within = (a: EnrichedProduct, b: EnrichedProduct) => {
+      switch (sort) {
+        case 'Precio ↑':
+          return a.priceVal - b.priceVal;
+        case 'Precio ↓':
+          return b.priceVal - a.priceVal;
+        case 'A–Z':
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    };
+    return copy.sort((a, b) => a.grupo - b.grupo || within(a, b));
   }, [filtered, sort]);
 
   const hasFilters = selectedTamano !== 'todas' || selectedPrecio !== 'todos';
@@ -387,15 +441,21 @@ export default function CatalogPage() {
       <section className="border-t border-[rgba(35,35,39,.12)] px-6 py-20 md:px-10 xl:px-14" data-reveal>
         <div className="mx-auto max-w-[1400px]">
           <div className="flex flex-col gap-10 md:flex-row md:items-center md:justify-between">
-            <h2 className="max-w-[520px] [font-family:var(--serif)] text-[clamp(1.6rem,2.8vw,2.4rem)] leading-[1.2] text-[#111111]">
-              ¿Busca una obra que no ve aquí?<br />
-              Muchas piezas viven fuera del catálogo público.
-            </h2>
+            <div className="max-w-[520px]">
+              <h2 className="[font-family:var(--serif)] text-[clamp(1.6rem,2.8vw,2.4rem)] leading-[1.2] text-[#111111]">
+                ¿Busca una obra que no ve aquí?
+              </h2>
+              <p className="mt-3 text-[15px] leading-[1.65] text-[rgba(35,35,39,.62)]">
+                Algunas obras pueden no estar publicadas todavía en el catálogo.
+                Escríbenos para consultar disponibilidad o recibir más
+                información.
+              </p>
+            </div>
             <Link
               to="/pages/contacto"
               className="inline-flex shrink-0 items-center border border-[#232327] px-7 py-4 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.22em] text-[#232327] transition hover:bg-[#232327] hover:text-[#F6F1EA]"
             >
-              Solicitar dossier privado
+              Consultar disponibilidad
             </Link>
           </div>
         </div>

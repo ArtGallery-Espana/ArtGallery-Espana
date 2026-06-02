@@ -305,7 +305,7 @@ function CartPage({
     const shipCost = activeCount * SHIP_PER_PIECE;
     const insCost = Math.ceil(displayedSubtotal * INS_RATE);
     const note =
-      `Envío DHL: ${shipCost} USD (${activeCount} ${activeCount !== 1 ? 'piezas' : 'pieza'})` +
+      `Envío DHL: ${shipCost} USD (${activeCount} ${activeCount !== 1 ? 'obras' : 'obra'})` +
       ` | Seguro ad-valorem: ${insCost} USD`;
     if (note === prevShippingNoteRef.current) return;
     prevShippingNoteRef.current = note;
@@ -744,7 +744,7 @@ function OrderSummary({
           <>
             <div className="flex items-baseline justify-between gap-4">
               <span className="text-[rgba(35,35,39,.65)]">
-                Envío DHL · {activeCount} {activeCount !== 1 ? 'piezas' : 'pieza'}
+                Envío DHL · {activeCount} {activeCount !== 1 ? 'obras' : 'obra'}
               </span>
               <span className="shrink-0 text-[#232327]">{fmtAmt(shipCost)}</span>
             </div>
