@@ -56,6 +56,8 @@ const DEFAULT_LANGUAGES = [
   {label: 'EN', value: 'EN'},
 ];
 
+// Datos de contacto visibles en el footer y la página de Contacto.
+// El dominio del email es fijo (verificado en Resend); solo cambia el nombre del remitente.
 const DEFAULT_CONTACT = {
   email: 'jespanaa9207@gmail.com',
   emailSecondary: 'maite.guic2@gmail.com',
@@ -63,27 +65,36 @@ const DEFAULT_CONTACT = {
 };
 
 /**
- * Indica si la página ha hecho scroll más allá de `threshold` px.
+ * Indica si la página ha hecho scroll más allá de un umbral.
  *
- * Alterna el header entre transparente (en el tope) y sólido (al
- * scrollear). Usa un listener pasivo y calcula el estado inicial en el
- * mount para cubrir el caso de recargar con la página ya desplazada.
+ * Usa histéresis para evitar el titilado (flickering) cuando el usuario
+ * frena el scroll cerca del tope:
+ *   - El header pasa a "scrolled" (oscuro/comprimido) al superar `enterAt`.
+ *   - Solo vuelve a "no scrolled" cuando baja de `leaveAt`.
+ * De este modo, entre leaveAt y enterAt el estado no cambia, lo que elimina
+ * los cambios rápidos de clase causados por el momentum del scroll.
  */
-function useHasScrolled(threshold = 8): boolean {
+function useHasScrolled(enterAt = 40, leaveAt = 8): boolean {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > threshold);
+    const update = () => {
+      const y = window.scrollY;
+      setScrolled((prev) => {
+        if (prev) return y > leaveAt;   // ya activo: solo desactiva muy cerca del tope
+        return y > enterAt;             // inactivo: activa al superar el umbral alto
+      });
+    };
     update();
     window.addEventListener('scroll', update, {passive: true});
     return () => window.removeEventListener('scroll', update);
-  }, [threshold]);
+  }, [enterAt, leaveAt]);
 
   return scrolled;
 }
 
 export function TopBar({
-  logoText = 'Galeria Taller J España',
+  logoText = 'Galería J. España',
   logoSrc = '/logo-j-espana.jpeg',
   navItems = DEFAULT_NAV_ITEMS,
   languages = DEFAULT_LANGUAGES,
@@ -94,63 +105,137 @@ export function TopBar({
   onLanguageChange,
 }: TopBarProps) {
   const scrolled = useHasScrolled();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Cierra el menú automáticamente al cambiar de página
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  // Bloquea el scroll del body mientras el menú móvil está abierto
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [menuOpen]);
+
+  const headerClass = [
+    'shared-topbar',
+    scrolled ? 'is-scrolled' : '',
+    menuOpen ? 'menu-open' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <header className={`shared-topbar${scrolled ? ' is-scrolled' : ''}`}>
-      <Link className="shared-topbar-logo" to="/" aria-label={logoText}>
-        {logoSrc && (
-          <img
-            className="shared-topbar-logo-image"
-            src={logoSrc}
-            alt=""
-            aria-hidden="true"
-          />
-        )}
-        <span>{logoText}</span>
-      </Link>
-
-      <nav className="shared-topbar-nav" aria-label="Navegacion principal">
-        {navItems.map((item) => (
-          <NavLink
-            key={`${item.label}-${item.to}`}
-            className={({isActive}) =>
-              isActive
-                ? 'shared-topbar-link shared-topbar-link-active'
-                : 'shared-topbar-link'
-            }
-            to={item.to}
-          >
-            {item.label}
-          </NavLink>
-        ))}
-      </nav>
-
-      <div className="shared-topbar-actions">
-        <label className="shared-language">
-          <span className="sr-only">Idioma</span>
-          <select
-            aria-label="Seleccionar idioma"
-            value={currentLanguage}
-            onChange={(event) => onLanguageChange?.(event.target.value)}
-          >
-            {languages.map((language) => (
-              <option key={language.value} value={language.value}>
-                {language.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <CurrencySelector currency={currency} />
-
-        <Link className="shared-cart-button" to={cartHref} aria-label="Carrito">
-          <span>Carrito</span>
-          <span className="shared-cart-badge" aria-label={`${cartCount} items`}>
-            {cartCount}
-          </span>
+    <>
+      <header className={headerClass}>
+        {/* Marca / Logo */}
+        <Link className="shared-topbar-logo" to="/" aria-label={logoText}>
+          {logoSrc && (
+            <img
+              className="shared-topbar-logo-image"
+              src={logoSrc}
+              alt=""
+              aria-hidden="true"
+            />
+          )}
+          <span>{logoText}</span>
         </Link>
+
+        {/* Navegación principal — solo escritorio */}
+        <nav className="shared-topbar-nav" aria-label="Navegación principal">
+          {navItems.map((item) => (
+            <NavLink
+              key={`${item.label}-${item.to}`}
+              className={({isActive}) =>
+                isActive
+                  ? 'shared-topbar-link shared-topbar-link-active'
+                  : 'shared-topbar-link'
+              }
+              to={item.to}
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+
+        {/* Utilidades — solo escritorio */}
+        <div className="shared-topbar-actions">
+          <label className="shared-language">
+            <span className="sr-only">Idioma</span>
+            <select
+              aria-label="Seleccionar idioma"
+              value={currentLanguage}
+              onChange={(event) => onLanguageChange?.(event.target.value)}
+            >
+              {languages.map((language) => (
+                <option key={language.value} value={language.value}>
+                  {language.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <CurrencySelector currency={currency} />
+          <Link className="shared-cart-button" to={cartHref} aria-label="Carrito">
+            <span>Carrito</span>
+            <span className="shared-cart-badge" aria-label={`${cartCount} items`}>
+              {cartCount}
+            </span>
+          </Link>
+        </div>
+
+        {/* Acciones móviles: carrito + hamburguesa — solo en móvil */}
+        <div className="shared-topbar-mobile-actions">
+          <Link className="shared-cart-button" to={cartHref} aria-label="Carrito">
+            <span>Carrito</span>
+            <span className="shared-cart-badge" aria-label={`${cartCount} items`}>
+              {cartCount}
+            </span>
+          </Link>
+          <button
+            type="button"
+            className="shared-hamburger"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={menuOpen}
+            aria-controls="shared-mobile-menu"
+          >
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+          </button>
+        </div>
+      </header>
+
+      {/* Menú móvil — panel de pantalla completa */}
+      <div
+        id="shared-mobile-menu"
+        className={`shared-mobile-menu${menuOpen ? ' is-open' : ''}`}
+        aria-hidden={!menuOpen}
+        role="dialog"
+        aria-label="Menú de navegación"
+      >
+        <nav aria-label="Menú móvil">
+          {navItems.map((item) => (
+            <NavLink
+              key={`mob-${item.label}-${item.to}`}
+              className={({isActive}) => (isActive ? 'active' : '')}
+              to={item.to}
+              onClick={() => setMenuOpen(false)}
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        {/* Selector de moneda accesible desde el menú móvil */}
+        <div className="shared-mobile-menu-footer">
+          <CurrencySelector currency={currency} />
+        </div>
       </div>
-    </header>
+    </>
   );
 }
 

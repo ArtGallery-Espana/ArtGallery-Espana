@@ -1,89 +1,147 @@
 /**
- * Carrusel full-bleed de obras destacadas (cabecera del home).
+ * Carrusel full-bleed de obras monumentales (cabecera del home).
  *
  * Características:
- *   - Deslizamiento HORIZONTAL entre slides (la pista se traslada en X).
- *   - Loop infinito sin "rebobinar": se añade un clon de la primera slide al
- *     final; al llegar a él, se salta de vuelta a la real sin animar.
- *   - Autoplay cada 5s; se pausa al pasar el mouse y se limpia en el cleanup.
- *   - Cada slide es un enlace a su ficha de obra (click en cualquier parte).
- *   - Dots de navegación manual (fuera del enlace, superpuestos).
- *   - Respeta `prefers-reduced-motion`: sin autoplay ni transición.
- *
- * Estructura no monolítica: el orquestador maneja índice/timer/loop; la vista
- * de slide y los dots son subcomponentes. Los datos llegan normalizados como
- * `CarouselSlide[]` desde `app/lib/featuredWorks.ts`.
- *
- * Referencia visual: ineditad.com (obra protagonista a sangre + overlay
- * editorial).
+ *   - Loop infinito BIDIRECCIONAL: clon del último al inicio y clon del
+ *     primero al final; al llegar a cada extremo se salta al real sin animar.
+ *   - Autoplay cada 3s; se pausa al pasar el cursor (escritorio).
+ *   - Flechas ← / → para navegación manual en escritorio y móvil.
+ *   - Swipe horizontal táctil: umbral de 50px para reconocer el gesto.
+ *   - Dots de posición (abajo centrados).
+ *   - Fondo Piedra (#EEE8E1) con gradiente marfil en el overlay,
+ *     coherente con la paleta del sitio.
+ *   - Respeta `prefers-reduced-motion`: sin autoplay ni transición CSS.
  */
 
-import {useCallback, useEffect, useState} from 'react';
+import {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router';
-import {Money} from '@shopify/hydrogen';
-import type {MoneyV2} from '@shopify/hydrogen/storefront-api-types';
 import type {CarouselSlide} from '~/lib/featuredWorks';
 
-const AUTOPLAY_MS = 5_000;
-const SLIDE_MS = 800;
+const AUTOPLAY_MS = 3_000;
+const SLIDE_MS = 750;
+// Desplazamiento mínimo (px) para reconocer un swipe como intencional
+const SWIPE_THRESHOLD = 50;
 
 export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
   const count = slides.length;
   const prefersReduced = usePrefersReducedMotion();
   const [paused, setPaused] = useState(false);
 
-  // `index` recorre 0..count. La posición `count` es un CLON de la primera
-  // slide; alcanzarla y saltar a 0 (sin animar) crea el loop infinito.
-  const [index, setIndex] = useState(0);
+  // La pista tiene un clon del ÚLTIMO slide al inicio (índice 0) y un clon
+  // del PRIMERO al final (índice count+1). Las slides reales ocupan 1..count.
+  // Arrancamos en índice 1 (primera slide real visible).
+  const [index, setIndex] = useState(1);
   const [animate, setAnimate] = useState(true);
 
-  const next = useCallback(() => setIndex((i) => i + 1), []);
+  // Referencia al X del toque inicial para detectar swipe
+  const touchStartX = useRef<number | null>(null);
 
-  const goTo = useCallback((target: number) => {
+  // Bloquea navegación simultánea: evita que autoplay + swipe incrementen el
+  // índice dos veces en el mismo ciclo, lo que sacaría el índice fuera del
+  // rango válido (0..count+1) y dejaría la pista en blanco.
+  const isTransitioning = useRef(false);
+
+  // ── Navegación ───────────────────────────────────────────────────────────
+  const next = useCallback(() => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
     setAnimate(true);
-    setIndex(target);
+    setIndex((i) => i + 1);
   }, []);
 
-  // ── Autoplay (5s) ────────────────────────────────────────────────────────
+  const prev = useCallback(() => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
+    setAnimate(true);
+    setIndex((i) => i - 1);
+  }, []);
+
+  // goTo recibe el índice real (0-based) y lo ajusta al índice en la pista
+  const goTo = useCallback((target: number) => {
+    if (isTransitioning.current) return;
+    isTransitioning.current = true;
+    setAnimate(true);
+    setIndex(target + 1);
+  }, []);
+
+  // ── Autoplay (pausa en hover) ────────────────────────────────────────────
   useEffect(() => {
     if (count <= 1 || paused || prefersReduced) return;
-    const intervalId = window.setInterval(next, AUTOPLAY_MS);
-    return () => window.clearInterval(intervalId);
+    const id = window.setInterval(next, AUTOPLAY_MS);
+    return () => window.clearInterval(id);
   }, [count, paused, prefersReduced, next]);
 
-  // ── Loop infinito ──────────────────────────────────────────────────────────
-  // Al terminar la transición hacia el clon, salta instantáneamente (sin
-  // animar) a la slide real 0.
-  const handleTransitionEnd = useCallback(() => {
-    if (index === count) {
-      setAnimate(false);
-      setIndex(0);
-    }
-  }, [index, count]);
+  // ── Loop infinito bidireccional ───────────────────────────────────────────
+  // Al terminar la transición en un extremo (clon), se salta al real opuesto
+  // sin animar; el siguiente frame reactiva la animación.
+  //
+  // IMPORTANTE: filtramos eventos burbuja (e.target !== e.currentTarget) porque
+  // las transiciones CSS de elementos hijos (p.ej. dots, overlay) también
+  // generan TransitionEnd que sube al contenedor padre. Sin este filtro,
+  // esos eventos espurios podrían disparar saltos de índice en momentos
+  // incorrectos y corromper el estado del carrusel.
+  const handleTransitionEnd = useCallback(
+    (e: React.TransitionEvent) => {
+      if (e.target !== e.currentTarget) return; // ignorar eventos burbuja de hijos
+      isTransitioning.current = false;
+      if (index >= count + 1) {
+        setAnimate(false);
+        setIndex(1);
+      } else if (index <= 0) {
+        setAnimate(false);
+        setIndex(count);
+      }
+    },
+    [index, count],
+  );
 
-  // Reactiva la transición en el frame siguiente al salto instantáneo.
   useEffect(() => {
     if (animate) return;
-    const raf = requestAnimationFrame(() => setAnimate(true));
+    const raf = requestAnimationFrame(() => {
+      setAnimate(true);
+      isTransitioning.current = false; // liberar el bloqueo tras el salto instantáneo
+    });
     return () => cancelAnimationFrame(raf);
   }, [animate]);
 
+  // ── Swipe táctil ──────────────────────────────────────────────────────────
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = touchStartX.current - e.changedTouches[0].clientX;
+    if (Math.abs(diff) >= SWIPE_THRESHOLD) {
+      if (diff > 0) next();
+      else prev();
+    }
+    touchStartX.current = null;
+  };
+
   if (count === 0) return null;
 
-  // Pista = slides reales + clon de la primera al final.
-  const track = [...slides, slides[0]];
-  const activeDot = index === count ? 0 : index;
+  // Pista: [clon_último, slide_0…slide_{n-1}, clon_primero]
+  const track = [slides[count - 1], ...slides, slides[0]];
+
+  // Dot activo en rango 0..count-1
+  const activeDot =
+    index === 0 ? count - 1 : index === count + 1 ? 0 : index - 1;
 
   return (
     <section
-      aria-label="Obras destacadas"
+      aria-label="Obras monumentales — carrusel"
       aria-roledescription="carrusel"
-      // Márgenes negativos = al margen de `main.site-main` (0.75rem / 1rem en
-      // md) para romper el contenedor y llegar a los bordes del viewport.
-      className="relative -mx-3 -mt-3 h-[68vh] min-h-[460px] overflow-hidden bg-[#0d0d0d] sm:h-[78vh] md:-mx-4 md:-mt-4 lg:h-[86vh]"
+      // Márgenes negativos rompen el contenedor para llegar al borde del viewport
+      // h-[56vh] en móvil: proporción más baja que evita que imágenes landscape
+      // queden muy recortadas. sm/lg recuperan la altura editorial de escritorio.
+      className="relative -mx-3 -mt-3 h-[56vh] min-h-[280px] overflow-hidden bg-[#EEE8E1] sm:h-[72vh] sm:min-h-[400px] md:-mx-4 md:-mt-4 lg:h-[86vh]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchEnd={handleTouchEnd}
+      onTouchStart={handleTouchStart}
     >
+      {/* ── Pista de slides ─────────────────────────────────────────────── */}
       <div
         className="flex h-full"
         onTransitionEnd={handleTransitionEnd}
@@ -91,15 +149,17 @@ export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
           transform: `translateX(-${index * 100}%)`,
           transition:
             animate && !prefersReduced
-              ? `transform ${SLIDE_MS}ms cubic-bezier(0.7, 0, 0.2, 1)`
+              ? `transform ${SLIDE_MS}ms cubic-bezier(0.77, 0, 0.175, 1)`
               : 'none',
         }}
       >
         {track.map((slide, i) => (
-          <CarouselSlideView eager={i === 0} key={`${slide.id}-${i}`} slide={slide} />
+          // El clon del primero (i === 1) se carga ansiosamente; el resto, lazy
+          <CarouselSlideView eager={i === 1} key={`${slide.id}-${i}`} slide={slide} />
         ))}
       </div>
 
+      {/* ── Dots de posición ────────────────────────────────────────────── */}
       {count > 1 ? (
         <CarouselDots active={activeDot} count={count} onSelect={goTo} />
       ) : null}
@@ -107,53 +167,42 @@ export function FeaturedWorksCarousel({slides}: {slides: CarouselSlide[]}) {
   );
 }
 
-// ─── Slide individual (enlace a la ficha de obra) ─────────────────────────────
+// ─── Slide individual ─────────────────────────────────────────────────────────
 
 type CarouselSlideViewProps = {
   slide: CarouselSlide;
-  /** Carga ansiosa solo la primera (visible al montar); el resto, lazy. */
+  /** Carga ansiosa solo la primera slide visible al montar; el resto, lazy. */
   eager: boolean;
 };
 
 function CarouselSlideView({slide, eager}: CarouselSlideViewProps) {
   const inner = (
     <>
-      {/* object-contain: muestra la obra completa (sin recortar). Las fotos
-          tienen fondo negro, que se funde con el fondo oscuro del escenario. */}
+      {/* imageFit controla el recorte: 'cover' (defecto) llena el viewport;
+          'contain' muestra la obra completa con fondo Piedra en los laterales */}
       <img
         alt={slide.imageAlt}
-        className="h-full w-full object-contain"
+        className="h-full w-full"
         loading={eager ? 'eager' : 'lazy'}
         sizes="100vw"
         src={slide.imageUrl}
+        style={{objectFit: slide.imageFit ?? 'cover'}}
       />
 
-      {/* Velo inferior para legibilidad del overlay. */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(13,13,13,.82)] via-[rgba(13,13,13,.16)] to-[rgba(13,13,13,.04)]" />
+      {/* Velo sutil desde abajo — solo lo necesario para leer el título */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(246,241,234,.55)] via-[rgba(246,241,234,.08)] to-transparent" />
 
+      {/* Título y metadatos superpuestos en la parte inferior */}
       <div className="absolute inset-x-0 bottom-0 p-6 md:p-12 lg:p-16">
         <div className="mx-auto max-w-[1440px]">
           {slide.meta ? (
-            <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(246,241,234,.72)]">
+            <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.65)]">
               {slide.meta}
             </span>
           ) : null}
-          <h2 className="mt-3 max-w-[18ch] [font-family:var(--serif)] text-[clamp(2.4rem,6vw,5rem)] leading-[0.98] text-[#F6F1EA]">
+          <h2 className="mt-3 max-w-[18ch] [font-family:var(--serif)] text-[clamp(2.4rem,6vw,5rem)] leading-[0.98] text-[#111111]">
             {slide.title}
           </h2>
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-            {slide.price ? (
-              <span className="[font-family:var(--mono)] text-[14px] tracking-[0.04em] text-[rgba(246,241,234,.9)]">
-                {/* currencyCode se normaliza como string; Money espera el enum
-                    CurrencyCode de MoneyV2 — cast seguro (mismo valor). */}
-                <Money data={slide.price as MoneyV2} />
-              </span>
-            ) : null}
-            {/* Pista visual (no es un <Link> anidado: toda la slide ya enlaza). */}
-            <span className="inline-flex items-center gap-2 border-b border-[rgba(246,241,234,.5)] pb-1 [font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#F6F1EA] transition group-hover:border-[#2F9EA0] group-hover:text-[#2F9EA0]">
-              Ver obra →
-            </span>
-          </div>
         </div>
       </div>
     </>
@@ -161,9 +210,13 @@ function CarouselSlideView({slide, eager}: CarouselSlideViewProps) {
 
   const baseClass = 'group relative h-full w-full shrink-0';
 
-  // Con ficha → toda la slide enlaza; sin ficha (obra manual) → div estático.
+  // Con href → toda la slide es un enlace; sin href (obras manuales) → div estático
   return slide.href ? (
-    <Link aria-label={`Ver ${slide.title}`} className={`${baseClass} block`} to={slide.href}>
+    <Link
+      aria-label={`Ver ${slide.title}`}
+      className={`${baseClass} block`}
+      to={slide.href}
+    >
       {inner}
     </Link>
   ) : (
@@ -171,7 +224,7 @@ function CarouselSlideView({slide, eager}: CarouselSlideViewProps) {
   );
 }
 
-// ─── Dots de navegación ──────────────────────────────────────────────────────
+// ─── Dots de posición ─────────────────────────────────────────────────────────
 
 type CarouselDotsProps = {
   count: number;
@@ -186,22 +239,23 @@ function CarouselDots({count, active, onSelect}: CarouselDotsProps) {
       className="absolute bottom-6 left-1/2 z-10 flex -translate-x-1/2 items-center gap-2.5 md:bottom-10"
       role="tablist"
     >
-      {Array.from({length: count}).map((_, index) => {
-        const isActive = index === active;
+      {Array.from({length: count}).map((_, dotIndex) => {
+        const isActive = dotIndex === active;
         return (
-          // El <button> da el área táctil de 44px (h-11); el <span> interior
-          // es el punto visual pequeño.
+          // El <button> garantiza área táctil de 44px; el <span> es el punto visual
           <button
             aria-current={isActive}
-            aria-label={`Ir a la obra ${index + 1} de ${count}`}
+            aria-label={`Ir a la obra ${dotIndex + 1} de ${count}`}
             className="flex h-11 items-center justify-center px-1"
-            key={index}
-            onClick={() => onSelect(index)}
+            key={dotIndex}
+            onClick={() => onSelect(dotIndex)}
             type="button"
           >
             <span
-              className={`block h-2 rounded-full transition-all duration-300 ${
-                isActive ? 'w-8 bg-white' : 'w-2 bg-white/45 hover:bg-white/70'
+              className={`block h-[3px] rounded-full transition-all duration-300 ${
+                isActive
+                  ? 'w-8 bg-[#C84D92]'
+                  : 'w-2 bg-[rgba(35,35,39,.28)] hover:bg-[rgba(35,35,39,.55)]'
               }`}
             />
           </button>
@@ -211,11 +265,11 @@ function CarouselDots({count, active, onSelect}: CarouselDotsProps) {
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// ─── Hook: prefers-reduced-motion ────────────────────────────────────────────
 
 /**
- * Suscripción a `prefers-reduced-motion`. Inicializa en `false` (SSR-safe) y
- * sincroniza en cliente, reaccionando si el usuario cambia la preferencia.
+ * Suscripción a `prefers-reduced-motion`. Inicializa en `false` (SSR-safe)
+ * y se sincroniza en cliente, reaccionando si el usuario cambia la preferencia.
  */
 function usePrefersReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false);

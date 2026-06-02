@@ -5,7 +5,7 @@ import {Image, Money} from '@shopify/hydrogen';
 import type {CatalogProductFragment} from 'storefrontapi.generated';
 
 export const meta: Route.MetaFunction = () => [
-  {title: 'Galería Taller J España | Catálogo'},
+  {title: 'Galería J. España | Catálogo'},
 ];
 
 export async function loader({context}: Route.LoaderArgs) {
@@ -146,8 +146,8 @@ function FilterPill({
       // min-h 44px en móvil (target táctil); compacto en desktop (≥768px).
       className={`inline-flex min-h-[44px] cursor-pointer items-center justify-center rounded-full border px-4 py-2 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] transition md:min-h-0 md:py-[6px] ${
         active
-          ? 'border-[#2F9EA0] bg-transparent text-[#2F9EA0]'
-          : 'border-[rgba(35,35,39,.22)] bg-transparent text-[rgba(35,35,39,.65)] hover:border-[#2F9EA0] hover:text-[#2F9EA0]'
+          ? 'border-[#C84D92] bg-transparent text-[#C84D92]'
+          : 'border-[rgba(35,35,39,.22)] bg-transparent text-[rgba(35,35,39,.65)] hover:border-[#C84D92] hover:text-[#C84D92]'
       }`}
     >
       {label}
@@ -199,7 +199,7 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
         ) : null}
         {product.categoria ? (
           <div className="absolute left-3 top-3">
-            <span className="inline-flex items-center rounded-full bg-[#2F9EA0] px-[10px] py-[4px] [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white">
+            <span className="inline-flex items-center rounded-full bg-[#C84D92] px-[10px] py-[4px] [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white">
               {product.categoria}
             </span>
           </div>
@@ -214,7 +214,7 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
             {product.tamano ? ` · ${product.tamano}` : ''}
           </span>
         </div>
-        <h2 className="[font-family:var(--serif)] text-[19px] leading-[1.15] text-[#111111] transition group-hover:text-[#2F9EA0]">
+        <h2 className="[font-family:var(--serif)] text-[19px] leading-[1.15] text-[#111111] transition group-hover:text-[#C84D92]">
           {product.title}
         </h2>
         {(dimAncho || dimAlto) && (
@@ -381,7 +381,7 @@ export default function CatalogPage() {
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
+                  className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92] underline underline-offset-4"
                 >
                   Limpiar
                 </button>
@@ -428,7 +428,7 @@ export default function CatalogPage() {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4"
+                className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92] underline underline-offset-4"
               >
                 Limpiar filtros
               </button>

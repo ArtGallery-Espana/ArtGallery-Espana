@@ -27,7 +27,7 @@ import {
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [
-    {title: `${data?.product.title ?? 'Obra'} | Galería Taller J España`},
+    {title: `${data?.product.title ?? 'Obra'} | Galería J. España`},
     {
       rel: 'canonical',
       href: `/products/${data?.product.handle}`,
@@ -445,7 +445,7 @@ export default function Product() {
                 <div className="space-y-4">
                   <div className="[&_form]:block [&_form]:w-full">
                     <AddToCartButton
-                      className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#111111] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!selectedVariant || !selectedVariant.availableForSale}
                       lines={
                         selectedVariant
@@ -467,7 +467,7 @@ export default function Product() {
                       (WhatsApp/Email) vive en <ProductConsultation/> abajo, así
                       que no duplicamos el botón "Consultar". */}
                   <button
-                    className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
+                    className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
                     onClick={() => setIsOfferDialogOpen(true)}
                     type="button"
                   >
@@ -695,9 +695,9 @@ export default function Product() {
             type="button"
           />
           <div className="relative z-10 w-full max-w-[420px] bg-[#F6F1EA] p-8 text-center">
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#2F9EA0]/12 mx-auto">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#C84D92]/12 mx-auto">
               <svg
-                className="h-6 w-6 text-[#2F9EA0]"
+                className="h-6 w-6 text-[#C84D92]"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth={1.8}
@@ -718,7 +718,7 @@ export default function Product() {
               una vez hayamos revisado tu propuesta con la galería.
             </p>
             <button
-              className="mt-4 inline-flex h-[48px] w-full items-center justify-center rounded-[2px] bg-[#2F9EA0] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#247D7F]"
+              className="mt-4 inline-flex h-[48px] w-full items-center justify-center rounded-[2px] bg-[#C84D92] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76]"
               onClick={() => setOfferSuccessEmail(null)}
               type="button"
             >
@@ -736,9 +736,9 @@ function Kicker({
   accent,
 }: {
   children: React.ReactNode;
-  accent?: 'mag' | 'turq';
+  accent?: 'mag';
 }) {
-  const accentColor = accent === 'mag' ? '#C84D92' : '#2F9EA0';
+  const accentColor = '#C84D92';
 
   return (
     <div className="flex items-center gap-3.5 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
