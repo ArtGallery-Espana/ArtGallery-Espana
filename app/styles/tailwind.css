@@ -1,5 +1,5 @@
 /* =============================================================================
- * Galería Taller J España — Hoja de estilos única
+ * Galería J. España — Hoja de estilos única
  * -----------------------------------------------------------------------------
  * Este archivo es la ÚNICA fuente CSS de la aplicación. Consolida lo que antes
  * vivía en `reset.css` y `app.css` siguiendo la configuración CSS-first de
@@ -33,7 +33,7 @@
 /* =============================================================================
  * 1. FUENTES EXTERNAS
  * ========================================================================== */
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
 
 /* =============================================================================
@@ -50,18 +50,28 @@
  *   - Utilidad Tailwind            → bg-ivory, text-ivory, border-ivory…
  * ========================================================================== */
 @theme {
-  /* --- Colores de marca ---------------------------------------------------- */
-  --color-ivory: #f6f1ea;       /* Fondo general              */
-  --color-char:  #232327;       /* Texto principal            */
-  --color-ink:   #111111;       /* Titulares                  */
-  --color-turq:  #2f9ea0;       /* Acento turquesa            */
-  --color-mag:   #c84d92;       /* Acento magenta             */
-  --color-dark:  #000000;       /* Skeleton (legacy)          */
-  --color-light: #ffffff;       /* Skeleton (legacy)          */
+  /* --- Paleta Curaduría Magenta -------------------------------------------- */
+  /* Base */
+  --color-ivory:    #f6f1ea;   /* Marfil — fondo principal del sitio    */
+  --color-papel:    #ffffff;   /* Papel — tarjetas de obra, formularios */
+  --color-piedra:   #eee8e1;   /* Piedra — secciones secundarias        */
+  --color-niebla:   #d9d4cf;   /* Niebla — bordes, separadores          */
+  --color-carbon:   #1a1a1f;   /* Carbón — texto de cuerpo              */
+  --color-tinta:    #0f0f12;   /* Tinta — titulares, botón primario     */
+  /* Acentos curatoriales */
+  --color-mag:      #c84d92;   /* Magenta — kickers, énfasis, CTA       */
+  --color-mag-deep: #a23a76;   /* Magenta profundo — hover/activo       */
+  --color-mag-soft: #e5bbd5;   /* Magenta suave — fondos delicados      */
+  --color-lavanda:  #d7c8e8;   /* Lavanda — apoyo curatorial            */
+  /* Aliases legacy (mantienen compatibilidad con código existente) */
+  --color-char:  #1a1a1f;
+  --color-ink:   #0f0f12;
+  --color-dark:  #000000;
+  --color-light: #ffffff;
 
-  /* --- Familias tipográficas ---------------------------------------------- */
-  --font-serif: "Cormorant Garamond", "EB Garamond", Georgia, serif;
-  --font-sans:  "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* --- Tipografía Curaduría Magenta --------------------------------------- */
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans:  "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono:  "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
@@ -74,12 +84,21 @@
  * Estos aliases mantienen ese contrato sin tocar los TSX.
  * ========================================================================== */
 :root {
-  /* Colores (alias cortos) */
-  --ivory: var(--color-ivory);
-  --char:  var(--color-char);
-  --ink:   var(--color-ink);
-  --turq:  var(--color-turq);
-  --mag:   var(--color-mag);
+  /* Colores Curaduría Magenta */
+  --ivory:    var(--color-ivory);
+  --papel:    var(--color-papel);
+  --piedra:   var(--color-piedra);
+  --niebla:   var(--color-niebla);
+  --carbon:   var(--color-carbon);
+  --tinta:    var(--color-tinta);
+  --mag:      var(--color-mag);
+  --mag-deep: var(--color-mag-deep);
+  --mag-soft: var(--color-mag-soft);
+  --lavanda:  var(--color-lavanda);
+  /* Aliases legacy */
+  --char: var(--color-carbon);
+  --ink:  var(--color-tinta);
+  --turq: var(--color-mag);   /* turquesa redirigido a magenta */
 
   /* Tipografía (alias cortos) */
   --serif: var(--font-serif);
@@ -87,8 +106,8 @@
   --mono:  var(--font-mono);
 
   /* Acentos derivados del texto principal */
-  --muted:   rgba(35, 35, 39, 0.55);
-  --muted-2: rgba(35, 35, 39, 0.72);
+  --muted:   rgba(26, 26, 31, 0.55);
+  --muted-2: rgba(26, 26, 31, 0.72);
 
   /* Layout (skeleton: aside, header, grids, cart drawer) */
   --aside-width: 400px;
@@ -105,7 +124,7 @@
 @layer base {
   /* --- Body ---------------------------------------------------------------
    * Combina el reset del skeleton (flex-column min-height) con la identidad
-   * editorial (fondo ivory, tipografía Inter, antialiasing).
+   * editorial (fondo ivory, tipografía Manrope, antialiasing).
    */
   body {
     background: var(--ivory);
@@ -261,7 +280,9 @@
     html:has(.overlay.expanded) { overflow: hidden; }
   }
 
-  aside {
+  /* Drawer del overlay (cart/search) — acotado a .overlay para no
+   * contaminar elementos <aside> editoriales como .contact-details. */
+  .overlay aside {
     background: var(--color-light);
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
     height: 100vh;
@@ -272,7 +293,7 @@
     transition: transform 200ms ease-in-out;
   }
 
-  aside header {
+  .overlay aside header {
     align-items: center;
     border-bottom: 1px solid var(--color-dark);
     display: flex;
@@ -281,22 +302,22 @@
     padding: 0 20px;
   }
 
-  aside header h2 { margin-top: 0; margin-bottom: 0.6rem; }
-  aside header h3 { margin: 0; }
+  .overlay aside header h2 { margin-top: 0; margin-bottom: 0.6rem; }
+  .overlay aside header h3 { margin: 0; }
 
-  aside header .close {
+  .overlay aside header .close {
     font-weight: bold;
     opacity: 0.8;
     text-decoration: none;
     transition: all 200ms;
     width: 20px;
   }
-  aside header .close:hover { opacity: 1; }
+  .overlay aside header .close:hover { opacity: 1; }
 
-  aside main { margin: 1rem; }
-  aside p { margin: 0 0 0.25rem; }
-  aside p:last-child { margin: 0; }
-  aside li { margin-bottom: 0.125rem; }
+  .overlay aside main { margin: 1rem; }
+  .overlay aside p { margin: 0 0 0.25rem; }
+  .overlay aside p:last-child { margin: 0; }
+  .overlay aside li { margin-bottom: 0.125rem; }
 
   .overlay {
     background: rgba(0, 0, 0, 0.2);
@@ -708,24 +729,33 @@
     padding: 0.875rem clamp(1rem, 4vw, 3rem);
     position: sticky;
     top: 0;
+    /* Se animan fondo, borde, altura y padding al hacer scroll */
     transition:
       background-color 280ms ease,
       border-color 280ms ease,
-      backdrop-filter 280ms ease;
-    z-index: 5;
+      backdrop-filter 280ms ease,
+      min-height 280ms ease,
+      padding-top 280ms ease,
+      padding-bottom 280ms ease;
+    /* z-index alto para quedar sobre el panel móvil (z:45) y overlays de contenido */
+    z-index: 50;
   }
 
+  /* Estado scrolled: fondo translúcido + altura comprimida para liberar pantalla */
   .shared-topbar.is-scrolled {
-    background: rgba(31, 26, 23, 0.82);
-    backdrop-filter: blur(12px);
+    background: rgba(26, 26, 31, 0.92);
+    backdrop-filter: blur(16px);
     border-bottom-color: rgba(255, 255, 255, 0.1);
+    min-height: 52px;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
   }
 
   .shared-topbar-logo {
     align-items: center;
     color: #1f1a17;
     display: inline-flex;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: var(--font-serif);
     font-size: clamp(1.25rem, 2.4vw, 1.875rem);
     font-weight: 700;
     gap: 0.75rem;
@@ -734,9 +764,7 @@
     transition: color 280ms ease;
   }
 
-  .shared-topbar.is-scrolled .shared-topbar-logo {
-    color: #fff;
-  }
+  .shared-topbar.is-scrolled .shared-topbar-logo { color: #fff; }
 
   .shared-topbar-logo-image {
     background: #050505;
@@ -744,7 +772,13 @@
     display: block;
     height: 3rem;
     object-fit: contain;
+    /* La imagen se encoge proporcionalmente cuando el header se comprime */
+    transition: height 280ms ease, width 280ms ease;
     width: 3rem;
+  }
+  .shared-topbar.is-scrolled .shared-topbar-logo-image {
+    height: 2rem;
+    width: 2rem;
   }
 
   .shared-topbar-nav {
@@ -757,6 +791,7 @@
   .shared-topbar-link {
     color: #312923;
     font-size: 0.95rem;
+    font-weight: 500;
     /* Padding vertical → área táctil cómoda en móvil (≥44px de alto con
        el line-height del topbar). */
     padding: 0.6rem 0.15rem;
@@ -764,14 +799,14 @@
     transition: color 200ms ease;
   }
   .shared-topbar-link:hover,
-  .shared-topbar-link-active { color: var(--color-turq); }
-  .shared-topbar-link-active { font-weight: 700; }
+  .shared-topbar-link-active { color: var(--color-mag); }
+  .shared-topbar-link-active { font-weight: 600; }
 
-  /* Scrolled: links blancos, hover/active turquesa. */
+  /* Scrolled: links blancos, hover/active magenta. */
   .shared-topbar.is-scrolled .shared-topbar-link { color: #fff; }
   .shared-topbar.is-scrolled .shared-topbar-link:hover,
   .shared-topbar.is-scrolled .shared-topbar-link-active {
-    color: var(--color-turq);
+    color: var(--color-mag);
   }
 
   .shared-topbar-actions {
@@ -836,6 +871,19 @@
     border-color: rgba(255, 255, 255, 0.22);
   }
 
+  /* Scrolled: adaptar selectores de idioma y moneda al fondo oscuro.
+   * Sin esto aparecen como recuadros blancos sobre el header translúcido. */
+  .shared-topbar.is-scrolled .shared-language select,
+  .shared-topbar.is-scrolled .shared-currency {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .shared-topbar.is-scrolled .shared-currency-option { color: rgba(255, 255, 255, 0.65); }
+  .shared-topbar.is-scrolled .shared-currency-option:hover,
+  .shared-topbar.is-scrolled .shared-currency-option-active { color: #fff; }
+  .shared-topbar.is-scrolled .shared-currency-divider { color: rgba(255, 255, 255, 0.25); }
+
   .shared-cart-badge {
     align-items: center;
     background: #d4148e;
@@ -894,7 +942,7 @@
     margin: 0;
     text-decoration: none;
   }
-  .shared-footer a:hover { color: #21b8b8; }
+  .shared-footer a:hover { color: var(--color-mag-soft); }
 
   .shared-footer-copy {
     border-top: 1px solid rgba(255, 255, 255, 0.16);
@@ -904,16 +952,140 @@
     padding-top: 1rem;
   }
 
-  /* Responsive shared TopBar/Footer */
+  /* ─── Hamburguesa y menú móvil ──────────────────────────────────────────
+   * El botón hamburguesa convierte sus tres barras en una X animada.
+   * Cada <span> es una barra horizontal que rota o desaparece al abrir.
+   * ──────────────────────────────────────────────────────────────────── */
+  .shared-hamburger {
+    align-items: center;
+    background: transparent;
+    border: none;
+    color: #1f1a17;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    height: 44px;
+    justify-content: center;
+    padding: 0;
+    width: 44px;
+  }
+  /* Color blanco cuando el header está oscuro (scrolled o menú abierto) */
+  .shared-topbar.is-scrolled .shared-hamburger,
+  .shared-topbar.menu-open .shared-hamburger { color: #fff; }
+
+  .shared-hamburger span {
+    background: currentColor;
+    border-radius: 2px;
+    display: block;
+    height: 1.5px;
+    transition: transform 280ms ease, opacity 280ms ease, width 280ms ease;
+    width: 22px;
+  }
+  /* Las tres barras se convierten en X al abrir el menú */
+  .shared-topbar.menu-open .shared-hamburger span:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+  }
+  .shared-topbar.menu-open .shared-hamburger span:nth-child(2) {
+    opacity: 0;
+    width: 0;
+  }
+  .shared-topbar.menu-open .shared-hamburger span:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
+  }
+
+  /* ─── Panel de menú móvil ────────────────────────────────────────────────
+   * Overlay de pantalla completa que aparece sobre el contenido.
+   * z-index: 45 → queda debajo del header (z:50) pero sobre todo lo demás,
+   * así la hamburguesa/X siempre es visible y accesible.
+   * ──────────────────────────────────────────────────────────────────── */
+  .shared-mobile-menu {
+    align-items: flex-start;
+    background: var(--color-tinta);
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    inset: 0;
+    justify-content: center;
+    opacity: 0;
+    padding: clamp(5rem, 12vw, 7rem) clamp(1.5rem, 6vw, 3rem) clamp(2rem, 6vw, 3rem);
+    pointer-events: none;
+    position: fixed;
+    transform: translateY(-12px);
+    transition: opacity 260ms ease, transform 260ms ease;
+    z-index: 45;
+  }
+  .shared-mobile-menu.is-open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+
+  /* Cada enlace del menú: Playfair Display grande, con subrayado sutil */
+  .shared-mobile-menu nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    width: 100%;
+  }
+  .shared-mobile-menu nav a {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: rgba(246, 241, 234, 0.8);
+    display: block;
+    font-family: var(--font-serif);
+    font-size: clamp(1.75rem, 7vw, 2.75rem);
+    font-weight: 400;
+    line-height: 1.2;
+    padding: 0.75rem 0;
+    text-decoration: none;
+    transition: color 180ms ease, padding-left 180ms ease;
+  }
+  .shared-mobile-menu nav a:first-child { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+  .shared-mobile-menu nav a:hover { color: var(--color-ivory); padding-left: 0.4rem; }
+  .shared-mobile-menu nav a.active { color: var(--color-mag); }
+
+  /* Selector de moneda al pie del menú móvil */
+  .shared-mobile-menu-footer { opacity: 0.55; }
+  .shared-mobile-menu-footer .shared-currency {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  .shared-mobile-menu-footer .shared-currency-option { color: rgba(255, 255, 255, 0.7); }
+  .shared-mobile-menu-footer .shared-currency-option-active,
+  .shared-mobile-menu-footer .shared-currency-option:hover { color: #fff; }
+  .shared-mobile-menu-footer .shared-currency-divider { color: rgba(255, 255, 255, 0.2); }
+
+  /* ─── Responsive: escritorio vs móvil ───────────────────────────────── */
+
+  /* Escritorio (> 760px): nav + acciones visibles, hamburguesa y menú ocultos */
+  @media (min-width: 761px) {
+    .shared-topbar-mobile-actions { display: none; }
+    /* El menú móvil nunca debe aparecer en escritorio */
+    .shared-mobile-menu { display: none !important; }
+  }
+
+  /* Móvil (≤ 760px): layout compacto — logo a la izquierda, acciones a la derecha */
   @media (max-width: 760px) {
     .shared-topbar {
-      grid-template-columns: 1fr;
+      /* Dos columnas: logo ocupa el espacio libre, acciones a la derecha */
+      grid-template-columns: 1fr auto;
+      min-height: 60px;
+      padding: 0.625rem clamp(1rem, 4vw, 1.5rem);
     }
+    .shared-topbar.is-scrolled {
+      min-height: 52px;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    /* Ocultar nav y utilidades de escritorio */
     .shared-topbar-nav,
-    .shared-topbar-actions {
-      justify-content: flex-start;
+    .shared-topbar-actions { display: none; }
+    /* Mostrar acciones móviles (carrito + hamburguesa) */
+    .shared-topbar-mobile-actions {
+      align-items: center;
+      display: flex;
+      gap: 0.5rem;
     }
-    .shared-topbar-nav { flex-wrap: wrap; }
     .shared-footer-grid { grid-template-columns: 1fr; }
   }
 
@@ -945,26 +1117,26 @@
     text-decoration: none !important;
   }
 
-  /* Outline: borde + texto char → hover turquesa. */
+  /* Outline: borde + texto carbon → hover magenta. */
   .home-cta-outline,
-  .home-cta-outline:visited { color: #232327 !important; }
+  .home-cta-outline:visited { color: var(--color-carbon) !important; }
 
   .home-cta-outline:hover,
   .home-cta-outline:active,
   .home-cta-link:hover,
   .home-cta-link:active {
-    border-color: var(--color-turq) !important;
-    color: var(--color-turq) !important;
+    border-color: var(--color-mag) !important;
+    color: var(--color-mag) !important;
     text-decoration: none !important;
   }
 
-  /* Ghost: borde turquesa → hover relleno turquesa con texto blanco. */
+  /* Ghost: borde magenta → hover relleno magenta profundo con texto blanco. */
   .home-cta-ghost,
-  .home-cta-ghost:visited { color: var(--color-turq) !important; }
+  .home-cta-ghost:visited { color: var(--color-mag) !important; }
 
   .home-cta-ghost:hover,
   .home-cta-ghost:active {
-    background-color: var(--color-turq) !important;
+    background-color: var(--color-mag-deep) !important;
     color: #fff !important;
   }
 
@@ -995,6 +1167,17 @@
   .editorial-page h2 { font-size: clamp(2rem, 4vw, 3.5rem); line-height: 1.08; }
   .editorial-page h3 { font-size: clamp(1.4rem, 2vw, 1.8rem); line-height: 1.2; }
   .editorial-page p  { margin: 0; }
+
+  /* Playfair Display — énfasis italic en magenta (kicker curatorial). */
+  .editorial-page h1 em,
+  .editorial-page h2 em,
+  .editorial-page h3 em,
+  .editorial-page h1 i,
+  .editorial-page h2 i,
+  .editorial-page h3 i {
+    color: var(--color-mag);
+    font-style: italic;
+  }
 
   /* --- Tipografía editorial reutilizable -------------------------------- */
   .editorial-kicker {
@@ -1039,7 +1222,7 @@
 
   .artist-hero-image {
     aspect-ratio: 4 / 5;
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    border: 1px solid var(--color-niebla);
     display: block;
     height: auto;
     object-fit: cover;
@@ -1055,8 +1238,8 @@
         rgba(35, 35, 39, 0.04) 0 1px,
         transparent 1px 10px
       ),
-      #e1d5c6;
-    border: 1px solid rgba(35, 35, 39, 0.08);
+      var(--color-piedra);
+    border: 1px solid var(--color-niebla);
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1082,7 +1265,8 @@
   .returns-section,
   .payments-section,
   .shipping-table-section,
-  .shipping-national-section {
+  .shipping-national-section,
+  .shipping-international-section {
     display: grid;
     gap: 1.5rem;
   }
@@ -1092,10 +1276,8 @@
   .artist-facts-section,
   .artist-trajectory,
   .galapagos-section {
-    background:
-      linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.34)),
-      #f2ece3;
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    background: var(--color-piedra);
+    border: 1px solid var(--color-niebla);
     padding: clamp(1.5rem, 3vw, 2.5rem);
   }
 
@@ -1124,12 +1306,12 @@
     gap: 1.5rem;
   }
 
-  /* Cada párrafo en card blanca translúcida. */
+  /* Cada párrafo en card Papel con borde Niebla. */
   .artist-statement .editorial-two-column-copy p,
   .artist-biography .editorial-two-column-copy p,
   .editorial-single-copy p {
-    background: rgba(255, 255, 255, 0.64);
-    border: 1px solid rgba(35, 35, 39, 0.06);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     padding: 1.1rem 1.2rem;
   }
 
@@ -1148,8 +1330,8 @@
     gap: 1rem;
   }
   .statement-works-gallery figure {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     display: grid;
     grid-template-rows: auto auto;
     margin: 0;
@@ -1195,8 +1377,8 @@
     gap: 1rem;
   }
   .galapagos-gallery figure {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     display: grid;
     grid-template-rows: auto auto;
     margin: 0;
@@ -1220,61 +1402,69 @@
     width: 100%;
   }
 
-  /* --- Timeline de trayectoria ---------------------------------------- */
-  .trajectory-timeline {
+  /* --- Timeline de trayectoria (línea horizontal) --------------------- */
+  .trajectory-header { margin-bottom: 2rem; }
+
+  .trajectory-content {
     display: grid;
-    gap: 1rem;
-    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  /* Móvil: apilado vertical simple con punto + texto */
+  .trajectory-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
     list-style: none;
     margin: 0;
     padding: 0;
-  }
-
-  .trajectory-timeline li {
-    align-content: start;
-    background: rgba(255, 255, 255, 0.76);
-    border: 1px solid rgba(35, 35, 39, 0.08);
-    display: grid;
-    gap: 0.75rem;
-    min-height: 11.5rem;
-    padding: 1rem 1.05rem;
     position: relative;
   }
 
-  /* Barra vertical turquesa a la izquierda de cada hito. */
-  .trajectory-timeline li::before {
-    background: var(--color-turq);
-    content: '';
-    height: 100%;
-    left: 0;
-    position: absolute;
-    top: 0;
-    width: 4px;
-  }
-  .trajectory-timeline li::after { content: none; }
+  .trajectory-timeline .tl-line { display: none; }
 
-  .trajectory-timeline span {
+  .trajectory-timeline li {
+    align-items: flex-start;
+    display: flex;
+    gap: 1rem;
+  }
+
+  .trajectory-timeline .tl-dot {
+    background: var(--color-turq);
+    border: 2px solid #F6F1EA;
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 10px;
+    margin-top: 0.3rem;
+    outline: 2px solid var(--color-turq);
+    width: 10px;
+  }
+
+  .tl-year {
     color: var(--color-mag);
+    display: block;
     font-family: var(--mono);
     font-size: 0.7rem;
     letter-spacing: 0.18em;
+    margin-bottom: 0.3rem;
     text-transform: uppercase;
   }
-  .trajectory-timeline p {
+  .tl-body {
     color: rgba(35, 35, 39, 0.76);
     font-size: 0.93rem;
-    line-height: 1.7;
+    line-height: 1.65;
+    margin: 0;
   }
 
-  /* --- Galería trayectoria (fotos archivo) ----------------------------- */
+  /* --- Galería trayectoria (fotos archivo en fila) --------------------- */
   .trajectory-gallery {
     display: grid;
     gap: 1rem;
-    margin-top: 1rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .trajectory-gallery figure {
-    background: rgba(255, 255, 255, 0.74);
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     margin: 0;
     overflow: hidden;
   }
@@ -1283,7 +1473,12 @@
     display: block;
     height: auto;
     object-fit: cover;
+    object-position: center center;
     width: 100%;
+  }
+  /* Foto del grupo 1994: centrada para mostrar a todos */
+  .trajectory-gallery figure:nth-child(2) img {
+    object-position: center center;
   }
   .trajectory-gallery figcaption {
     color: var(--color-mag);
@@ -1304,12 +1499,8 @@
 
   .artist-profile-story {
     align-content: stretch;
-    background: linear-gradient(
-      145deg,
-      rgba(255, 255, 255, 0.76),
-      rgba(255, 255, 255, 0.42)
-    );
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     display: grid;
     gap: 0;
     overflow: hidden;
@@ -1325,9 +1516,9 @@
     text-align: left;
   }
   .artist-profile-intro h2 { line-height: 1.08; margin: 0; }
-  /* Barra superior decorativa con gradiente turquesa→magenta. */
+  /* Barra superior decorativa con gradiente lavanda→magenta. */
   .artist-profile-intro::before {
-    background: linear-gradient(90deg, var(--color-turq), var(--color-mag));
+    background: linear-gradient(90deg, var(--color-lavanda), var(--color-mag));
     content: '';
     height: 3px;
     left: 1.4rem;
@@ -1363,10 +1554,10 @@
     display: grid;
   }
 
-  /* Cada fact card alterna turquesa/magenta en su barra superior. */
+  /* Cada fact card alterna lavanda/magenta en su barra superior. */
   .artist-facts-grid div {
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(35, 35, 39, 0.08);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     display: grid;
     gap: 0.5rem;
     min-height: 9.25rem;
@@ -1375,7 +1566,7 @@
     position: relative;
   }
   .artist-facts-grid div::before {
-    background: var(--color-turq);
+    background: var(--color-lavanda);
     content: '';
     height: 3px;
     left: 0;
@@ -1409,7 +1600,7 @@
   }
 
   .artist-timeline {
-    border-left: 2px solid var(--color-turq);
+    border-left: 2px solid var(--color-lavanda);
     display: grid;
     gap: 1.75rem;
     list-style: none;
@@ -1424,7 +1615,7 @@
     position: relative;
   }
   .artist-timeline li::before {
-    background: var(--color-turq);
+    background: var(--color-mag);
     border-radius: 999px;
     content: '';
     height: 0.9rem;
@@ -1435,7 +1626,7 @@
   }
 
   .timeline-year {
-    color: var(--color-turq);
+    color: var(--color-mag);
     font-family: var(--mono);
     font-size: 0.78rem;
     letter-spacing: 0.18em;
@@ -1488,9 +1679,9 @@
     padding-left: 2.2rem;
     position: relative;
   }
-  /* Punto turquesa al inicio de cada paso. */
+  /* Punto magenta al inicio de cada paso. */
   .creative-process-step::before {
-    background: var(--color-turq);
+    background: var(--color-mag);
     border-radius: 999px;
     content: '';
     height: 0.8rem;
@@ -1502,12 +1693,12 @@
   /* Conector vertical + flecha hacia el siguiente paso. */
   .creative-process-step::after {
     background:
-      linear-gradient(var(--color-turq), var(--color-turq))
+      linear-gradient(var(--color-mag-soft), var(--color-mag-soft))
         center / 2px 100% no-repeat,
       linear-gradient(
         135deg,
         transparent 48%,
-        var(--color-turq) 49% 58%,
+        var(--color-mag-soft) 49% 58%,
         transparent 59%
       ) center bottom 0.2rem / 0.7rem 0.7rem no-repeat;
     content: '';
@@ -1520,7 +1711,7 @@
   .creative-process-step:last-child::after { content: none; }
 
   .creative-process-step span {
-    color: var(--color-turq);
+    color: var(--color-mag);
     font-family: var(--mono);
     font-size: 0.75rem;
     letter-spacing: 0.18em;
@@ -1580,7 +1771,8 @@
     gap: 1rem;
   }
   .payment-card {
-    border: 1px solid rgba(35, 35, 39, 0.1);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     display: grid;
     gap: 0.75rem;
     padding: 1.5rem;
@@ -1615,13 +1807,14 @@
     font-size: 1rem;
     margin: 0;
   }
-  .payment-detail dd a { color: #2f9ea0; }
+  .payment-detail dd a { color: var(--color-mag); }
   .payment-detail-pending {
     color: rgba(35, 35, 39, 0.5) !important;
     font-style: italic;
   }
 
-  .shipping-national-info {
+  .shipping-national-info,
+  .shipping-international-info {
     display: grid;
     gap: 1rem;
   }
@@ -1632,7 +1825,7 @@
     margin-top: 0.5rem;
   }
   .shipping-fields li {
-    border: 1px solid rgba(35, 35, 39, 0.18);
+    border: 1px solid var(--color-niebla);
     color: #111111;
     font-family: var(--mono);
     font-size: 0.72rem;
@@ -1649,8 +1842,8 @@
 
   .contact-form,
   .contact-details {
-    background: rgba(255, 255, 255, 0.46);
-    border: 1px solid rgba(35, 35, 39, 0.1);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     padding: clamp(1.25rem, 3vw, 2rem);
   }
 
@@ -1677,8 +1870,8 @@
 
   .contact-form input,
   .contact-form textarea {
-    background: #fff;
-    border: 1px solid rgba(35, 35, 39, 0.18);
+    background: var(--color-papel);
+    border: 1px solid var(--color-niebla);
     border-radius: 2px;
     color: var(--color-char);
     font: inherit;
@@ -1688,8 +1881,8 @@
   }
   .contact-form input:focus,
   .contact-form textarea:focus {
-    border-color: var(--color-turq);
-    outline: 2px solid rgba(47, 158, 160, 0.16);
+    border-color: var(--color-mag);
+    outline: 2px solid rgba(200, 77, 146, 0.16);
   }
 
   .contact-submit {
@@ -1709,7 +1902,7 @@
     text-transform: uppercase;
     width: fit-content;
   }
-  .contact-submit:hover { background: var(--color-turq); }
+  .contact-submit:hover { background: var(--color-mag-deep); }
 
   /* Estados del formulario de contacto con envío real vía Resend (PR #12). */
   .contact-submit:disabled {
@@ -1738,9 +1931,9 @@
     text-transform: uppercase;
   }
   .contact-form-feedback--success {
-    background: rgba(47, 158, 160, 0.12);
-    border: 1px solid rgba(47, 158, 160, 0.4);
-    color: #1f7172;
+    background: rgba(200, 77, 146, 0.08);
+    border: 1px solid rgba(200, 77, 146, 0.35);
+    color: var(--color-mag-deep);
   }
   .contact-form-feedback--error {
     background: rgba(200, 77, 146, 0.1);
@@ -1750,15 +1943,19 @@
 
   .contact-details {
     align-content: start;
+    /* No estirar a la altura del formulario: la caja toma solo el alto de su
+     * contenido en vez de quedar como un rectángulo blanco casi vacío. */
+    align-self: start;
     display: grid;
     gap: 1.75rem;
   }
   .contact-details a {
     color: var(--color-ink);
+    display: block;
     font-size: 1.05rem;
     text-decoration: none;
   }
-  .contact-details a:hover { color: var(--color-turq); }
+  .contact-details a:hover { color: var(--color-mag); }
 
 
   /* === 6.14 FLOATING WHATSAPP ==========================================
@@ -1776,10 +1973,10 @@
   /* Contenedor ─ círculo plegado por defecto. */
   .floating-whatsapp {
     align-items: center;
-    background: var(--color-turq);
+    background: var(--color-mag);
     border-radius: 999px;
     bottom: 1.5rem;
-    box-shadow: 0 8px 24px rgba(47, 158, 160, 0.32);
+    box-shadow: 0 8px 24px rgba(200, 77, 146, 0.32);
     color: #fff;
     display: inline-flex;
     height: 3.5rem;
@@ -1792,7 +1989,7 @@
 
   .floating-whatsapp:hover,
   .floating-whatsapp:focus-visible {
-    box-shadow: 0 12px 30px rgba(47, 158, 160, 0.45);
+    box-shadow: 0 12px 30px rgba(200, 77, 146, 0.45);
     outline: none;
   }
 
@@ -1855,7 +2052,19 @@
    * primer paint → sin parpadeo). `is-revealed` se alterna según la
    * intersección con el viewport, por lo que anima al bajar y al subir.
    * Sin JS, el contenido nunca recibe `.reveal` y se ve normal.
+   *
+   * La regla :not(.reveal) oculta el elemento ANTES de que el JS de
+   * hidratación corra, eliminando el destello visual al cargar la página.
    */
+  /* Solo cuando hay JS activo: sin scripting la animación nunca corre, así que
+   * el contenido debe permanecer visible (no lo ocultamos). */
+  @media (scripting: enabled) {
+    [data-reveal]:not(.reveal) {
+      opacity: 0;
+      transform: translateY(56px) scale(0.97);
+    }
+  }
+
   .reveal {
     opacity: 0;
     /* Desplazamiento + leve escala para que la entrada se note claramente. */
@@ -1897,12 +2106,12 @@
     .artist-biography,
     .artist-statement,
     .artist-facts-section,
-    .artist-trajectory,
     .galapagos-section,
     .returns-section,
     .payments-section,
     .shipping-table-section,
-    .shipping-national-section {
+    .shipping-national-section,
+    .shipping-international-section {
       align-items: start;
       grid-template-columns: minmax(16rem, 0.8fr) minmax(0, 1.2fr);
     }
@@ -1938,11 +2147,6 @@
     .artist-facts-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-    /* La última fact card ocupa la fila completa. */
-    .artist-facts-grid div:last-child {
-      grid-column: 1 / -1;
-      min-height: 7.5rem;
-    }
 
     .galapagos-section { grid-template-columns: 1fr; }
     .galapagos-header {
@@ -1955,8 +2159,7 @@
     }
     .galapagos-gallery figure { min-height: 0; }
 
-    .trajectory-gallery  { grid-template-columns: 1fr; }
-    .trajectory-timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    /* Galería fotos ya tiene 3 cols desde mobile; nada que cambiar en 900px. */
 
     .payment-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1976,16 +2179,75 @@
     }
   }
 
-  /* Desktop ancho (≥ 1280px): timeline trajectory en 4 columnas. */
-  @media (min-width: 1280px) {
+  /* Desktop (≥ 768px): timeline horizontal con barra central y alternancia */
+  @media (min-width: 768px) {
+    /* Contenedor: altura fija para que el 50% sea siempre la línea central */
     .trajectory-timeline {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: stretch;
+      flex-direction: row;
+      gap: 0;
+      min-height: 14rem;
+      padding: 0;
+      position: relative;
     }
-  }
 
-  /* < 1280px: relaja la altura mínima del timeline. */
-  @media (max-width: 1279px) {
-    .trajectory-timeline li { min-height: auto; }
+    /* Barra horizontal exactamente en el medio */
+    .trajectory-timeline .tl-line {
+      background: linear-gradient(90deg, var(--color-turq), var(--color-mag));
+      display: block;
+      height: 3px;
+      left: 0;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 100%;
+      z-index: 0;
+    }
+
+    /* Cada hito ocupa su columna y usa position relative para anclar texto y punto */
+    .trajectory-timeline li {
+      align-items: center;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Punto siempre en la línea central */
+    .trajectory-timeline .tl-dot {
+      background: #F6F1EA;
+      border: 3px solid var(--color-turq);
+      border-radius: 50%;
+      height: 14px;
+      left: 50%;
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 14px;
+      z-index: 2;
+    }
+
+    .trajectory-timeline li.tl-below .tl-dot {
+      border-color: var(--color-mag);
+    }
+
+    /* Texto arriba: anclado al borde inferior del espacio superior (encima de la línea) */
+    .trajectory-timeline li.tl-above .tl-text {
+      bottom: calc(50% + 1.25rem);
+      position: absolute;
+      text-align: center;
+      width: 88%;
+    }
+
+    /* Texto abajo: anclado al borde superior del espacio inferior (debajo de la línea) */
+    .trajectory-timeline li.tl-below .tl-text {
+      position: absolute;
+      text-align: center;
+      top: calc(50% + 1.25rem);
+      width: 88%;
+    }
   }
 }
 

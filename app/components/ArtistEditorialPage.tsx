@@ -24,12 +24,12 @@ const GALAPAGOS_IMAGES = [
     src: '/images/galapagos1.png',
     alt: 'Paisaje de Galapagos observado por el artista',
     caption:
-      'Vista de la exposición individual del artista. Aeropuerto Mariscal Lamar de Cuenca, febrero de 2025',
+      'Tortuga terrestre, cobre repujado, 18 x 28 cm, 2024',
   },
   {
     src: '/images/galapagos2.png',
     alt: 'Detalle visual vinculado a la experiencia en Galapagos',
-    caption: 'Tortuga marina · cobre repujado · 10 x 24 cm · 2024',
+    caption: 'Vista de la exposición individual del artista. Aeropuerto Mariscal Lamar de Cuenca, febrero de 2025',
   },
   {
     src: '/images/galapagos3.png',
@@ -58,23 +58,19 @@ const TRAJECTORY_IMAGES = [
 const ARTIST_FACTS = [
   {
     label: 'Nacimiento',
-    value: '1981, Cuenca, Ecuador',
+    value: '1954, Cuenca, Ecuador',
   },
   {
     label: 'Formacion',
-    value: 'Universidad de Cuenca · Real Academia de San Carlos, Mexico DF',
+    value: 'Universidad de Cuenca · Facultad de Bellas Artes',
   },
   {
     label: 'Reside',
-    value: 'Cuenca, EC · estancias anuales en Galapagos',
+    value: 'Cuenca, EC · San Antonio de Gapal',
   },
   {
     label: 'Galeria',
-    value: 'Estudio independiente · representacion bajo consulta',
-  },
-  {
-    label: 'Idiomas',
-    value: 'Español · Ingles · Portugues',
+    value: 'Estudio independiente',
   },
 ];
 
@@ -94,93 +90,36 @@ const CREATIVE_PROCESS = [
     title: 'Pintura',
     body: 'Aplicacion de capas finas durante semanas. La obra reposa entre cada intervencion, permitiendo que la imagen emerja progresivamente.',
   },
-  {
-    step: '04',
-    title: 'Archivo',
-    body: 'Registro profesional, certificacion y documentacion de la obra antes de su circulacion.',
-  },
 ];
 
 const TRAJECTORY_TIMELINE = [
   {
-    year: '1974',
-    body: 'De regreso a Cuenca, ingresa en la Escuela de Bellas Artes y comienza una etapa de exploracion material con cobre y bronce.',
+    year: '1954',
+    body: 'Nace en Cuenca, Ecuador.',
+  },
+  {
+    year: '1970s',
+    body: 'Inicia su formación artística y exploración material.',
   },
   {
     year: '1980',
-    body: 'Realiza su primera exposicion en el Municipio de Cuenca, con obras en cobre. Ese mismo periodo presenta trabajo en el Banco del Pacifico.',
-  },
-  {
-    year: '1981',
-    body: 'Lleva su obra a Quito con dos exhibiciones: una en La Mascara de Oro y otra en la Galeria Pampite.',
-  },
-  {
-    year: '1984',
-    body: 'Presenta una nueva muestra en la Galeria La Tienda, en Cuenca, consolidando su presencia dentro del circuito artistico local.',
-  },
-  {
-    year: '1985',
-    body: 'Expone en la Casa de la Cultura, Nucleo del Azuay, dentro de una etapa de mayor visibilidad institucional en Cuenca.',
-  },
-  {
-    year: '1986',
-    body: 'Participa con una muestra en la Mackenzie Gallery de Miami, una de sus primeras proyecciones expositivas fuera del Ecuador.',
-  },
-  {
-    year: '1987',
-    body: 'Obtiene el segundo lugar en el Concurso de Pintura Luis A. Martinez, en Ambato, y recibe una Primera Mencion en el VIII Salon Nacional del Azuay.',
+    body: 'Realiza sus primeras exposiciones en Ecuador.',
   },
   {
     year: '1989',
-    body: 'Presenta Los castillos dorados y temas festivos en la galeria La Manzana Verde de Cuenca y obtiene el premio del publico en la II Bienal de Pintura de Cuenca.',
-  },
-  {
-    year: '1994',
-    body: 'Exhibe sus obras en la Casa de la Cultura de Quito y en la Alianza Francesa de Cuenca, ampliando su circulacion entre ambas ciudades.',
-  },
-  {
-    year: '1996',
-    body: 'Expone en el Instituto Ibaguereño de Cultura y Turismo, en Ibague, Colombia, dentro de una etapa de intercambio regional.',
-  },
-  {
-    year: '1998',
-    body: 'Presenta obra en el Museo Fundacion Ecuatoriana de Desarrollo y en la Galeria Posada de las Artes Kingman, en Quito. Tambien expone en la Galeria Mortier Flores, en Belgica.',
-  },
-  {
-    year: '1999',
-    body: 'Participa en la exposicion Convenio por la Paz, en Lima, y lleva su trabajo a la galeria Latitudes South Houston, en Texas.',
-  },
-  {
-    year: '2000',
-    body: 'Expone en Galaxi D. Art, en Nueva York, y en U. Frame-it Art Gallery, en Oakland, Nueva Jersey.',
-  },
-  {
-    year: '2001',
-    body: 'Presenta sus obras en el Salon Abya Yala del Consulado Ecuatoriano, en Nueva York, y en Princeton, Nueva Jersey.',
-  },
-  {
-    year: '2002',
-    body: 'Expone en C.G. Gallery L.T.D., en Nueva Jersey, y en el Museo Puertas de la Ciudad, en Loja. Ese año recibe el primer premio otorgado por la Direccion de Turismo de Cuenca.',
-  },
-  {
-    year: '2003',
-    body: 'Exhibe en el Museo Arqueologico del Banco del Pacifico, en Guayaquil, reforzando su presencia en espacios culturales de alcance nacional.',
+    body: 'Recibe reconocimiento del público en la II Bienal de Pintura de Cuenca.',
   },
   {
     year: '2008',
-    body: 'Presenta Encuentros en el Centro Cultural Quinta Bolivar, en Cuenca, muestra que subraya la madurez de su lenguaje pictorico.',
-  },
-  {
-    year: '2012',
-    body: 'Elabora un mural y un conjunto escultorico titulados La familia para la Asamblea Nacional del Ecuador, en Quito.',
+    body: 'Realiza La Familia para la Asamblea Nacional del Ecuador.',
   },
   {
     year: '2016',
-    body: 'Realiza el conjunto escultorico Los estudiantes para la Universidad de Cuenca, ampliando su produccion hacia la obra publica.',
+    body: 'Desarrolla Los Estudiantes para la Universidad de Cuenca.',
   },
   {
     year: '2025',
-    body: 'En abril inaugura una exhibicion en la Galeria OFF Arte Contemporaneo y en el Aeropuerto Nacional Mariscal La Mar, en Cuenca.',
+    body: 'Presenta obra reciente en espacios expositivos de Cuenca.',
   },
 ];
 
@@ -192,9 +131,10 @@ export function ArtistEditorialPage() {
           <p className="editorial-kicker">El artista</p>
           <h1>Jorge España</h1>
           <p className="editorial-lede">
-            Pintor ecuatoriano. Su obra se desarrolla entre Cuenca y Galapagos,
-            dos territorios que han marcado una practica construida desde la
-            observacion lenta, la memoria y la materia.
+            Pintor ecuatoriano. Reconocido por su obra en escultura y pintura,
+            inspirada en los paisajes andinos y la identidad latinoamericana. Su
+            estilo destaca por el uso de texturas, cobre, acero y tierras de
+            colores.
           </p>
         </div>
 
@@ -210,27 +150,32 @@ export function ArtistEditorialPage() {
       <section className="editorial-section artist-biography" data-reveal>
         <div>
           <p className="editorial-kicker">Biografia</p>
-          <h2>Una practica entre taller, residencia y desplazamiento.</h2>
+          <h2>Una obra enraizada en el paisaje y la materia.</h2>
         </div>
         <div className="editorial-two-column-copy">
           <p>
-            Jorge España es un pintor ecuatoriano cuya practica se ha
-            desarrollado entre el trabajo de taller, la residencia y el
-            desplazamiento. Formado en la Universidad de Cuenca y en la Real
-            Academia de San Carlos en Ciudad de Mexico, su trayectoria se
-            articula en torno a la pintura y la exploracion de la materia como
-            lenguaje.
+            Jorge España nació en Cuenca, Ecuador, en 1954. Desde temprana edad
+            desarrolló un interés por el dibujo y las formas de la naturaleza,
+            influenciado por el paisaje andino de Yunguilla y Girón. En los años
+            setenta viajó a Colombia, donde entró en contacto con la obra de
+            artistas como Botero, Obregón y Caballero, experiencias que marcaron
+            el desarrollo de su lenguaje artístico.
           </p>
           <p>
-            A lo largo de los años, su obra ha transitado por distintos medios:
-            encaustica, oleo y acrilico. Mantiene una atencion constante al
-            espesor de la superficie, al valor simbolico del color y a la
-            relacion entre imagen y tiempo.
+            A su regreso a Ecuador ingresó a la Escuela de Bellas Artes de
+            Cuenca y comenzó a trabajar con materiales como cobre y bronce,
+            explorando la pintura, el relieve y la materia. Su obra se caracteriza
+            por el uso de texturas, collage y tierras de color, elementos que
+            construyen un universo visual profundamente ligado al paisaje y a la
+            identidad cultural.
           </p>
           <p>
-            Su trabajo ha sido exhibido en America Latina, Europa y Asia,
-            consolidando una practica que combina investigacion material,
-            observacion del entorno y una aproximacion reflexiva a la pintura.
+            Desde 1980 ha realizado exposiciones en Ecuador, Colombia, Estados
+            Unidos, Bélgica y Perú, participando en galerías, museos y bienales
+            internacionales. Entre sus reconocimientos destacan el premio por
+            votación del público en la Segunda Bienal de Pintura de Cuenca y
+            proyectos escultóricos como “La Familia” para la Asamblea Nacional
+            del Ecuador y “Los Estudiantes” para la Universidad Estatal de Cuenca.
           </p>
         </div>
       </section>
@@ -238,27 +183,30 @@ export function ArtistEditorialPage() {
       <section className="editorial-section artist-statement" data-reveal>
         <div>
           <p className="editorial-kicker">Declaracion artistica</p>
-          <h2>La luz como paisaje, tiempo y experiencia.</h2>
+          <h2>Materia, color y memoria.</h2>
         </div>
         <div className="artist-statement-content">
           <div className="editorial-two-column-copy">
             <p>
-              La pintura de Jorge España se construye desde la observacion
-              prolongada y el silencio. Su practica investiga la luz como fenomeno
-              fisico y emocional, en relacion con el agua, el territorio y las
-              formas de vida que lo habitan.
+              Jorge España desarrolla una obra profundamente vinculada a la
+              materia, el color y la memoria. A través de texturas, tierras,
+              pigmentos y relieves, construye un lenguaje visual inspirado en el
+              paisaje andino, la naturaleza y las raíces culturales que han
+              marcado su vida y su entorno.
             </p>
             <p>
-              Lejos del gesto inmediato, cada obra se desarrolla mediante
-              acumulacion lenta: capas delgadas, tiempos de reposo y una economia
-              rigurosa del color. La superficie deja de ser soporte y se convierte
-              en archivo.
+              Su trabajo nace de una búsqueda constante de identidad y
+              experimentación. Desde el cobre, el pastel y la encáustica hasta el
+              collage y la abstracción, cada etapa de su obra explora nuevas
+              formas de expresión, manteniendo siempre una fuerte conexión con lo
+              telúrico, lo simbólico y lo humano.
             </p>
             <p>
-              Su trabajo articula una tension constante entre lo ancestral y lo
-              contemporaneo. Texturas densas, fragmentos simbolicos, presencias
-              animales y estructuras abiertas configuran un lenguaje donde lo
-              figurativo y lo abstracto coexisten sin jerarquia.
+              En sus composiciones convergen signos, formas y superficies que
+              evocan lo ancestral, lo orgánico y lo ritual. Su pintura busca ir
+              más allá de la representación visual, creando espacios donde la
+              textura, la luz y el color transmiten sensaciones, memoria y una
+              relación íntima con la tierra.
             </p>
           </div>
           <div className="statement-works-gallery">
@@ -284,8 +232,8 @@ export function ArtistEditorialPage() {
             <p className="editorial-kicker">Identidad y recorrido</p>
             <h2>Perfil del artista</h2>
             <p className="artist-profile-summary">
-              Una práctica construida entre Cuenca, Galápagos, la formación
-              académica y una trayectoria de circulación internacional.
+              Una obra arraigada en el paisaje andino, la materia y la identidad
+              cultural, desarrollada entre Cuenca y San Antonio de Gapal.
             </p>
           </div>
         </div>
@@ -302,8 +250,27 @@ export function ArtistEditorialPage() {
       </section>
 
       <section className="editorial-section artist-trajectory" data-reveal>
-        <div>
+        <div className="trajectory-header">
+          <p className="editorial-kicker">Recorrido</p>
           <h2>Trayectoria</h2>
+        </div>
+
+        <div className="trajectory-content">
+          {/* Línea de tiempo horizontal */}
+          <ol className="trajectory-timeline">
+            {TRAJECTORY_TIMELINE.map((item, index) => (
+              <li key={item.year} className={index % 2 === 0 ? 'tl-above' : 'tl-below'}>
+                <div className="tl-text">
+                  <span className="tl-year">{item.year}</span>
+                  <p className="tl-body">{item.body}</p>
+                </div>
+                <div className="tl-dot" aria-hidden="true" />
+              </li>
+            ))}
+            <div className="tl-line" aria-hidden="true" />
+          </ol>
+
+          {/* Galería de fotos de archivo */}
           <div className="trajectory-gallery">
             {TRAJECTORY_IMAGES.map((image) => (
               <figure key={image.src}>
@@ -313,14 +280,6 @@ export function ArtistEditorialPage() {
             ))}
           </div>
         </div>
-        <ol className="trajectory-timeline">
-          {TRAJECTORY_TIMELINE.map((item) => (
-            <li key={item.year}>
-              <span>{item.year}</span>
-              <p>{item.body}</p>
-            </li>
-          ))}
-        </ol>
       </section>
 
       <section className="editorial-section galapagos-section" data-reveal>
@@ -336,7 +295,7 @@ export function ArtistEditorialPage() {
               vida marina hasta convertirlas en memoria visual.
             </p>
             <p>
-              Ese vínculo atraviesa su obra reciente y se traduce en piezas de
+              Ese vínculo atraviesa su obra reciente y se traduce en obras de
               cobre repujado, escenas expositivas y formas que condensan
               movimiento, fragilidad y permanencia.
             </p>

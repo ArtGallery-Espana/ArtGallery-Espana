@@ -39,26 +39,55 @@ export type CarouselSlide = {
   href?: string;
   /** Precio para mostrar con <Money>. Ausente en obras manuales. */
   price?: {amount: string; currencyCode: string} | null;
+  /**
+   * Ajuste de la imagen en el carrusel.
+   * - 'cover' (por defecto): llena el viewport; puede recortar imágenes muy verticales.
+   * - 'contain': muestra la obra completa; los bordes laterales quedan con el
+   *   fondo Piedra (#EEE8E1) del contenedor, lo que es coherente con la paleta.
+   */
+  imageFit?: 'cover' | 'contain';
 };
 
 /**
- * Obras de Jorge España que NO están en el catálogo Shopify
- * (esculturas expuestas: Colibrí, Personas de Piedra, Halcón, …).
+ * Obras monumentales de Jorge España que NO están en el catálogo Shopify.
+ * Son esculturas de gran formato instaladas en espacios públicos del Ecuador.
  *
- * Para añadir una:
+ * Para agregar otra obra:
  *   1. Sube la imagen a `public/images/`.
- *   2. Agrega una entrada aquí con su ruta `/images/...`.
+ *   2. Agrega una entrada con su ruta `/images/...`.
  *
- * Aparecen primero en el carrusel (antes de los productos de la tienda).
+ * Estas slides aparecen primero en el carrusel del inicio.
  */
 export const MANUAL_FEATURED_SLIDES: CarouselSlide[] = [
-  // {
-  //   id: 'colibri',
-  //   title: 'Colibrí',
-  //   imageUrl: '/images/colibri.jpg',
-  //   imageAlt: 'Escultura Colibrí de Jorge España',
-  //   meta: 'Cobre repujado · 2024',
-  // },
+  {
+    id: 'la-familia',
+    title: 'La Familia',
+    imageUrl: '/images/obra-la-familia.jpeg',
+    imageAlt:
+      'La Familia — obra monumental de Jorge España, Asamblea Nacional del Ecuador',
+    meta: 'Asamblea Nacional del Ecuador · 2008',
+    // Imagen horizontal (landscape) en un carrusel de altura variable; contain
+    // garantiza ver la obra completa en cualquier tamaño de pantalla.
+    imageFit: 'contain',
+  },
+  {
+    id: 'los-estudiantes',
+    title: 'Los Estudiantes',
+    imageUrl: '/images/obra-los-estudiantes.jpg',
+    imageAlt:
+      'Los Estudiantes — conjunto escultórico monumental, Universidad de Cuenca',
+    meta: 'Universidad de Cuenca · Conjunto escultórico',
+    // La foto es vertical (retrato) en un carrusel apaisado; contain muestra
+    // las esculturas completas sin recortar. El fondo Piedra llena los laterales.
+    imageFit: 'contain',
+  },
+  {
+    id: 'allcamari',
+    title: 'Allcamari',
+    imageUrl: '/images/obra-allcamari.jpg',
+    imageAlt: 'Allcamari — escultura monumental inspirada en el cóndor andino',
+    meta: 'Edificio Allcamari · Identidad andina',
+  },
 ];
 
 /**

@@ -42,7 +42,7 @@ export function ProductConsultation({productTitle}: ProductConsultationProps) {
       <div className="grid grid-cols-2 gap-3">
         <a
           aria-label={`Consultar por WhatsApp sobre ${productTitle}`}
-          className="inline-flex h-[54px] items-center justify-center gap-2 rounded-[2px] border border-[#2F9EA0] px-4 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:text-white"
+          className="inline-flex h-[54px] items-center justify-center gap-2 rounded-[2px] border border-[#C84D92] px-4 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:text-white"
           href={whatsappUrl}
           rel="noopener noreferrer"
           target="_blank"
@@ -219,7 +219,7 @@ function ConsultationModal({productTitle, onClose}: ConsultationModalProps) {
                 Cancelar
               </button>
               <button
-                className="inline-flex h-[48px] items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F6F1EA] transition hover:bg-[#2F9EA0] disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-[48px] items-center justify-center rounded-[2px] bg-[#111111] px-6 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F6F1EA] transition hover:bg-[#C84D92] disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={isSubmitting}
                 type="submit"
               >
@@ -256,7 +256,7 @@ function SuccessState({onClose}: {onClose: () => void}) {
         El estudio recibirá tu mensaje y responderá al correo que indicaste.
       </p>
       <button
-        className="inline-flex h-[48px] items-center justify-center rounded-[2px] bg-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-white transition hover:bg-[#268285]"
+        className="inline-flex h-[48px] items-center justify-center rounded-[2px] bg-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-white transition hover:bg-[#A23A76]"
         onClick={onClose}
         type="button"
       >
@@ -298,7 +298,7 @@ const Field = function Field({
   const errorId = `${fieldId}-error`;
 
   const baseClass =
-    'w-full border border-[rgba(35,35,39,.18)] bg-white px-3.5 py-2.5 text-[14px] text-[#232327] transition focus:border-[#2F9EA0] focus:outline focus:outline-2 focus:outline-[rgba(47,158,160,.16)]';
+    'w-full border border-[rgba(35,35,39,.18)] bg-white px-3.5 py-2.5 text-[14px] text-[#232327] transition focus:border-[#C84D92] focus:outline focus:outline-2 focus:outline-[rgba(200,77,146,.16)]';
 
   return (
     <label className="block" htmlFor={fieldId}>

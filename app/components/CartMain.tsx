@@ -305,7 +305,7 @@ function CartPage({
     const shipCost = activeCount * SHIP_PER_PIECE;
     const insCost = Math.ceil(displayedSubtotal * INS_RATE);
     const note =
-      `Envío DHL: ${shipCost} USD (${activeCount} ${activeCount !== 1 ? 'piezas' : 'pieza'})` +
+      `Envío DHL: ${shipCost} USD (${activeCount} ${activeCount !== 1 ? 'obras' : 'obra'})` +
       ` | Seguro ad-valorem: ${insCost} USD`;
     if (note === prevShippingNoteRef.current) return;
     prevShippingNoteRef.current = note;
@@ -634,7 +634,7 @@ function SavedLine({item}: {item: SavedItem}) {
             <button
               type="submit"
               disabled={fetcher.state !== 'idle'}
-              className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#2F9EA0] underline underline-offset-4 disabled:opacity-50"
+              className="mt-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#C84D92] underline underline-offset-4 disabled:opacity-50"
             >
               {fetcher.state === 'idle' ? 'Agregar a la compra' : 'Agregando…'}
             </button>
@@ -744,7 +744,7 @@ function OrderSummary({
           <>
             <div className="flex items-baseline justify-between gap-4">
               <span className="text-[rgba(35,35,39,.65)]">
-                Envío DHL · {activeCount} {activeCount !== 1 ? 'piezas' : 'pieza'}
+                Envío DHL · {activeCount} {activeCount !== 1 ? 'obras' : 'obra'}
               </span>
               <span className="shrink-0 text-[#232327]">{fmtAmt(shipCost)}</span>
             </div>
@@ -792,7 +792,7 @@ function OrderSummary({
 
       <Link
         to="/pages/contacto"
-        className="block text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:text-[#2F9EA0]"
+        className="block text-center [font-family:var(--mono)] text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:text-[#C84D92]"
       >
         Solicitar llamada con el estudio →
       </Link>
@@ -807,7 +807,7 @@ function OrderSummary({
           {title: 'Devolución 14 días', desc: 'Reembolso completo desde la entrega.'},
         ].map(({title, desc}) => (
           <li key={title} className="flex items-start gap-3">
-            <span className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#2F9EA0]" />
+            <span className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#C84D92]" />
             <div>
               <p className="[font-family:var(--mono)] text-[11px] uppercase tracking-[0.12em] text-[#232327]">{title}</p>
               <p className="mt-[3px] text-[13px] leading-[1.5] text-[rgba(35,35,39,.58)]">{desc}</p>
