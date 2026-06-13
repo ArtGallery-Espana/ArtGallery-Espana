@@ -153,6 +153,13 @@ export function Layout({children}: {children?: React.ReactNode}) {
         <link rel="stylesheet" href={tailwindCss} />
         <Meta />
         <Links />
+        {/* model-viewer: web component para modelos 3D en fichas de producto.
+            Se carga como módulo con nonce para pasar el CSP de Hydrogen. */}
+        <script
+          nonce={nonce}
+          type="module"
+          src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"
+        />
       </head>
       <body>
         {children}

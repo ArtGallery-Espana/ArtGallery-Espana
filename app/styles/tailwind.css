@@ -1306,11 +1306,11 @@
     gap: 1.5rem;
   }
 
-  /* Cada párrafo en card Papel con borde Niebla. */
+  /* Cada párrafo en card Marfil con borde Niebla — más suave que el blanco puro. */
   .artist-statement .editorial-two-column-copy p,
   .artist-biography .editorial-two-column-copy p,
   .editorial-single-copy p {
-    background: var(--color-papel);
+    background: var(--color-ivory);
     border: 1px solid var(--color-niebla);
     padding: 1.1rem 1.2rem;
   }
@@ -1330,7 +1330,7 @@
     gap: 1rem;
   }
   .statement-works-gallery figure {
-    background: var(--color-papel);
+    background: var(--color-ivory);
     border: 1px solid var(--color-niebla);
     display: grid;
     grid-template-rows: auto auto;
@@ -1377,7 +1377,7 @@
     gap: 1rem;
   }
   .galapagos-gallery figure {
-    background: var(--color-papel);
+    background: var(--color-ivory);
     border: 1px solid var(--color-niebla);
     display: grid;
     grid-template-rows: auto auto;
@@ -1463,7 +1463,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .trajectory-gallery figure {
-    background: var(--color-papel);
+    background: var(--color-ivory);
     border: 1px solid var(--color-niebla);
     margin: 0;
     overflow: hidden;
@@ -1499,7 +1499,7 @@
 
   .artist-profile-story {
     align-content: stretch;
-    background: var(--color-papel);
+    background: var(--color-ivory);
     border: 1px solid var(--color-niebla);
     display: grid;
     gap: 0;
@@ -1556,7 +1556,7 @@
 
   /* Cada fact card alterna lavanda/magenta en su barra superior. */
   .artist-facts-grid div {
-    background: var(--color-papel);
+    background: var(--color-ivory);
     border: 1px solid var(--color-niebla);
     display: grid;
     gap: 0.5rem;
