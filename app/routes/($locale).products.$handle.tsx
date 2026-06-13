@@ -199,18 +199,24 @@ export default function Product() {
   });
 
   const gallery = React.useMemo(
-    () => getProductGallery(product, selectedVariant?.image ?? null),
-    [product, selectedVariant?.image],
+    () => getProductGallery(product),
+    [product],
   );
 
   React.useEffect(() => {
     if (!gallery.length) return;
-    setSelectedImageId((currentImageId) => {
-      if (currentImageId && gallery.some((image) => image.id === currentImageId)) {
-        return currentImageId;
-      }
-      return selectedVariant?.image?.id ?? gallery[0]?.id ?? null;
-    });
+    const variantImageId = selectedVariant?.image?.id;
+    if (variantImageId) {
+      // Cuando la variante tiene imagen propia, siempre mostramos esa imagen.
+      setSelectedImageId(variantImageId);
+    } else {
+      // Sin imagen específica de variante: mantenemos la actual si sigue en
+      // la galería, o caemos al primer elemento.
+      setSelectedImageId((currentId) => {
+        if (currentId && gallery.some((img) => img.id === currentId)) return currentId;
+        return gallery[0]?.id ?? null;
+      });
+    }
   }, [gallery, selectedVariant?.image?.id]);
 
   const activeImage =
@@ -248,19 +254,8 @@ export default function Product() {
     showImageAtIndex(activeImageIndex - 1);
   }, [activeImageIndex, showImageAtIndex]);
 
-  React.useEffect(() => {
-    if (gallery.length <= 1 || isLightboxOpen) return;
-
-    const interval = window.setInterval(() => {
-      setSelectedImageId((currentImageId) => {
-        const currentIndex = gallery.findIndex((image) => image.id === currentImageId);
-        const nextIndex = currentIndex >= 0 ? currentIndex + 1 : 0;
-        return gallery[nextIndex % gallery.length]?.id ?? currentImageId ?? null;
-      });
-    }, 4000);
-
-    return () => window.clearInterval(interval);
-  }, [gallery, isLightboxOpen]);
+  // Autoplay eliminado: el cambio automático de fotos interfería con la
+  // navegación manual y con el cambio de variante.
 
   React.useEffect(() => {
     if (!isOfferDialogOpen) return;
@@ -314,40 +309,64 @@ export default function Product() {
           <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-20">
             <div>
               <figure className="group">
-                <button
-                  aria-label="Ver imagen en primer plano"
-                  className="relative block w-full overflow-hidden bg-black text-left"
-                  onClick={() => setIsLightboxOpen(true)}
-                  type="button"
-                  style={{aspectRatio: '4 / 5'}}
-                >
-                  {activeImage ? (
-                    <Image
-                      alt={activeImage.altText || title}
-                      className="h-full w-full object-contain p-3 md:p-4"
-                      data={activeImage}
-                      sizes="(min-width: 1280px) 760px, 100vw"
+                {/* Cuando hay modelo 3D activo usamos un div (no button) para
+                    que el model-viewer reciba los eventos de drag sin conflicto */}
+                {activeImage?.mediaContentType === 'MODEL_3D' ? (
+                  <div
+                    className="group relative block w-full overflow-hidden bg-[#1a1a1a]"
+                    style={{aspectRatio: '4 / 5'}}
+                  >
+                    <Model3dViewer
+                      alt={activeImage.altText ?? title}
+                      sources={activeImage.sources}
                     />
-                  ) : (
-                    <div className="absolute inset-0 bg-[#E1D5C6]" />
-                  )}
-                  <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.16)] via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                  <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
-                    {title}
+                    <div className="pointer-events-none absolute inset-0 border border-[rgba(255,255,255,.06)]" />
+                    <div className="absolute left-3.5 top-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-white/70">
+                      {title}
+                    </div>
+                    <div className="pointer-events-none absolute left-3.5 bottom-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white/70">
+                      Vista 3D · Arrastra para rotar
+                    </div>
+                    <div className="pointer-events-none absolute bottom-3.5 right-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-white/70">
+                      {product.handle}
+                    </div>
                   </div>
-                  <div className="absolute left-3.5 bottom-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-[rgba(35,35,39,.72)] opacity-0 transition group-hover:opacity-100">
-                    Click para ampliar
-                  </div>
-                  <div className="absolute bottom-3.5 right-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
-                    {product.handle}
-                  </div>
-                </button>
+                ) : (
+                  <button
+                    aria-label="Ver imagen en primer plano"
+                    className="relative block w-full overflow-hidden bg-[#F6F1EA] text-left"
+                    onClick={() => setIsLightboxOpen(true)}
+                    type="button"
+                    style={{aspectRatio: '4 / 5'}}
+                  >
+                    {activeImage ? (
+                      <Image
+                        alt={activeImage.altText || title}
+                        className="h-full w-full object-contain p-3 md:p-4"
+                        data={activeImage as any}
+                        sizes="(min-width: 1280px) 760px, 100vw"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[#E1D5C6]" />
+                    )}
+                    <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.16)] via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
+                    <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
+                      {title}
+                    </div>
+                    <div className="absolute left-3.5 bottom-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-[rgba(35,35,39,.72)] opacity-0 transition group-hover:opacity-100">
+                      Click para ampliar
+                    </div>
+                    <div className="absolute bottom-3.5 right-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
+                      {product.handle}
+                    </div>
+                  </button>
+                )}
               </figure>
 
               {gallery.length > 1 ? (
                 <div className="mt-4 grid grid-cols-5 gap-3">
-                  {gallery.slice(0, 5).map((image, index) => {
+                  {gallery.map((image, index) => {
                     const isActive = image.id === activeImage?.id;
                     return (
                       <button
@@ -361,15 +380,30 @@ export default function Product() {
                         type="button"
                       >
                         <div className="aspect-square bg-[#EEE8E1]">
-                          <Image
-                            alt={image.altText || `${title} ${index + 1}`}
-                            className="h-full w-full object-cover"
-                            data={image}
-                            sizes="120px"
-                          />
+                          {image.mediaContentType === 'MODEL_3D' ? (
+                            /* Thumbnail del modelo 3D: usa su imagen de previsualización */
+                            image.previewImage ? (
+                              <img
+                                alt={image.altText || `${title} 3D`}
+                                className="h-full w-full object-cover"
+                                src={image.previewImage.url}
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center">
+                                <span className="[font-family:var(--mono)] text-[9px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.50)]">3D</span>
+                              </div>
+                            )
+                          ) : (
+                            <Image
+                              alt={image.altText || `${title} ${index + 1}`}
+                              className="h-full w-full object-cover"
+                              data={image}
+                              sizes="120px"
+                            />
+                          )}
                         </div>
                         <span className="absolute bottom-2 right-2 bg-[rgba(246,241,234,.88)] px-1.5 py-0.5 [font-family:var(--mono)] text-[8px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
-                          {String(index + 1).padStart(2, '0')}
+                          {image.mediaContentType === 'MODEL_3D' ? '3D' : String(index + 1).padStart(2, '0')}
                         </span>
                       </button>
                     );
@@ -612,7 +646,7 @@ export default function Product() {
                 <Image
                   alt={activeImage.altText || title}
                   className="max-h-[78vh] w-full object-contain"
-                  data={activeImage}
+                  data={activeImage as any}
                   sizes="100vw"
                   style={{
                     transform: `scale(${lightboxZoom})`,
@@ -818,19 +852,84 @@ function InfoBlock({title, items}: {title: string; items: string[]}) {
   );
 }
 
-function getProductGallery(
-  product: ProductData,
-  variantImage: ProductData['selectedOrFirstAvailableVariant']['image'] | null,
-) {
-  const seen = new Set<string>();
-  const gallery = [variantImage, ...(product.images?.nodes ?? [])].filter(
-    (image): image is NonNullable<typeof image> => Boolean(image?.id),
-  );
+// Tipo unificado para los ítems de la galería (imágenes y modelos 3D).
+export type GalleryItem =
+  | {
+      mediaContentType: 'IMAGE';
+      id: string;
+      url: string;
+      altText?: string | null;
+      width?: number | null;
+      height?: number | null;
+    }
+  | {
+      mediaContentType: 'MODEL_3D';
+      id: string;
+      altText?: string | null;
+      previewImage?: {url: string; altText?: string | null} | null;
+      sources: {url: string; mimeType: string; format: string; filesize: number}[];
+    };
 
-  return gallery.filter((image) => {
-    if (seen.has(image.id)) return false;
-    seen.add(image.id);
-    return true;
+// ─── Visor de modelo 3D ──────────────────────────────────────────────────────
+
+type Model3dSource = {url: string; mimeType: string; format: string; filesize: number};
+
+/**
+ * Renderiza un <model-viewer> de Google mediante dangerouslySetInnerHTML.
+ * El script se carga en root.tsx con el nonce de CSP. Al ser un Web Component,
+ * el navegador actualiza el elemento automáticamente cuando el custom element
+ * queda registrado, sin depender de timing en useEffect.
+ */
+function Model3dViewer({sources, alt}: {sources: Model3dSource[]; alt?: string}) {
+  const glb = sources.find(
+    (s) => s.mimeType === 'model/gltf-binary' || s.format === 'glb',
+  );
+  const usdz = sources.find(
+    (s) => s.mimeType === 'model/vnd.usdz+zip' || s.format === 'usdz',
+  );
+  const src = glb?.url ?? sources[0]?.url;
+
+  if (!src) return null;
+
+  const safeAlt = (alt ?? '').replace(/"/g, '&quot;');
+  const iosSrc = usdz?.url ? ` ios-src="${usdz.url}"` : '';
+
+  return (
+    <div
+      className="absolute inset-0"
+      // eslint-disable-next-line react/no-danger
+      dangerouslySetInnerHTML={{
+        __html: `<model-viewer src="${src}"${iosSrc} alt="${safeAlt}" camera-controls auto-rotate ar environment-image="legacy" exposure="0.8" shadow-intensity="1" style="width:100%;height:100%;background:#1a1a1a;display:block;"></model-viewer>`,
+      }}
+      suppressHydrationWarning
+    />
+  );
+}
+
+// ─── Galería de producto ──────────────────────────────────────────────────────
+
+function getProductGallery(product: ProductData): GalleryItem[] {
+  return (product.media?.nodes ?? []).flatMap((node) => {
+    if (node.__typename === 'MediaImage' && node.image) {
+      return [{
+        mediaContentType: 'IMAGE' as const,
+        id: node.image.id,
+        url: node.image.url,
+        altText: node.image.altText,
+        width: node.image.width,
+        height: node.image.height,
+      }];
+    }
+    if (node.__typename === 'Model3d') {
+      return [{
+        mediaContentType: 'MODEL_3D' as const,
+        id: node.id,
+        altText: node.alt,
+        previewImage: node.previewImage,
+        sources: node.sources,
+      }];
+    }
+    return [];
   });
 }
 
@@ -905,14 +1004,21 @@ type ProductData = {
   descriptionHtml: string;
   publishedAt?: string | null;
   tags: string[];
-  images?: {
-    nodes: Array<{
-      id: string;
-      url: string;
-      altText?: string | null;
-      width?: number | null;
-      height?: number | null;
-    }>;
+  media?: {
+    nodes: Array<
+      | {
+          __typename: 'MediaImage';
+          id: string;
+          image: {id: string; url: string; altText?: string | null; width?: number | null; height?: number | null} | null;
+        }
+      | {
+          __typename: 'Model3d';
+          id: string;
+          alt?: string | null;
+          previewImage?: {url: string; altText?: string | null} | null;
+          sources: {url: string; mimeType: string; format: string; filesize: number}[];
+        }
+    >;
   } | null;
   alto?: {value: string} | null;
   ancho?: {value: string} | null;
@@ -995,13 +1101,34 @@ const PRODUCT_FRAGMENT = `#graphql
     description
     publishedAt
     tags
-    images(first: 6) {
+    media(first: 20) {
       nodes {
-        id
-        url
-        altText
-        width
-        height
+        ... on MediaImage {
+          __typename
+          id
+          image {
+            id
+            url
+            altText
+            width
+            height
+          }
+        }
+        ... on Model3d {
+          __typename
+          id
+          alt
+          previewImage {
+            url
+            altText
+          }
+          sources {
+            url
+            mimeType
+            format
+            filesize
+          }
+        }
       }
     }
     encodedVariantExistence

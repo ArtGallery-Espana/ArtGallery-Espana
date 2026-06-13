@@ -191,11 +191,19 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
         style={{aspectRatio: '4/5'}}
       >
         {product.featuredImage ? (
-          <Image
-            data={product.featuredImage}
-            className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.02]"
-            sizes="(min-width: 1280px) 280px, (min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw"
-          />
+          /* El wrapper absoluto garantiza el posicionamiento independientemente
+             de los estilos internos que Hydrogen inyecta en <Image>.
+             El style inline en <Image> fuerza object-fit:cover porque los
+             estilos inline del componente tienen mayor especificidad que las
+             clases de Tailwind y podrían sobrescribir object-cover. */
+          <div className="absolute inset-0">
+            <Image
+              data={product.featuredImage}
+              className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
+              style={{objectFit: 'cover', display: 'block', height: '100%', width: '100%'}}
+              sizes="(min-width: 1280px) 280px, (min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw"
+            />
+          </div>
         ) : null}
         {product.categoria ? (
           <div className="absolute left-3 top-3">
