@@ -817,7 +817,9 @@
   }
 
   .shared-language select {
-    background: #fff;
+    /* Transparente en el tope para combinar con el header (ivory). Al hacer
+       scroll, `.is-scrolled` lo adapta al header oscuro. */
+    background: transparent;
     border: 1px solid #cfc7bd;
     border-radius: 4px;
     color: #1f1a17;
@@ -829,7 +831,9 @@
   /* Selector de moneda USD/EUR (PR #12). Targets a 44px (T-A7). */
   .shared-currency {
     align-items: center;
-    background: #fff;
+    /* Transparente en el tope para combinar con el header (ivory). Al hacer
+       scroll, `.is-scrolled` lo adapta al header oscuro. */
+    background: transparent;
     border: 1px solid #cfc7bd;
     border-radius: 4px;
     display: inline-flex;

@@ -172,7 +172,13 @@ function FilterGroup({
   );
 }
 
-function CatalogCard({product}: {product: EnrichedProduct}) {
+function CatalogCard({
+  product,
+  eager,
+}: {
+  product: EnrichedProduct;
+  eager?: boolean;
+}) {
   const consultar = product.priceVal === 0;
   const year = product.createdAt
     ? new Date(product.createdAt).getFullYear()
@@ -199,9 +205,20 @@ function CatalogCard({product}: {product: EnrichedProduct}) {
           <div className="absolute inset-0">
             <Image
               data={product.featuredImage}
+              // `aspectRatio="4/5"` hace que Shopify recorte la imagen al mismo
+              // formato del contenedor (portrait). Sin esto, la imagen original
+              // (landscape 3:2) se escalaba HACIA ARRIBA con object-cover para
+              // cubrir la caja 4/5, mostrando un candidato del srcset a mayor
+              // tamaño del real → se veía borrosa hasta re-renderizar. Con el
+              // recorte correcto el navegador pide y muestra la resolución justa.
+              aspectRatio="4/5"
+              // Las primeras tarjetas (sobre el pliegue) se cargan de inmediato
+              // para que el catálogo entre nítido; el resto sigue perezoso para
+              // no penalizar tiempos de respuesta ni responsividad.
+              loading={eager ? 'eager' : 'lazy'}
               className="h-full w-full transition duration-500 group-hover:scale-[1.02]"
               style={{objectFit: 'cover', display: 'block', height: '100%', width: '100%'}}
-              sizes="(min-width: 1280px) 280px, (min-width: 1024px) 22vw, (min-width: 640px) 45vw, 90vw"
+              sizes="(min-width: 1280px) 360px, (min-width: 768px) 33vw, 46vw"
             />
           </div>
         ) : null}
@@ -424,8 +441,12 @@ export default function CatalogPage() {
 
           {sorted.length > 0 ? (
             <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-3 xl:grid-cols-4">
-              {sorted.map((product) => (
-                <CatalogCard key={product.id} product={product} />
+              {sorted.map((product, index) => (
+                <CatalogCard
+                  key={product.id}
+                  product={product}
+                  eager={index < 4}
+                />
               ))}
             </div>
           ) : (

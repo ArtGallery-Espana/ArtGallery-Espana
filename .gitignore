@@ -9,3 +9,4 @@ node_modules
 .react-router
 .playwright-cli
 .playwright
+.claude/worktrees

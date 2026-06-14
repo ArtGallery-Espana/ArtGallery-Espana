@@ -316,7 +316,7 @@ export function Footer({
         </FooterColumn>
 
         <FooterColumn title="Redes sociales">
-          <SocialLinks />
+          <SocialLinks onDark />
         </FooterColumn>
       </div>
 
