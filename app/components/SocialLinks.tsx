@@ -18,15 +18,21 @@ export const SOCIAL_LINKS = {
 type SocialLinksProps = {
   /** Clases extra para el contenedor (ej. alineación/espaciado). */
   className?: string;
+  /**
+   * Usar la variante para fondos oscuros (footer): íconos en tono claro para
+   * que contrasten. Por defecto (false) usa tonos oscuros pensados para el
+   * fondo claro del PDP.
+   */
+  onDark?: boolean;
 };
 
-export function SocialLinks({className = ''}: SocialLinksProps) {
+export function SocialLinks({className = '', onDark = false}: SocialLinksProps) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
-      <SocialIcon href={SOCIAL_LINKS.facebook} label="Facebook">
+      <SocialIcon href={SOCIAL_LINKS.facebook} label="Facebook" onDark={onDark}>
         <FacebookGlyph />
       </SocialIcon>
-      <SocialIcon href={SOCIAL_LINKS.instagram} label="Instagram">
+      <SocialIcon href={SOCIAL_LINKS.instagram} label="Instagram" onDark={onDark}>
         <InstagramGlyph />
       </SocialIcon>
     </div>
@@ -38,15 +44,23 @@ function SocialIcon({
   href,
   label,
   children,
+  onDark,
 }: {
   href: string;
   label: string;
   children: React.ReactNode;
+  onDark?: boolean;
 }) {
+  // Sobre fondo oscuro usamos crema; sobre fondo claro, gris oscuro. El hover
+  // turquesa funciona bien en ambos fondos.
+  const toneClass = onDark
+    ? 'border-[rgba(248,243,237,.35)] text-[rgba(248,243,237,.82)]'
+    : 'border-[rgba(35,35,39,.22)] text-[rgba(35,35,39,.60)]';
+
   return (
     <a
       aria-label={label}
-      className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(35,35,39,.22)] text-[rgba(35,35,39,.60)] transition hover:border-[#2F9EA0] hover:text-[#2F9EA0]"
+      className={`inline-flex h-11 w-11 items-center justify-center rounded-full border transition hover:border-[#2F9EA0] hover:text-[#2F9EA0] ${toneClass}`}
       href={href}
       rel="noopener noreferrer"
       target="_blank"

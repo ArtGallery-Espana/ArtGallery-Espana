@@ -118,7 +118,7 @@ export default function Homepage() {
 
       {/* Sección del taller en Cuenca */}
       <section
-        className="px-6 pt-28 md:px-10 xl:px-14 xl:pt-[200px]"
+        className="px-6 pt-14 md:px-10 xl:px-14 xl:pt-24"
         data-reveal
       >
         <div className="mx-auto max-w-[1440px]">
@@ -135,12 +135,6 @@ export default function Homepage() {
                 sentido a cada serie.
               </p>
               <div className="mt-9">
-                <Link
-                  className="home-cta-ghost inline-flex h-12 items-center justify-center rounded-[2px] border border-[#2F9EA0] px-6 text-[11px] uppercase tracking-[0.18em] text-[#2F9EA0] transition hover:bg-[#2F9EA0] hover:!text-white hover:no-underline"
-                  to="/pages/contacto"
-                >
-                  Consultar disponibilidad
-                </Link>
                 <Link
                   className="home-cta-link inline-flex items-center border-b border-[#232327] pb-1 text-[11px] uppercase tracking-[0.18em] text-[#232327] transition hover:border-[#2F9EA0] hover:!text-[#2F9EA0] hover:no-underline"
                   to="/pages/artista"
@@ -174,25 +168,24 @@ export default function Homepage() {
                 </figcaption>
               </figure>
 
-              {/* Ubicación del taller */}
+              {/* Datos del taller */}
               <div className="border-t border-[rgba(35,35,39,.10)] pt-6">
-                <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                  Ubicación
-                </div>
-                <div>
-                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                    Atención
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4">
+                  <div>
+                    <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                      Atención
+                    </div>
+                    <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
+                      Consultas en línea
+                    </div>
                   </div>
-                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
-                    Consultas en línea
-                  </div>
-                </div>
-                <div>
-                  <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
-                    Envíos
-                  </div>
-                  <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
-                    Nacional e internacional
+                  <div>
+                    <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.55)]">
+                      Envíos
+                    </div>
+                    <div className="mt-2 [font-family:var(--serif)] text-[20px] leading-[1.25] text-[#111111]">
+                      Nacional e internacional
+                    </div>
                   </div>
                 </div>
               </div>
