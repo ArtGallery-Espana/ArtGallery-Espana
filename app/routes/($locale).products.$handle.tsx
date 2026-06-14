@@ -226,6 +226,17 @@ export default function Product() {
     gallery.findIndex((image) => image.id === activeImage?.id),
   );
 
+  // Proporción real de la fotografía activa (solo imágenes normales). El
+  // contenedor adopta este aspect-ratio para que una foto horizontal no quede
+  // centrada dentro de una caja vertical fija 4/5 dejando franjas vacías arriba
+  // y abajo. Los modelos 3D NO entran aquí: conservan su propia caja 4/5.
+  const photoAspectRatio =
+    activeImage?.mediaContentType === 'IMAGE' &&
+    activeImage.width &&
+    activeImage.height
+      ? `${activeImage.width} / ${activeImage.height}`
+      : undefined;
+
   const descriptionHtml = product.descriptionHtml?.trim();
   const plainDescription = product.description?.trim();
   const publishedYear = getPublishedYear(product.publishedAt);
@@ -303,7 +314,7 @@ export default function Product() {
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
-      <section className="px-6 pb-20 pt-10 md:px-10 xl:px-14 xl:pb-28 xl:pt-12">
+      <section className="px-6 pb-2 pt-10 md:px-10 xl:px-14 xl:pb-3 xl:pt-12">
         <div className="mx-auto max-w-[1440px]">
           <BackToCatalogButton />
           <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-20">
@@ -337,12 +348,14 @@ export default function Product() {
                     className="relative block w-full overflow-hidden bg-[#F6F1EA] text-left"
                     onClick={() => setIsLightboxOpen(true)}
                     type="button"
-                    style={{aspectRatio: '4 / 5'}}
+                    // Con foto real usamos su proporción original; sólo como
+                    // respaldo (sin imagen) mantenemos la caja 4/5 del placeholder.
+                    style={{aspectRatio: photoAspectRatio ?? '4 / 5'}}
                   >
                     {activeImage ? (
                       <Image
                         alt={activeImage.altText || title}
-                        className="h-full w-full object-contain p-3 md:p-4"
+                        className="h-full w-full object-contain"
                         data={activeImage as any}
                         sizes="(min-width: 1280px) 760px, 100vw"
                       />
@@ -520,7 +533,7 @@ export default function Product() {
                   </div>
                 ) : null}
 
-                <div className="mt-8 space-y-5 border-t border-[rgba(35,35,39,.10)] pt-6">
+                <div className="mt-1 space-y-5 border-t border-[rgba(35,35,39,.10)] pt-3">
                   <InfoBlock
                     title="Incluye"
                     items={[
