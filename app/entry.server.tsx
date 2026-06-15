@@ -14,11 +14,36 @@ export default async function handleRequest(
   reactRouterContext: EntryContext,
   context: HydrogenRouterContextProvider,
 ) {
+  const storeDomain = context.env.PUBLIC_STORE_DOMAIN;
+  const checkoutDomain = context.env.PUBLIC_CHECKOUT_DOMAIN;
+  const shopDomains = [storeDomain, checkoutDomain]
+    .filter((domain): domain is string => Boolean(domain))
+    .map((domain) => `https://${domain}`);
+
   const {nonce, header, NonceProvider} = createContentSecurityPolicy({
     shop: {
-      checkoutDomain: context.env.PUBLIC_CHECKOUT_DOMAIN,
-      storeDomain: context.env.PUBLIC_STORE_DOMAIN,
+      checkoutDomain,
+      storeDomain,
     },
+    // <model-viewer> genera URLs `blob:` para las texturas del GLB (y posibles
+    // workers). Sin `blob:` en el CSP el navegador las bloquea y el modelo se
+    // ve blanco tipo "clay render" (geometría sí, texturas no). `connectSrc` se
+    // FUSIONA con los defaults de Hydrogen (self, cdn.shopify, monorail, dominios
+    // de tienda/checkout), así que aquí basta con añadir `blob:`.
+    connectSrc: ['blob:'],
+    // `imgSrc`/`mediaSrc`/`workerSrc` NO tienen default en Hydrogen: al definirlas
+    // dejan de heredar de `default-src`, por eso van completas (incluyen los
+    // orígenes de imágenes actuales: cdn.shopify.com, shopify.com y la tienda).
+    imgSrc: [
+      "'self'",
+      'data:',
+      'blob:',
+      'https://cdn.shopify.com',
+      'https://shopify.com',
+      ...shopDomains,
+    ],
+    mediaSrc: ["'self'", 'blob:', 'https://cdn.shopify.com', ...shopDomains],
+    workerSrc: ["'self'", 'blob:'],
     // Permite cargar la hoja de estilos de Google Fonts (Playfair Display,
     // Manrope, JetBrains Mono). Sin este permiso el navegador bloquea el @import
     // de tailwind.css y el sitio cae a tipografías de respaldo.
