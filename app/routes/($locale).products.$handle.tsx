@@ -247,6 +247,7 @@ export default function Product() {
     ? 'Comprar · Añadir al carrito'
     : 'Agotado';
   const hasOptions = productOptions.some((option) => option.optionValues.length > 1);
+  const permiteOfertas = product.permite_ofertas?.value === 'true';
 
   const showImageAtIndex = React.useCallback(
     (index: number) => {
@@ -510,16 +511,15 @@ export default function Product() {
                     </AddToCartButton>
                   </div>
 
-                  {/* "Ofertar" abre el diálogo de oferta (PR #11). La consulta
-                      (WhatsApp/Email) vive en <ProductConsultation/> abajo, así
-                      que no duplicamos el botón "Consultar". */}
-                  <button
-                    className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
-                    onClick={() => setIsOfferDialogOpen(true)}
-                    type="button"
-                  >
-                    Ofertar
-                  </button>
+                  {permiteOfertas ? (
+                    <button
+                      className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
+                      onClick={() => setIsOfferDialogOpen(true)}
+                      type="button"
+                    >
+                      Ofertar
+                    </button>
+                  ) : null}
                 </div>
 
                 <ProductConsultation productTitle={title} />
@@ -1036,6 +1036,7 @@ type ProductData = {
   alto?: {value: string} | null;
   ancho?: {value: string} | null;
   profundidad?: {value: string} | null;
+  permite_ofertas?: {value: string} | null;
   priceRange: {
     minVariantPrice: {
       amount: string;
@@ -1153,6 +1154,9 @@ const PRODUCT_FRAGMENT = `#graphql
       value
     }
     profundidad: metafield(namespace: "custom", key: "profundidad") {
+      value
+    }
+    permite_ofertas: metafield(namespace: "custom", key: "permite_ofertas") {
       value
     }
     options {
