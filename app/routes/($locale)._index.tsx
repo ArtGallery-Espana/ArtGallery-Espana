@@ -84,7 +84,7 @@ export default function Homepage() {
                   <div className="[font-family:var(--serif)] text-[24px] leading-[1.15] text-[#111111]">
                     {product.title}{' '}
                     <em className="italic text-[rgba(35,35,39,.72)]">
-                      · {getPublishedYear(product.publishedAt)}
+                      · {product.anio?.value?.trim() || '—'}
                     </em>
                   </div>
                   <p className="mt-3 line-clamp-3 max-w-[42ch] text-[14px] leading-[1.65] text-[rgba(35,35,39,.72)]">
@@ -527,11 +527,6 @@ function getProductPath(handle: string) {
   return `/products/${handle}`;
 }
 
-function getPublishedYear(publishedAt?: string | null) {
-  if (!publishedAt) return '—';
-  return new Date(publishedAt).getFullYear().toString();
-}
-
 function getPrimaryTag(tags?: readonly string[] | null) {
   if (!tags?.length) return 'catálogo';
   return tags[0];
@@ -556,6 +551,7 @@ type HomepageProduct = {
   title: string;
   description: string;
   publishedAt?: string | null;
+  anio?: {value: string} | null;
   totalInventory?: number | null;
   tags: readonly string[];
   seo: {
@@ -584,6 +580,9 @@ const HOMEPAGE_PRODUCT_FRAGMENT = `#graphql
     title
     description
     publishedAt
+    anio: metafield(namespace: "custom", key: "ano") {
+      value
+    }
     totalInventory
     tags
     seo {
