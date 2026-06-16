@@ -239,7 +239,8 @@ export default function Product() {
 
   const descriptionHtml = product.descriptionHtml?.trim();
   const plainDescription = product.description?.trim();
-  const publishedYear = getPublishedYear(product.publishedAt);
+  const publishedYear =
+    normalizeMetafieldScalar(product.anio?.value) || '—';
   const dimensions = getProductDimensions(product);
   const primaryTag = getPrimaryTag(product.tags);
   const title = product.title;
@@ -946,11 +947,6 @@ function getProductGallery(product: ProductData): GalleryItem[] {
   });
 }
 
-function getPublishedYear(publishedAt?: string | null) {
-  if (!publishedAt) return '—';
-  return new Date(publishedAt).getFullYear().toString();
-}
-
 function getPrimaryTag(tags?: readonly string[] | null) {
   if (!tags?.length) return 'catálogo';
   return tags[0];
@@ -1036,6 +1032,7 @@ type ProductData = {
   alto?: {value: string} | null;
   ancho?: {value: string} | null;
   profundidad?: {value: string} | null;
+  anio?: {value: string} | null;
   permite_ofertas?: {value: string} | null;
   priceRange: {
     minVariantPrice: {
@@ -1154,6 +1151,9 @@ const PRODUCT_FRAGMENT = `#graphql
       value
     }
     profundidad: metafield(namespace: "custom", key: "profundidad") {
+      value
+    }
+    anio: metafield(namespace: "custom", key: "ano") {
       value
     }
     permite_ofertas: metafield(namespace: "custom", key: "permite_ofertas") {
