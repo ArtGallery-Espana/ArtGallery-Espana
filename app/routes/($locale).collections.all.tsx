@@ -24,6 +24,7 @@ export async function loader({context}: Route.LoaderArgs) {
 }
 
 type RawProduct = CatalogProductFragment & {
+  anio?: {value: string} | null;
   collections?: {nodes: {title: string; handle: string}[]};
 };
 
@@ -180,9 +181,7 @@ function CatalogCard({
   eager?: boolean;
 }) {
   const consultar = product.priceVal === 0;
-  const year = product.createdAt
-    ? new Date(product.createdAt).getFullYear()
-    : '';
+  const year = product.anio?.value?.trim() || '';
   const dimAlto = formatDim(product.alto?.value);
   const dimAncho = formatDim(product.ancho?.value);
 
@@ -514,6 +513,9 @@ const CATALOG_PRODUCT_FRAGMENT = `#graphql
         amount
         currencyCode
       }
+    }
+    anio: metafield(namespace: "custom", key: "ano") {
+      value
     }
     alto: metafield(namespace: "custom", key: "alto") {
       value
