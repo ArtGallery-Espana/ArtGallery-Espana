@@ -347,11 +347,45 @@ export default function CatalogPage() {
                 {dateLabel}.
               </p>
             </div>
-            <p className="max-w-[360px] text-[15px] leading-[1.65] text-[rgba(35,35,39,.62)] lg:mb-2 lg:ml-auto">
-              El catálogo se actualiza el primer lunes de cada mes. Para obras
-              que ya no aparecen, escribir al estudio: en muchos casos
-              permanecen disponibles bajo consulta directa.
-            </p>
+            {/* Panel editorial — reemplaza el párrafo de texto con datos */}
+            <div className="lg:mb-2 lg:ml-auto lg:shrink-0">
+              <div className="grid grid-cols-2 gap-px border border-[rgba(35,35,39,.12)] bg-[rgba(35,35,39,.10)]">
+                {/* Celda: total de obras */}
+                <div className="flex flex-col justify-between bg-[#F6F1EA] px-6 py-5">
+                  <span className="[font-family:var(--mono)] text-[9px] uppercase tracking-[0.24em] text-[rgba(35,35,39,.40)]">
+                    Obras
+                  </span>
+                  <span className="mt-3 [font-family:var(--serif)] text-[clamp(2rem,3.5vw,2.8rem)] leading-none tracking-[-0.02em] text-[#111111]">
+                    {products.length}
+                  </span>
+                </div>
+                {/* Celda: formatos */}
+                <div className="flex flex-col justify-between bg-[#F6F1EA] px-6 py-5">
+                  <span className="[font-family:var(--mono)] text-[9px] uppercase tracking-[0.24em] text-[rgba(35,35,39,.40)]">
+                    Formatos
+                  </span>
+                  <div className="mt-3 space-y-[5px]">
+                    <div className="flex items-center gap-2">
+                      <span className="h-[1px] w-3 shrink-0 bg-[#C84D92]" />
+                      <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[#232327]">Pintura</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="h-[1px] w-3 shrink-0 bg-[#2F9EA0]" />
+                      <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[#232327]">Escultura</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Celda ancha: fecha de actualización */}
+                <div className="col-span-2 flex items-center justify-between bg-[#EEE8E1] px-6 py-3">
+                  <span className="[font-family:var(--mono)] text-[9px] uppercase tracking-[0.24em] text-[rgba(35,35,39,.40)]">
+                    Catálogo
+                  </span>
+                  <span className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.18em] text-[#232327]">
+                    {dateLabel}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
