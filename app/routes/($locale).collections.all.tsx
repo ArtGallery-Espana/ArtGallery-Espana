@@ -365,7 +365,7 @@ export default function CatalogPage() {
                     Obras
                   </span>
                   <span className="mt-3 [font-family:var(--serif)] text-[clamp(2rem,3.5vw,2.8rem)] leading-none tracking-[-0.02em] text-[#111111]">
-                    {products.length}
+                    {sorted.length}
                   </span>
                 </div>
                 {/* Celda: formatos */}
