@@ -226,17 +226,6 @@ export default function Product() {
     gallery.findIndex((image) => image.id === activeImage?.id),
   );
 
-  // Proporción real de la fotografía activa (solo imágenes normales). El
-  // contenedor adopta este aspect-ratio para que una foto horizontal no quede
-  // centrada dentro de una caja vertical fija 4/5 dejando franjas vacías arriba
-  // y abajo. Los modelos 3D NO entran aquí: conservan su propia caja 4/5.
-  const photoAspectRatio =
-    activeImage?.mediaContentType === 'IMAGE' &&
-    activeImage.width &&
-    activeImage.height
-      ? `${activeImage.width} / ${activeImage.height}`
-      : undefined;
-
   const descriptionHtml = product.descriptionHtml?.trim();
   const plainDescription = product.description?.trim();
   const publishedYear =
@@ -287,6 +276,7 @@ export default function Product() {
   React.useEffect(() => {
     if (!isLightboxOpen) return;
 
+    const savedScrollY = window.scrollY;
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -311,6 +301,7 @@ export default function Product() {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
       window.removeEventListener('keydown', handleKeyDown);
+      window.scrollTo({top: savedScrollY, behavior: 'instant'});
     };
   }, [isLightboxOpen, showNextImage, showPreviousImage]);
 
@@ -344,9 +335,7 @@ export default function Product() {
                     className="relative block w-full overflow-hidden bg-[#F6F1EA] text-left"
                     onClick={() => setIsLightboxOpen(true)}
                     type="button"
-                    // Con foto real usamos su proporción original; sólo como
-                    // respaldo (sin imagen) mantenemos la caja 4/5 del placeholder.
-                    style={{aspectRatio: photoAspectRatio ?? '4 / 5'}}
+                    style={{aspectRatio: '4 / 5'}}
                   >
                     {activeImage ? (
                       <Image
@@ -368,13 +357,13 @@ export default function Product() {
               </figure>
 
               {gallery.length > 1 ? (
-                <div className="mt-4 grid grid-cols-5 gap-3">
+                <div className="mt-4 flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0">
                   {gallery.map((image, index) => {
                     const isActive = image.id === activeImage?.id;
                     return (
                       <button
                         key={image.id}
-                        className={`relative overflow-hidden border transition ${
+                        className={`relative shrink-0 overflow-hidden border transition sm:shrink ${
                           isActive
                             ? 'border-[#C84D92] ring-2 ring-[rgba(200,77,146,.18)] ring-inset'
                             : 'border-[rgba(35,35,39,.10)] hover:border-[rgba(35,35,39,.28)]'
@@ -382,7 +371,7 @@ export default function Product() {
                         onClick={() => setSelectedImageId(image.id)}
                         type="button"
                       >
-                        <div className="aspect-square bg-[#EEE8E1]">
+                        <div className="aspect-square w-[72px] bg-[#EEE8E1] sm:w-auto">
                           {image.mediaContentType === 'MODEL_3D' ? (
                             /* Thumbnail del modelo 3D: usa su imagen de previsualización */
                             image.previewImage ? (
