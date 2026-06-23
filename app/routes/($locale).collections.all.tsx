@@ -35,7 +35,8 @@ type EnrichedProduct = RawProduct & {
   grupo: number;
 };
 
-type PriceBucket = 'todos' | 'hasta5' | '5a15' | 'mas15' | 'consultar';
+type PriceBucket = 'todos' | 'hasta1k' | 'de4k6k' | 'mas6k' | 'consultar';
+type TipoBucket = 'todas' | 'pintura' | 'escultura';
 
 function parseMetaVal(value: string | null | undefined): number {
   if (!value) return 0;
@@ -125,9 +126,12 @@ function matchesPriceBucket(priceVal: number, bucket: PriceBucket): boolean {
   if (bucket === 'todos') return true;
   if (bucket === 'consultar') return priceVal === 0;
   if (priceVal === 0) return false;
-  if (bucket === 'hasta5') return priceVal <= 5000;
-  if (bucket === '5a15') return priceVal > 5000 && priceVal <= 15000;
-  if (bucket === 'mas15') return priceVal > 15000;
+  // Esculturas: $200–$950
+  if (bucket === 'hasta1k') return priceVal < 1000;
+  // Pinturas medias: $4.000–$6.000
+  if (bucket === 'de4k6k') return priceVal >= 4000 && priceVal <= 6000;
+  // Pinturas premium: más de $6.000
+  if (bucket === 'mas6k') return priceVal > 6000;
   return true;
 }
 
@@ -265,6 +269,7 @@ function CatalogCard({
 export default function CatalogPage() {
   const {products, dateLabel} = useLoaderData<typeof loader>();
 
+  const [selectedTipo, setSelectedTipo] = useState<TipoBucket>('todas');
   const [selectedTamano, setSelectedTamano] = useState('todas');
   const [selectedPrecio, setSelectedPrecio] = useState<PriceBucket>('todos');
   const [sort, setSort] = useState('Recientes');
@@ -291,13 +296,15 @@ export default function CatalogPage() {
 
   const filtered = useMemo(() => {
     let result = enriched;
+    if (selectedTipo === 'pintura') result = result.filter((p) => p.grupo === 0);
+    if (selectedTipo === 'escultura') result = result.filter((p) => p.grupo === 1);
     if (selectedTamano !== 'todas')
       result = result.filter((p) => p.tamano === selectedTamano);
     result = result.filter((p) =>
       matchesPriceBucket(p.priceVal, selectedPrecio),
     );
     return result;
-  }, [enriched, selectedTamano, selectedPrecio]);
+  }, [enriched, selectedTipo, selectedTamano, selectedPrecio]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -318,9 +325,11 @@ export default function CatalogPage() {
     return copy.sort((a, b) => a.grupo - b.grupo || within(a, b));
   }, [filtered, sort]);
 
-  const hasFilters = selectedTamano !== 'todas' || selectedPrecio !== 'todos';
+  const hasFilters =
+    selectedTipo !== 'todas' || selectedTamano !== 'todas' || selectedPrecio !== 'todos';
 
   function clearFilters() {
+    setSelectedTipo('todas');
     setSelectedTamano('todas');
     setSelectedPrecio('todos');
   }
@@ -395,6 +404,25 @@ export default function CatalogPage() {
         <div className="mx-auto max-w-[1400px]">
           <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
 
+            {/* Filtro: Tipo de obra */}
+            <FilterGroup title="Tipo">
+              {(
+                [
+                  {key: 'todas', label: 'Todas'},
+                  {key: 'pintura', label: 'Pinturas'},
+                  {key: 'escultura', label: 'Esculturas'},
+                ] as {key: TipoBucket; label: string}[]
+              ).map(({key, label}) => (
+                <FilterPill
+                  key={key}
+                  label={label}
+                  active={selectedTipo === key}
+                  onClick={() => setSelectedTipo(key)}
+                />
+              ))}
+            </FilterGroup>
+
+            {/* Filtro: Tamaño — solo aparece cuando hay productos con dimensiones */}
             {tamanos.length > 0 && (
               <FilterGroup title="Tamaño">
                 <FilterPill
@@ -415,13 +443,15 @@ export default function CatalogPage() {
               </FilterGroup>
             )}
 
+            {/* Filtro: Precio — rangos ajustados a la distribución real del catálogo
+                Esculturas: $200–$950 · Pinturas: $4.500–$7.500 */}
             <FilterGroup title="Precio">
               {(
                 [
                   {key: 'todos', label: 'Todos'},
-                  {key: 'hasta5', label: 'Hasta 5.000'},
-                  {key: '5a15', label: '5.000 – 15.000'},
-                  {key: 'mas15', label: '+15.000'},
+                  {key: 'hasta1k', label: 'Hasta $1.000'},
+                  {key: 'de4k6k', label: '$4.000 – $6.000'},
+                  {key: 'mas6k', label: '+$6.000'},
                   {key: 'consultar', label: 'Consultar'},
                 ] as {key: PriceBucket; label: string}[]
               ).map(({key, label}) => (
