@@ -237,7 +237,10 @@ export default function Product() {
     ? 'Comprar · Añadir al carrito'
     : 'Agotado';
   const hasOptions = productOptions.some((option) => option.optionValues.length > 1);
-  const permiteOfertas = product.permite_ofertas?.value === 'true';
+  // Regla de ofertas (pinturas y esculturas):
+  // — Mostrar "Ofertar" SOLO cuando el metafield permite_ofertas es exactamente "true".
+  // — false, sin valor o valor inválido → ocultar. No hay valor por defecto permisivo.
+  const permiteOfertas = resolvePermiteOfertas(product.permite_ofertas?.value);
 
   const showImageAtIndex = React.useCallback(
     (index: number) => {
@@ -487,6 +490,9 @@ export default function Product() {
                     </AddToCartButton>
                   </div>
 
+                  {/* Botón "Ofertar" — visible solo cuando permite_ofertas === "true".
+                      Se aplica igual a pinturas y esculturas: nunca se muestra
+                      por defecto ni con valores inválidos o ausentes. */}
                   {permiteOfertas ? (
                     <button
                       className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
@@ -921,6 +927,23 @@ function getProductGallery(product: ProductData): GalleryItem[] {
     return [];
   });
 }
+
+// ─── Regla de ofertas ────────────────────────────────────────────────────────
+
+/**
+ * Determina si se debe mostrar el botón "Ofertar" para un producto.
+ *
+ * Regla (aplica igual a pinturas y esculturas):
+ *   - El metafield custom.permite_ofertas debe contener exactamente el string "true".
+ *   - Cualquier otro valor ("false", vacío, nulo, inválido) → ocultar el botón.
+ *   - No existe valor por defecto permisivo: la ausencia del metafield se trata
+ *     como false por seguridad.
+ */
+function resolvePermiteOfertas(value: string | null | undefined): boolean {
+  return value === 'true';
+}
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
 
 // Tags que no deben mostrarse públicamente en la ficha de producto.
 const HIDDEN_TAGS = new Set(['catálogo', 'catalogo', 'Cobre', 'cobre']);
