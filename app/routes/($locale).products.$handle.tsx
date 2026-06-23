@@ -12,6 +12,7 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {AddToCartButton} from '~/components/AddToCartButton';
+import {useAside} from '~/components/Aside';
 import {ProductConsultation} from '~/components/ProductConsultation';
 import {ProductForm} from '~/components/ProductForm';
 import {ProductOfferForm} from '~/components/ProductOfferForm';
@@ -182,6 +183,8 @@ export default function Product() {
   const [offerSuccessEmail, setOfferSuccessEmail] = React.useState<string | null>(null);
   const [ghostImage, setGhostImage] = React.useState<GalleryItem | null>(null);
   const prevImageRef = React.useRef<GalleryItem | null>(null);
+
+  const {open: openCart} = useAside();
 
   const handleOfferSuccess = React.useCallback((email: string) => {
     setIsOfferDialogOpen(false);
@@ -479,7 +482,6 @@ export default function Product() {
                 <div className="mt-6 border-t border-[rgba(35,35,39,.10)] pt-5">
                   <ProductForm
                     productOptions={productOptions}
-                    selectedVariant={selectedVariant}
                   />
                 </div>
               ) : null}
@@ -512,6 +514,7 @@ export default function Product() {
                   <AddToCartButton
                     className="inline-flex h-[52px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-8 text-[11px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
                     disabled={!selectedVariant || !selectedVariant.availableForSale}
+                    onClick={() => openCart('cart')}
                     lines={
                       selectedVariant
                         ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
