@@ -313,11 +313,10 @@ export default function Product() {
       <section className="px-6 pb-2 pt-10 md:px-10 xl:px-14 xl:pb-3 xl:pt-12">
         <div className="mx-auto max-w-[1440px]">
           <BackToCatalogButton />
-          <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-20">
+          {/* Imagen más dominante (1.45fr) inspirado en referencia Inéditad */}
+          <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.7fr)] xl:gap-16">
             <div>
               <figure className="group">
-                {/* Cuando hay modelo 3D activo usamos un div (no button) para
-                    que el model-viewer reciba los eventos de drag sin conflicto */}
                 {activeImage?.mediaContentType === 'MODEL_3D' ? (
                   <div
                     className="group relative block w-full overflow-hidden bg-[#1a1a1a]"
@@ -328,14 +327,14 @@ export default function Product() {
                       sources={activeImage.sources}
                     />
                     <div className="pointer-events-none absolute inset-0 border border-[rgba(255,255,255,.06)]" />
-                    <div className="pointer-events-none absolute left-3.5 bottom-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white/70">
+                    <div className="pointer-events-none absolute bottom-3.5 left-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white/70">
                       Vista 3D · Arrastra para rotar
                     </div>
                   </div>
                 ) : (
                   <button
                     aria-label="Ver imagen en primer plano"
-                    className="relative block w-full overflow-hidden bg-[#F6F1EA] text-left"
+                    className="relative block w-full overflow-hidden bg-[#EEE8E1] text-left"
                     onClick={() => setIsLightboxOpen(true)}
                     type="button"
                     style={{aspectRatio: '4 / 5'}}
@@ -343,40 +342,43 @@ export default function Product() {
                     {activeImage ? (
                       <Image
                         alt={activeImage.altText || title}
-                        className="h-full w-full object-contain"
+                        className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.015]"
                         data={activeImage as any}
-                        sizes="(min-width: 1280px) 760px, 100vw"
+                        sizes="(min-width: 1280px) 820px, 100vw"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-[#E1D5C6]" />
                     )}
-                    <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.16)] via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                    <div className="absolute left-3.5 bottom-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-[rgba(35,35,39,.72)] opacity-0 transition group-hover:opacity-100">
-                      Click para ampliar
+                    <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.08)]" />
+                    {/* Ícono de zoom — siempre visible, estilo lupa de galería */}
+                    <div className="absolute right-3.5 top-3.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition group-hover:bg-white">
+                      <svg aria-hidden="true" className="h-4 w-4 text-[#232327]" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.35-4.35" strokeLinecap="round" />
+                      </svg>
                     </div>
                   </button>
                 )}
               </figure>
 
+              {/* Miniaturas: fila horizontal en móvil, grid adaptativo en desktop */}
               {gallery.length > 1 ? (
-                <div className="mt-4 flex gap-3 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0">
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:gap-3 sm:overflow-visible sm:pb-0">
                   {gallery.map((image, index) => {
                     const isActive = image.id === activeImage?.id;
                     return (
                       <button
                         key={image.id}
-                        className={`relative shrink-0 overflow-hidden border transition sm:shrink ${
+                        className={`relative shrink-0 overflow-hidden transition sm:shrink ${
                           isActive
-                            ? 'border-[#C84D92] ring-2 ring-[rgba(200,77,146,.18)] ring-inset'
-                            : 'border-[rgba(35,35,39,.10)] hover:border-[rgba(35,35,39,.28)]'
+                            ? 'outline outline-2 outline-offset-0 outline-[#C84D92]'
+                            : 'outline outline-1 outline-offset-0 outline-[rgba(35,35,39,.12)] hover:outline-[rgba(35,35,39,.32)]'
                         }`}
                         onClick={() => setSelectedImageId(image.id)}
                         type="button"
                       >
-                        <div className="aspect-square w-[72px] bg-[#EEE8E1] sm:w-auto">
+                        <div className="aspect-square w-[80px] bg-[#EEE8E1] sm:w-auto">
                           {image.mediaContentType === 'MODEL_3D' ? (
-                            /* Thumbnail del modelo 3D: usa su imagen de previsualización */
                             image.previewImage ? (
                               <img
                                 alt={image.altText || `${title} 3D`}
@@ -397,9 +399,6 @@ export default function Product() {
                             />
                           )}
                         </div>
-                        <span className="absolute bottom-2 right-2 bg-[rgba(246,241,234,.88)] px-1.5 py-0.5 [font-family:var(--mono)] text-[8px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
-                          {image.mediaContentType === 'MODEL_3D' ? '3D' : String(index + 1).padStart(2, '0')}
-                        </span>
                       </button>
                     );
                   })}
@@ -432,107 +431,106 @@ export default function Product() {
               </div>
             </div>
 
-            <div className="xl:sticky xl:top-28 xl:self-start">
-              <div className="border border-[rgba(35,35,39,.10)] bg-[rgba(255,255,255,.28)] p-6 backdrop-blur-sm md:p-8">
-                <div className="mb-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-                  {[primaryTag, publishedYear].filter(Boolean).join(' · ')}
-                </div>
-                <h1 className="[font-family:var(--serif)] text-[clamp(2.8rem,4vw,4.25rem)] leading-[0.98] tracking-[-0.02em] text-[#111111]">
-                  {title}
-                </h1>
-                {dimensions ? (
-                  <div className="mt-4 text-[15px] text-[rgba(35,35,39,.72)]">
-                    {dimensions}
-                  </div>
-                ) : null}
+            {/* Sidebar sticky — layout abierto sin card wrapper, inspirado en
+                referencia Inéditad: título → variantes → precio → compra → info */}
+            <div className="xl:sticky xl:top-24 xl:self-start">
 
-                <div className="mb-8 mt-8 flex items-end gap-4 border-y border-[rgba(35,35,39,.10)] py-6">
-                  <div>
-                    <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-                      Precio
-                    </div>
-                    <div className="mt-2 [font-family:var(--serif)] text-[36px] leading-none text-[#111111]">
-                      <Money
-                        data={
-                          selectedVariant?.price || product.priceRange.minVariantPrice
-                        }
-                      />
-                    </div>
+              {/* ── Identidad de la obra ── */}
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.50)]">
+                {[primaryTag, publishedYear].filter(Boolean).join(' · ')}
+              </div>
+              <h1 className="mt-3 [font-family:var(--serif)] text-[clamp(2.4rem,3.8vw,3.8rem)] leading-[1.0] tracking-[-0.02em] text-[#111111]">
+                {title}
+              </h1>
+              {dimensions ? (
+                <div className="mt-2 text-[14px] text-[rgba(35,35,39,.60)]">
+                  {dimensions}
+                </div>
+              ) : null}
+
+              {/* ── Variantes (cuando existen) — antes del precio ── */}
+              {hasOptions ? (
+                <div className="mt-6 border-t border-[rgba(35,35,39,.10)] pt-5">
+                  <ProductForm
+                    productOptions={productOptions}
+                    selectedVariant={selectedVariant}
+                  />
+                </div>
+              ) : null}
+
+              {/* ── Precio ── bloque propio, visualmente separado */}
+              <div className="mt-6 border-t border-[rgba(35,35,39,.10)] pt-5">
+                <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.50)]">
+                  Precio
+                </div>
+                <div className="mt-2 flex items-end gap-4">
+                  <div className="[font-family:var(--serif)] text-[clamp(2rem,3vw,2.8rem)] leading-none text-[#111111]">
+                    <Money
+                      data={selectedVariant?.price || product.priceRange.minVariantPrice}
+                    />
                   </div>
                   {selectedVariant?.compareAtPrice ? (
-                    <div className="pb-1 text-[14px] text-[rgba(35,35,39,.55)] line-through">
+                    <div className="pb-1 text-[14px] text-[rgba(35,35,39,.45)] line-through">
                       <Money data={selectedVariant.compareAtPrice} />
                     </div>
                   ) : null}
-                  <div className="ml-auto pb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+                  <div className="ml-auto pb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.50)]">
                     {selectedVariant?.availableForSale ? 'Disponible' : 'Agotado'}
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="[&_form]:block [&_form]:w-full">
-                    <AddToCartButton
-                      className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!selectedVariant || !selectedVariant.availableForSale}
-                      lines={
-                        selectedVariant
-                          ? [
-                              {
-                                merchandiseId: selectedVariant.id,
-                                quantity: 1,
-                                selectedVariant,
-                              },
-                            ]
-                          : []
-                      }
-                    >
-                      {actionCopy}
-                    </AddToCartButton>
-                  </div>
-
-                  {/* Botón "Ofertar" — visible solo cuando permite_ofertas === "true".
-                      Se aplica igual a pinturas y esculturas: nunca se muestra
-                      por defecto ni con valores inválidos o ausentes. */}
-                  {permiteOfertas ? (
-                    <button
-                      className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
-                      onClick={() => setIsOfferDialogOpen(true)}
-                      type="button"
-                    >
-                      Ofertar
-                    </button>
-                  ) : null}
-                </div>
-
-                <ProductConsultation productTitle={title} />
-
-                {hasOptions ? (
-                  <div className="mt-8 border-t border-[rgba(35,35,39,.10)] pt-6">
-                    <ProductForm
-                      productOptions={productOptions}
-                      selectedVariant={selectedVariant}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="mt-1 space-y-5 border-t border-[rgba(35,35,39,.10)] pt-3">
-                  <InfoBlock
-                    title="Incluye"
-                    items={[
-                      'Firma del artista y factura emitida desde la galería.',
-                      'Acompañamiento para coordinar envío o entrega.',
-                      'Atención directa para resolver dudas sobre la obra.',
-                    ]}
-                  />
-                  <InfoBlock
-                    title="Compra"
-                    items={[
-                      'Pago seguro desde Shopify.',
-                      'Añade la obra al carrito o contáctanos para atención personalizada.',
-                    ]}
-                  />
-                </div>
               </div>
+
+              {/* ── Compra — bloque separado con fondo sutil ── */}
+              <div className="mt-5 space-y-3 border-t border-[rgba(35,35,39,.10)] pt-5">
+                <div className="[&_form]:block [&_form]:w-full">
+                  <AddToCartButton
+                    className="inline-flex h-[52px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-8 text-[11px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!selectedVariant || !selectedVariant.availableForSale}
+                    lines={
+                      selectedVariant
+                        ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
+                        : []
+                    }
+                  >
+                    {actionCopy}
+                  </AddToCartButton>
+                </div>
+
+                {/* Botón "Ofertar" — visible solo cuando permite_ofertas === "true".
+                    Aplica igual a pinturas y esculturas; ausente = false por seguridad. */}
+                {permiteOfertas ? (
+                  <button
+                    className="home-cta-ghost inline-flex h-[52px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
+                    onClick={() => setIsOfferDialogOpen(true)}
+                    type="button"
+                  >
+                    Ofertar
+                  </button>
+                ) : null}
+              </div>
+
+              {/* ── Consulta ── */}
+              <ProductConsultation productTitle={title} />
+
+              {/* ── Garantías de la galería ── */}
+              <div className="mt-6 space-y-4 border-t border-[rgba(35,35,39,.10)] pt-5">
+                <InfoBlock
+                  title="Incluye"
+                  items={[
+                    'Firma del artista y factura emitida desde la galería.',
+                    'Acompañamiento para coordinar envío o entrega personalizada.',
+                    'Atención directa para resolver dudas sobre la obra.',
+                  ]}
+                />
+                <InfoBlock
+                  title="Compra segura"
+                  items={[
+                    'Pago seguro desde Shopify.',
+                    'Añade la obra al carrito o contáctanos para atención personalizada.',
+                  ]}
+                />
+              </div>
+
             </div>
           </div>
         </div>
