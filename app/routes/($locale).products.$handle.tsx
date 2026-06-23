@@ -240,9 +240,9 @@ export default function Product() {
   const descriptionHtml = product.descriptionHtml?.trim();
   const plainDescription = product.description?.trim();
   const publishedYear =
-    normalizeMetafieldScalar(product.anio?.value) || '—';
+    normalizeMetafieldScalar(product.anio?.value) || null;
   const dimensions = getProductDimensions(product);
-  const primaryTag = getPrimaryTag(product.tags);
+  const primaryTag = getDisplayTag(product.tags);
   const title = product.title;
   const actionCopy = selectedVariant?.availableForSale
     ? 'Comprar · Añadir al carrito'
@@ -334,14 +334,8 @@ export default function Product() {
                       sources={activeImage.sources}
                     />
                     <div className="pointer-events-none absolute inset-0 border border-[rgba(255,255,255,.06)]" />
-                    <div className="absolute left-3.5 top-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-white/70">
-                      {title}
-                    </div>
                     <div className="pointer-events-none absolute left-3.5 bottom-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white/70">
                       Vista 3D · Arrastra para rotar
-                    </div>
-                    <div className="pointer-events-none absolute bottom-3.5 right-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-white/70">
-                      {product.handle}
                     </div>
                   </div>
                 ) : (
@@ -366,14 +360,8 @@ export default function Product() {
                     )}
                     <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.16)] via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                    <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
-                      {title}
-                    </div>
                     <div className="absolute left-3.5 bottom-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-[rgba(35,35,39,.72)] opacity-0 transition group-hover:opacity-100">
                       Click para ampliar
-                    </div>
-                    <div className="absolute bottom-3.5 right-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
-                      {product.handle}
                     </div>
                   </button>
                 )}
@@ -428,45 +416,43 @@ export default function Product() {
 
               <div className="mt-20 xl:mt-24">
                 <Kicker accent="mag">Sobre la obra</Kicker>
-                <h2 className="mt-6 max-w-[10ch] [font-family:var(--serif)] text-[clamp(2.8rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.02em] text-[#111111]">
-                  {title}
-                </h2>
-                <div className="mt-6 max-w-[52ch] text-[15px] leading-[1.9] text-[#232327]">
-                  {descriptionHtml ? (
-                    <div
-                      className="[&_p]:mb-4 [&_p:last-child]:mb-0"
-                      dangerouslySetInnerHTML={{__html: descriptionHtml}}
-                    />
-                  ) : (
-                    <p>
-                      {plainDescription ||
-                        'La descripción de esta obra estará disponible muy pronto.'}
-                    </p>
-                  )}
-                </div>
-                <div className="mt-12 border-y border-[rgba(35,35,39,.10)] py-8">
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <DataPair label="Año" value={publishedYear} />
-                    <DataPair label="Categoría" value={primaryTag} />
-                    <DataPair label="Medidas" value={dimensions || 'Consultar'} />
-                    <DataPair label="SKU" value={selectedVariant?.sku || 'Sin referencia'} />
+                {(descriptionHtml || plainDescription) ? (
+                  <div className="mt-6 max-w-[52ch] text-[15px] leading-[1.9] text-[#232327]">
+                    {descriptionHtml ? (
+                      <div
+                        className="[&_p]:mb-4 [&_p:last-child]:mb-0"
+                        dangerouslySetInnerHTML={{__html: descriptionHtml}}
+                      />
+                    ) : (
+                      <p>{plainDescription}</p>
+                    )}
                   </div>
-                </div>
+                ) : null}
+                {(publishedYear || primaryTag || dimensions) ? (
+                  <div className="mt-12 border-y border-[rgba(35,35,39,.10)] py-8">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {publishedYear ? <DataPair label="Año" value={publishedYear} /> : null}
+                      {primaryTag ? <DataPair label="Categoría" value={primaryTag} /> : null}
+                      {dimensions ? <DataPair label="Medidas" value={dimensions} /> : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
             <div className="xl:sticky xl:top-28 xl:self-start">
               <div className="border border-[rgba(35,35,39,.10)] bg-[rgba(255,255,255,.28)] p-6 backdrop-blur-sm md:p-8">
                 <div className="mb-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-                  {product.handle} · {primaryTag} · {publishedYear}
+                  {[primaryTag, publishedYear].filter(Boolean).join(' · ')}
                 </div>
                 <h1 className="[font-family:var(--serif)] text-[clamp(2.8rem,4vw,4.25rem)] leading-[0.98] tracking-[-0.02em] text-[#111111]">
                   {title}
                 </h1>
-                <div className="mt-4 text-[15px] text-[rgba(35,35,39,.72)]">
-                  {dimensions || 'Medidas a consultar'}
-                  {selectedVariant?.sku ? ` · Ref. ${selectedVariant.sku}` : ''}
-                </div>
+                {dimensions ? (
+                  <div className="mt-4 text-[15px] text-[rgba(35,35,39,.72)]">
+                    {dimensions}
+                  </div>
+                ) : null}
 
                 <div className="mb-8 mt-8 flex items-end gap-4 border-y border-[rgba(35,35,39,.10)] py-6">
                   <div>
@@ -945,6 +931,15 @@ function getProductGallery(product: ProductData): GalleryItem[] {
     }
     return [];
   });
+}
+
+// Tags que no deben mostrarse públicamente en la ficha de producto.
+const HIDDEN_TAGS = new Set(['catálogo', 'catalogo', 'Cobre', 'cobre']);
+
+function getDisplayTag(tags?: readonly string[] | null): string | null {
+  if (!tags?.length) return null;
+  const visible = tags.find((t) => !HIDDEN_TAGS.has(t));
+  return visible ?? null;
 }
 
 function getPrimaryTag(tags?: readonly string[] | null) {
