@@ -2257,7 +2257,19 @@
 
 
 /* =============================================================================
- * 7. CAPA DE UTILIDADES
+ * 7. ANIMACIONES GLOBALES
+ * ========================================================================== */
+
+/* Entrada suave al cambiar la imagen activa en la galería del PDP.
+ * Se usa vía clase arbitraria Tailwind: animate-[gallery-image-in_320ms_ease-out_both] */
+@keyframes gallery-image-in {
+  from { opacity: 0; transform: scale(1.008); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+
+/* =============================================================================
+ * 8. CAPA DE UTILIDADES
  * ========================================================================== */
 @layer utilities {
   /* Screen-reader only (visualmente oculto, accesible por A11y). */

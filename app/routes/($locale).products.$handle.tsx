@@ -341,8 +341,9 @@ export default function Product() {
                   >
                     {activeImage ? (
                       <Image
+                        key={activeImage.id}
                         alt={activeImage.altText || title}
-                        className="h-full w-full object-contain transition duration-300 group-hover:scale-[1.015]"
+                        className="h-full w-full object-contain animate-[gallery-image-in_320ms_ease-out_both] transition duration-300 group-hover:scale-[1.015]"
                         data={activeImage as any}
                         sizes="(min-width: 1280px) 820px, 100vw"
                       />
@@ -350,8 +351,8 @@ export default function Product() {
                       <div className="absolute inset-0 bg-[#E1D5C6]" />
                     )}
                     <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.08)]" />
-                    {/* Ícono de zoom — siempre visible, estilo lupa de galería */}
-                    <div className="absolute right-3.5 top-3.5 flex h-9 w-9 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition group-hover:bg-white">
+                    {/* Ícono de zoom — ivory + borde fino para mantener la paleta del sitio */}
+                    <div className="absolute right-3.5 top-3.5 flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(35,35,39,.14)] bg-[rgba(246,241,234,.88)] transition group-hover:bg-[rgba(246,241,234,1)]">
                       <svg aria-hidden="true" className="h-4 w-4 text-[#232327]" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                         <circle cx="11" cy="11" r="7" />
                         <path d="m21 21-4.35-4.35" strokeLinecap="round" />
@@ -371,8 +372,8 @@ export default function Product() {
                         key={image.id}
                         className={`relative shrink-0 overflow-hidden transition sm:shrink ${
                           isActive
-                            ? 'outline outline-2 outline-offset-0 outline-[#C84D92]'
-                            : 'outline outline-1 outline-offset-0 outline-[rgba(35,35,39,.12)] hover:outline-[rgba(35,35,39,.32)]'
+                            ? 'shadow-[0_0_0_1.5px_#C84D92]'
+                            : 'opacity-70 shadow-[0_0_0_1px_rgba(35,35,39,.12)] hover:opacity-100 hover:shadow-[0_0_0_1px_rgba(35,35,39,.32)]'
                         }`}
                         onClick={() => setSelectedImageId(image.id)}
                         type="button"
