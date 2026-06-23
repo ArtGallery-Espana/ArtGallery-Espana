@@ -180,6 +180,8 @@ export default function Product() {
   const [lightboxZoom, setLightboxZoom] = React.useState(1);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
   const [offerSuccessEmail, setOfferSuccessEmail] = React.useState<string | null>(null);
+  const [ghostImage, setGhostImage] = React.useState<GalleryItem | null>(null);
+  const prevImageRef = React.useRef<GalleryItem | null>(null);
 
   const handleOfferSuccess = React.useCallback((email: string) => {
     setIsOfferDialogOpen(false);
@@ -308,6 +310,18 @@ export default function Product() {
     };
   }, [isLightboxOpen, showNextImage, showPreviousImage]);
 
+  // Cross-dissolve de galería: mantiene la imagen anterior en el DOM (ghost)
+  // mientras la nueva entra, creando una mezcla suave entre ambas.
+  React.useEffect(() => {
+    if (!activeImage) { prevImageRef.current = null; return; }
+    const prev = prevImageRef.current;
+    prevImageRef.current = activeImage;
+    if (!prev || prev.id === activeImage.id || prev.mediaContentType !== 'IMAGE') return;
+    setGhostImage(prev);
+    const t = setTimeout(() => setGhostImage(null), 700);
+    return () => clearTimeout(t);
+  }, [activeImage]);
+
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
       <section className="px-6 pb-2 pt-10 md:px-10 xl:px-14 xl:pb-3 xl:pt-12">
@@ -339,11 +353,22 @@ export default function Product() {
                     type="button"
                     style={{aspectRatio: '4 / 5'}}
                   >
+                    {/* Ghost — imagen anterior desvaneciéndose bajo la nueva */}
+                    {ghostImage && ghostImage.mediaContentType === 'IMAGE' ? (
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="gallery-anim-out pointer-events-none absolute inset-0 h-full w-full object-contain"
+                        data={ghostImage as any}
+                        sizes="(min-width: 1280px) 820px, 100vw"
+                      />
+                    ) : null}
+                    {/* Imagen activa: entra encima del ghost */}
                     {activeImage ? (
                       <Image
                         key={activeImage.id}
                         alt={activeImage.altText || title}
-                        className="h-full w-full object-contain animate-[gallery-image-in_320ms_ease-out_both] transition duration-300 group-hover:scale-[1.015]"
+                        className="gallery-anim-in absolute inset-0 h-full w-full object-contain transition duration-500 group-hover:scale-[1.015]"
                         data={activeImage as any}
                         sizes="(min-width: 1280px) 820px, 100vw"
                       />
