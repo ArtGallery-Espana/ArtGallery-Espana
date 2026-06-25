@@ -19,6 +19,7 @@ import {createPortal} from 'react-dom';
 import {useFetcher} from 'react-router';
 import {buildWhatsAppConsultationUrl} from '~/lib/consultation';
 import {SocialLinks} from '~/components/SocialLinks';
+import {HoneypotField} from '~/components/HoneypotField';
 
 type ProductConsultationProps = {
   /** Título de la obra. Se inyecta en los mensajes pre-cargados. */
@@ -176,6 +177,7 @@ function ConsultationModal({productTitle, onClose}: ConsultationModalProps) {
             method="post"
           >
             <input name="productTitle" type="hidden" value={productTitle} />
+            <HoneypotField />
 
             <Field
               error={fieldErrors.visitorName}

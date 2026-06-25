@@ -11,7 +11,7 @@ import {
   useRouteLoaderData,
 } from 'react-router';
 import type {Route} from './+types/root';
-import favicon from '~/assets/favicon.svg';
+import faviconLogo from '~/assets/lOGO.jpeg';
 import {FOOTER_QUERY, HEADER_QUERY} from '~/lib/fragments';
 import tailwindCss from '~/styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
@@ -61,7 +61,10 @@ export function links() {
       rel: 'preconnect',
       href: 'https://shop.app',
     },
-    {rel: 'icon', type: 'image/svg+xml', href: favicon},
+    // Favicon de marca (Galería-Taller J. España). Reemplaza el logo por
+    // defecto de Hydrogen que aparecía en la pestaña y en Google.
+    {rel: 'icon', type: 'image/jpeg', href: faviconLogo, sizes: 'any'},
+    {rel: 'shortcut icon', href: faviconLogo},
   ];
 }
 
@@ -84,7 +87,12 @@ export async function loader(args: Route.LoaderArgs) {
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
     }),
     consent: {
-      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
+      // Fallback al dominio de la tienda: si PUBLIC_CHECKOUT_DOMAIN no está
+      // definido en Oxygen, Analytics.Provider lanzaba en hidratación y rompía
+      // todo el árbol (errores React #418/#423). Con el fallback nunca queda
+      // vacío. Configura igualmente PUBLIC_CHECKOUT_DOMAIN en el Admin para el
+      // valor correcto de checkout.
+      checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN || env.PUBLIC_STORE_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
       withPrivacyBanner: false,
       // localize the privacy banner
@@ -153,13 +161,10 @@ export function Layout({children}: {children?: React.ReactNode}) {
         <link rel="stylesheet" href={tailwindCss} />
         <Meta />
         <Links />
-        {/* model-viewer: web component para modelos 3D en fichas de producto.
-            Se carga como módulo con nonce para pasar el CSP de Hydrogen. */}
-        <script
-          nonce={nonce}
-          type="module"
-          src="https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js"
-        />
+        {/* model-viewer ya NO se carga aquí: se inyectaba en cada página (1 MB
+            desde unpkg) aunque no hubiera modelo 3D, generando lentitud y
+            ERR_CONNECTION_RESET. Ahora lo carga bajo demanda el componente
+            Model3dViewer solo cuando una obra tiene modelo 3D. */}
       </head>
       <body>
         {children}

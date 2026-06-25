@@ -15,7 +15,10 @@ export default async function handleRequest(
   context: HydrogenRouterContextProvider,
 ) {
   const storeDomain = context.env.PUBLIC_STORE_DOMAIN;
-  const checkoutDomain = context.env.PUBLIC_CHECKOUT_DOMAIN;
+  // Fallback al dominio de tienda si no hay checkout domain configurado, para
+  // que el CSP del checkout/consent quede siempre con un origen válido.
+  const checkoutDomain =
+    context.env.PUBLIC_CHECKOUT_DOMAIN || context.env.PUBLIC_STORE_DOMAIN;
   const shopDomains = [storeDomain, checkoutDomain]
     .filter((domain): domain is string => Boolean(domain))
     .map((domain) => `https://${domain}`);
@@ -30,7 +33,9 @@ export default async function handleRequest(
     // ve blanco tipo "clay render" (geometría sí, texturas no). `connectSrc` se
     // FUSIONA con los defaults de Hydrogen (self, cdn.shopify, monorail, dominios
     // de tienda/checkout), así que aquí basta con añadir `blob:`.
-    connectSrc: ['blob:'],
+    // unpkg: model-viewer descarga su sourcemap (.js.map) vía fetch; sin este
+    // origen el navegador lanza un error de CSP en consola (ruido en devtools).
+    connectSrc: ['blob:', 'https://unpkg.com'],
     // `imgSrc`/`mediaSrc`/`workerSrc` NO tienen default en Hydrogen: al definirlas
     // dejan de heredar de `default-src`, por eso van completas (incluyen los
     // orígenes de imágenes actuales: cdn.shopify.com, shopify.com y la tienda).
