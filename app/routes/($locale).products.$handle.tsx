@@ -8,6 +8,7 @@ import {
   getAdjacentAndFirstAvailableVariants,
   getProductOptions,
   getSelectedProductOptions,
+  useNonce,
   useOptimisticVariant,
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
@@ -25,6 +26,12 @@ import {
   submitOffer,
   validateOfferForm,
 } from '~/lib/offers.server';
+import {
+  EMAIL_FORM_LIMIT,
+  getClientIp,
+  isHoneypotFilled,
+  rateLimit,
+} from '~/lib/spam-guard';
 
 export const meta: Route.MetaFunction = ({data}) => {
   return [
@@ -48,7 +55,29 @@ export async function action({context, params, request}: Route.ActionArgs) {
     );
   }
 
-  const values = getOfferFormValues(await request.formData());
+  const formData = await request.formData();
+
+  // Anti-spam (ver ~/lib/spam-guard). Honeypot: respondemos "éxito" silencioso
+  // para que el bot no reintente. Rate-limit por IP para frenar ráfagas.
+  if (isHoneypotFilled(formData)) {
+    return data({
+      status: 'success' as const,
+      message:
+        'Tu oferta fue enviada correctamente. Te contactaremos muy pronto.',
+    });
+  }
+  if (!rateLimit(`offer:${getClientIp(request)}`, EMAIL_FORM_LIMIT)) {
+    return data(
+      {
+        status: 'error' as const,
+        message:
+          'Has enviado varias ofertas seguidas. Espera unos minutos e inténtalo de nuevo.',
+      },
+      {status: 429},
+    );
+  }
+
+  const values = getOfferFormValues(formData);
   const fieldErrors = validateOfferForm(values);
 
   if (Object.keys(fieldErrors).length > 0) {
@@ -231,6 +260,17 @@ export default function Product() {
     gallery.findIndex((image) => image.id === activeImage?.id),
   );
 
+  // Relación de aspecto real de la imagen activa: evita los recuadros crema
+  // (bandas de object-contain) que aparecían al forzar 4/5 a fotos que no son
+  // verticales. Si faltan dimensiones, caemos a 4/5. La altura se topa con
+  // max-h en el contenedor para que las verticales no obliguen a scroll largo.
+  const activeImageAspectRatio =
+    activeImage?.mediaContentType === 'IMAGE' &&
+    activeImage.width &&
+    activeImage.height
+      ? `${activeImage.width} / ${activeImage.height}`
+      : '4 / 5';
+
   const descriptionHtml = product.descriptionHtml?.trim();
   const plainDescription = product.description?.trim();
   const publishedYear =
@@ -351,10 +391,10 @@ export default function Product() {
                 ) : (
                   <button
                     aria-label="Ver imagen en primer plano"
-                    className="relative block w-full overflow-hidden bg-[#EEE8E1] text-left"
+                    className="relative mx-auto block max-h-[82vh] w-full overflow-hidden bg-[#EEE8E1] text-left"
                     onClick={() => setIsLightboxOpen(true)}
                     type="button"
-                    style={{aspectRatio: '4 / 5'}}
+                    style={{aspectRatio: activeImageAspectRatio}}
                   >
                     {/* Ghost — imagen anterior desvaneciéndose bajo la nueva */}
                     {ghostImage && ghostImage.mediaContentType === 'IMAGE' ? (
@@ -902,7 +942,27 @@ type Model3dSource = {url: string; mimeType: string; format: string; filesize: n
  * el navegador actualiza el elemento automáticamente cuando el custom element
  * queda registrado, sin depender de timing en useEffect.
  */
+const MODEL_VIEWER_SRC =
+  'https://unpkg.com/@google/model-viewer@3.5.0/dist/model-viewer.min.js';
+
 function Model3dViewer({sources, alt}: {sources: Model3dSource[]; alt?: string}) {
+  const nonce = useNonce();
+
+  // Carga el script de model-viewer solo cuando se monta un visor 3D real.
+  // Antes vivía en root.tsx y se descargaba (~1 MB) en cada página. El custom
+  // element actualiza el <model-viewer> automáticamente al quedar registrado.
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.customElements?.get('model-viewer')) return;
+    if (document.querySelector('script[data-model-viewer]')) return;
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = MODEL_VIEWER_SRC;
+    script.dataset.modelViewer = '';
+    if (nonce) script.nonce = nonce;
+    document.head.appendChild(script);
+  }, [nonce]);
+
   const glb = sources.find(
     (s) => s.mimeType === 'model/gltf-binary' || s.format === 'glb',
   );

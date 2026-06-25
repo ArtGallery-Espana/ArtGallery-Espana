@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {useFetcher} from 'react-router';
 import type {ContactActionData} from '~/routes/($locale).pages.$handle';
+import {HoneypotField} from '~/components/HoneypotField';
 
 const CONTACT_DETAILS = {
   studio: 'Galería J. España',
@@ -48,6 +49,7 @@ export function ContactEditorialPage() {
           noValidate
         >
           <input type="hidden" name="intent" value="contact" />
+          <HoneypotField />
 
           <div className="contact-form-grid">
             <label>

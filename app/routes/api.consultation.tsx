@@ -22,6 +22,12 @@ import {
   validateConsultation,
 } from '~/lib/consultation';
 import {sendResendEmail} from '~/lib/resend';
+import {
+  EMAIL_FORM_LIMIT,
+  getClientIp,
+  isHoneypotFilled,
+  rateLimit,
+} from '~/lib/spam-guard';
 
 export async function action({request, context}: Route.ActionArgs) {
   // Solo aceptamos POST: cualquier otro método responde 405.
@@ -30,6 +36,23 @@ export async function action({request, context}: Route.ActionArgs) {
   }
 
   const formData = await request.formData();
+
+  // Anti-spam (ver ~/lib/spam-guard). Honeypot: respondemos ok silencioso.
+  // Rate-limit por IP contra ráfagas.
+  if (isHoneypotFilled(formData)) {
+    return data({ok: true}, {status: 200});
+  }
+  if (!rateLimit(`consultation:${getClientIp(request)}`, EMAIL_FORM_LIMIT)) {
+    return data(
+      {
+        ok: false,
+        error:
+          'Has enviado varias consultas seguidas. Espera unos minutos e inténtalo de nuevo.',
+      },
+      {status: 429},
+    );
+  }
+
   const validation = validateConsultation(formData);
   if (!validation.ok) {
     return data({ok: false, errors: validation.errors}, {status: 400});
