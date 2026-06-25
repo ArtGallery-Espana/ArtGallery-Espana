@@ -12,6 +12,7 @@ import {
   useSelectedOptionInUrlParam,
 } from '@shopify/hydrogen';
 import {AddToCartButton} from '~/components/AddToCartButton';
+import {useAside} from '~/components/Aside';
 import {ProductConsultation} from '~/components/ProductConsultation';
 import {ProductForm} from '~/components/ProductForm';
 import {ProductOfferForm} from '~/components/ProductOfferForm';
@@ -180,6 +181,10 @@ export default function Product() {
   const [lightboxZoom, setLightboxZoom] = React.useState(1);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = React.useState(false);
   const [offerSuccessEmail, setOfferSuccessEmail] = React.useState<string | null>(null);
+  const [ghostImage, setGhostImage] = React.useState<GalleryItem | null>(null);
+  const prevImageRef = React.useRef<GalleryItem | null>(null);
+
+  const {open: openCart} = useAside();
 
   const handleOfferSuccess = React.useCallback((email: string) => {
     setIsOfferDialogOpen(false);
@@ -226,29 +231,21 @@ export default function Product() {
     gallery.findIndex((image) => image.id === activeImage?.id),
   );
 
-  // Proporción real de la fotografía activa (solo imágenes normales). El
-  // contenedor adopta este aspect-ratio para que una foto horizontal no quede
-  // centrada dentro de una caja vertical fija 4/5 dejando franjas vacías arriba
-  // y abajo. Los modelos 3D NO entran aquí: conservan su propia caja 4/5.
-  const photoAspectRatio =
-    activeImage?.mediaContentType === 'IMAGE' &&
-    activeImage.width &&
-    activeImage.height
-      ? `${activeImage.width} / ${activeImage.height}`
-      : undefined;
-
   const descriptionHtml = product.descriptionHtml?.trim();
   const plainDescription = product.description?.trim();
   const publishedYear =
-    normalizeMetafieldScalar(product.anio?.value) || '—';
+    normalizeMetafieldScalar(product.anio?.value) || null;
   const dimensions = getProductDimensions(product);
-  const primaryTag = getPrimaryTag(product.tags);
+  const primaryTag = getDisplayTag(product.tags);
   const title = product.title;
   const actionCopy = selectedVariant?.availableForSale
     ? 'Comprar · Añadir al carrito'
     : 'Agotado';
   const hasOptions = productOptions.some((option) => option.optionValues.length > 1);
-  const permiteOfertas = product.permite_ofertas?.value === 'true';
+  // Regla de ofertas (pinturas y esculturas):
+  // — Mostrar "Ofertar" SOLO cuando el metafield permite_ofertas es exactamente "true".
+  // — false, sin valor o valor inválido → ocultar. No hay valor por defecto permisivo.
+  const permiteOfertas = resolvePermiteOfertas(product.permite_ofertas?.value);
 
   const showImageAtIndex = React.useCallback(
     (index: number) => {
@@ -287,6 +284,7 @@ export default function Product() {
   React.useEffect(() => {
     if (!isLightboxOpen) return;
 
+    const savedScrollY = window.scrollY;
     const previousBodyOverflow = document.body.style.overflow;
     const previousHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -311,19 +309,31 @@ export default function Product() {
       document.body.style.overflow = previousBodyOverflow;
       document.documentElement.style.overflow = previousHtmlOverflow;
       window.removeEventListener('keydown', handleKeyDown);
+      window.scrollTo({top: savedScrollY, behavior: 'instant'});
     };
   }, [isLightboxOpen, showNextImage, showPreviousImage]);
+
+  // Cross-dissolve de galería: mantiene la imagen anterior en el DOM (ghost)
+  // mientras la nueva entra, creando una mezcla suave entre ambas.
+  React.useEffect(() => {
+    if (!activeImage) { prevImageRef.current = null; return; }
+    const prev = prevImageRef.current;
+    prevImageRef.current = activeImage;
+    if (!prev || prev.id === activeImage.id || prev.mediaContentType !== 'IMAGE') return;
+    setGhostImage(prev);
+    const t = setTimeout(() => setGhostImage(null), 700);
+    return () => clearTimeout(t);
+  }, [activeImage]);
 
   return (
     <div className="min-h-screen bg-[#F6F1EA] text-[#232327]">
       <section className="px-6 pb-2 pt-10 md:px-10 xl:px-14 xl:pb-3 xl:pt-12">
         <div className="mx-auto max-w-[1440px]">
           <BackToCatalogButton />
-          <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1.2fr)_minmax(360px,0.8fr)] xl:gap-20">
+          {/* Imagen más dominante (1.45fr) inspirado en referencia Inéditad */}
+          <div className="grid items-start gap-10 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.7fr)] xl:gap-16">
             <div>
               <figure className="group">
-                {/* Cuando hay modelo 3D activo usamos un div (no button) para
-                    que el model-viewer reciba los eventos de drag sin conflicto */}
                 {activeImage?.mediaContentType === 'MODEL_3D' ? (
                   <div
                     className="group relative block w-full overflow-hidden bg-[#1a1a1a]"
@@ -334,69 +344,70 @@ export default function Product() {
                       sources={activeImage.sources}
                     />
                     <div className="pointer-events-none absolute inset-0 border border-[rgba(255,255,255,.06)]" />
-                    <div className="absolute left-3.5 top-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-white/70">
-                      {title}
-                    </div>
-                    <div className="pointer-events-none absolute left-3.5 bottom-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white/70">
+                    <div className="pointer-events-none absolute bottom-3.5 left-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-white/70">
                       Vista 3D · Arrastra para rotar
-                    </div>
-                    <div className="pointer-events-none absolute bottom-3.5 right-3.5 bg-[rgba(0,0,0,.55)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-white/70">
-                      {product.handle}
                     </div>
                   </div>
                 ) : (
                   <button
                     aria-label="Ver imagen en primer plano"
-                    className="relative block w-full overflow-hidden bg-[#F6F1EA] text-left"
+                    className="relative block w-full overflow-hidden bg-[#EEE8E1] text-left"
                     onClick={() => setIsLightboxOpen(true)}
                     type="button"
-                    // Con foto real usamos su proporción original; sólo como
-                    // respaldo (sin imagen) mantenemos la caja 4/5 del placeholder.
-                    style={{aspectRatio: photoAspectRatio ?? '4 / 5'}}
+                    style={{aspectRatio: '4 / 5'}}
                   >
+                    {/* Ghost — imagen anterior desvaneciéndose bajo la nueva */}
+                    {ghostImage && ghostImage.mediaContentType === 'IMAGE' ? (
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="gallery-anim-out pointer-events-none absolute inset-0 h-full w-full object-contain"
+                        data={ghostImage as any}
+                        sizes="(min-width: 1280px) 820px, 100vw"
+                      />
+                    ) : null}
+                    {/* Imagen activa: entra encima del ghost */}
                     {activeImage ? (
                       <Image
+                        key={activeImage.id}
                         alt={activeImage.altText || title}
-                        className="h-full w-full object-contain"
+                        className="gallery-anim-in absolute inset-0 h-full w-full object-contain transition duration-500 group-hover:scale-[1.015]"
                         data={activeImage as any}
-                        sizes="(min-width: 1280px) 760px, 100vw"
+                        sizes="(min-width: 1280px) 820px, 100vw"
                       />
                     ) : (
                       <div className="absolute inset-0 bg-[#E1D5C6]" />
                     )}
-                    <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.06)]" />
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,.16)] via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
-                    <div className="absolute left-3.5 top-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] uppercase tracking-[0.18em] text-[rgba(35,35,39,.72)]">
-                      {title}
-                    </div>
-                    <div className="absolute left-3.5 bottom-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9px] uppercase tracking-[0.16em] text-[rgba(35,35,39,.72)] opacity-0 transition group-hover:opacity-100">
-                      Click para ampliar
-                    </div>
-                    <div className="absolute bottom-3.5 right-3.5 bg-[rgba(246,241,234,.88)] px-2 py-1 [font-family:var(--mono)] text-[9.5px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
-                      {product.handle}
+                    <div className="pointer-events-none absolute inset-0 border border-[rgba(35,35,39,.08)]" />
+                    {/* Ícono de zoom — ivory + borde fino para mantener la paleta del sitio */}
+                    <div className="absolute right-3.5 top-3.5 flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(35,35,39,.14)] bg-[rgba(246,241,234,.88)] transition group-hover:bg-[rgba(246,241,234,1)]">
+                      <svg aria-hidden="true" className="h-4 w-4 text-[#232327]" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m21 21-4.35-4.35" strokeLinecap="round" />
+                      </svg>
                     </div>
                   </button>
                 )}
               </figure>
 
+              {/* Miniaturas: fila horizontal en móvil, grid adaptativo en desktop */}
               {gallery.length > 1 ? (
-                <div className="mt-4 grid grid-cols-5 gap-3">
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 sm:grid sm:grid-cols-5 sm:gap-3 sm:overflow-visible sm:pb-0">
                   {gallery.map((image, index) => {
                     const isActive = image.id === activeImage?.id;
                     return (
                       <button
                         key={image.id}
-                        className={`relative overflow-hidden border transition ${
+                        className={`relative shrink-0 overflow-hidden transition sm:shrink ${
                           isActive
-                            ? 'border-[#C84D92] ring-2 ring-[rgba(200,77,146,.18)] ring-inset'
-                            : 'border-[rgba(35,35,39,.10)] hover:border-[rgba(35,35,39,.28)]'
+                            ? 'shadow-[0_0_0_1.5px_#C84D92]'
+                            : 'opacity-70 shadow-[0_0_0_1px_rgba(35,35,39,.12)] hover:opacity-100 hover:shadow-[0_0_0_1px_rgba(35,35,39,.32)]'
                         }`}
                         onClick={() => setSelectedImageId(image.id)}
                         type="button"
                       >
-                        <div className="aspect-square bg-[#EEE8E1]">
+                        <div className="aspect-square w-[80px] bg-[#EEE8E1] sm:w-auto">
                           {image.mediaContentType === 'MODEL_3D' ? (
-                            /* Thumbnail del modelo 3D: usa su imagen de previsualización */
                             image.previewImage ? (
                               <img
                                 alt={image.altText || `${title} 3D`}
@@ -417,9 +428,6 @@ export default function Product() {
                             />
                           )}
                         </div>
-                        <span className="absolute bottom-2 right-2 bg-[rgba(246,241,234,.88)] px-1.5 py-0.5 [font-family:var(--mono)] text-[8px] tracking-[0.12em] text-[rgba(35,35,39,.72)]">
-                          {image.mediaContentType === 'MODEL_3D' ? '3D' : String(index + 1).padStart(2, '0')}
-                        </span>
                       </button>
                     );
                   })}
@@ -428,130 +436,130 @@ export default function Product() {
 
               <div className="mt-20 xl:mt-24">
                 <Kicker accent="mag">Sobre la obra</Kicker>
-                <h2 className="mt-6 max-w-[10ch] [font-family:var(--serif)] text-[clamp(2.8rem,5vw,4.5rem)] leading-[1.02] tracking-[-0.02em] text-[#111111]">
-                  {title}
-                </h2>
-                <div className="mt-6 max-w-[52ch] text-[15px] leading-[1.9] text-[#232327]">
-                  {descriptionHtml ? (
-                    <div
-                      className="[&_p]:mb-4 [&_p:last-child]:mb-0"
-                      dangerouslySetInnerHTML={{__html: descriptionHtml}}
-                    />
-                  ) : (
-                    <p>
-                      {plainDescription ||
-                        'La descripción de esta obra estará disponible muy pronto.'}
-                    </p>
-                  )}
-                </div>
-                <div className="mt-12 border-y border-[rgba(35,35,39,.10)] py-8">
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    <DataPair label="Año" value={publishedYear} />
-                    <DataPair label="Categoría" value={primaryTag} />
-                    <DataPair label="Medidas" value={dimensions || 'Consultar'} />
-                    <DataPair label="SKU" value={selectedVariant?.sku || 'Sin referencia'} />
+                {(descriptionHtml || plainDescription) ? (
+                  <div className="mt-6 max-w-[52ch] text-[15px] leading-[1.9] text-[#232327]">
+                    {descriptionHtml ? (
+                      <div
+                        className="[&_p]:mb-4 [&_p:last-child]:mb-0"
+                        dangerouslySetInnerHTML={{__html: descriptionHtml}}
+                      />
+                    ) : (
+                      <p>{plainDescription}</p>
+                    )}
                   </div>
-                </div>
+                ) : null}
+                {(publishedYear || primaryTag || dimensions) ? (
+                  <div className="mt-12 border-y border-[rgba(35,35,39,.10)] py-8">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {publishedYear ? <DataPair label="Año" value={publishedYear} /> : null}
+                      {primaryTag ? <DataPair label="Categoría" value={primaryTag} /> : null}
+                      {dimensions ? <DataPair label="Medidas" value={dimensions} /> : null}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
 
-            <div className="xl:sticky xl:top-28 xl:self-start">
-              <div className="border border-[rgba(35,35,39,.10)] bg-[rgba(255,255,255,.28)] p-6 backdrop-blur-sm md:p-8">
-                <div className="mb-4 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-                  {product.handle} · {primaryTag} · {publishedYear}
-                </div>
-                <h1 className="[font-family:var(--serif)] text-[clamp(2.8rem,4vw,4.25rem)] leading-[0.98] tracking-[-0.02em] text-[#111111]">
-                  {title}
-                </h1>
-                <div className="mt-4 text-[15px] text-[rgba(35,35,39,.72)]">
-                  {dimensions || 'Medidas a consultar'}
-                  {selectedVariant?.sku ? ` · Ref. ${selectedVariant.sku}` : ''}
-                </div>
+            {/* Sidebar sticky — layout abierto sin card wrapper, inspirado en
+                referencia Inéditad: título → variantes → precio → compra → info */}
+            <div className="xl:sticky xl:top-24 xl:self-start">
 
-                <div className="mb-8 mt-8 flex items-end gap-4 border-y border-[rgba(35,35,39,.10)] py-6">
-                  <div>
-                    <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.55)]">
-                      Precio
-                    </div>
-                    <div className="mt-2 [font-family:var(--serif)] text-[36px] leading-none text-[#111111]">
-                      <Money
-                        data={
-                          selectedVariant?.price || product.priceRange.minVariantPrice
-                        }
-                      />
-                    </div>
+              {/* ── Identidad de la obra ── */}
+              <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.50)]">
+                {[primaryTag, publishedYear].filter(Boolean).join(' · ')}
+              </div>
+              <h1 className="mt-3 [font-family:var(--serif)] text-[clamp(2.4rem,3.8vw,3.8rem)] leading-[1.0] tracking-[-0.02em] text-[#111111]">
+                {title}
+              </h1>
+              {dimensions ? (
+                <div className="mt-2 text-[14px] text-[rgba(35,35,39,.60)]">
+                  {dimensions}
+                </div>
+              ) : null}
+
+              {/* ── Variantes (cuando existen) — antes del precio ── */}
+              {hasOptions ? (
+                <div className="mt-6 border-t border-[rgba(35,35,39,.10)] pt-5">
+                  <ProductForm
+                    productOptions={productOptions}
+                  />
+                </div>
+              ) : null}
+
+              {/* ── Precio ── bloque propio, visualmente separado */}
+              <div className="mt-6 border-t border-[rgba(35,35,39,.10)] pt-5">
+                <div className="[font-family:var(--mono)] text-[10px] uppercase tracking-[0.22em] text-[rgba(35,35,39,.50)]">
+                  Precio
+                </div>
+                <div className="mt-2 flex items-end gap-4">
+                  <div className="[font-family:var(--serif)] text-[clamp(2rem,3vw,2.8rem)] leading-none text-[#111111]">
+                    <Money
+                      data={selectedVariant?.price || product.priceRange.minVariantPrice}
+                    />
                   </div>
                   {selectedVariant?.compareAtPrice ? (
-                    <div className="pb-1 text-[14px] text-[rgba(35,35,39,.55)] line-through">
+                    <div className="pb-1 text-[14px] text-[rgba(35,35,39,.45)] line-through">
                       <Money data={selectedVariant.compareAtPrice} />
                     </div>
                   ) : null}
-                  <div className="ml-auto pb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.55)]">
+                  <div className="ml-auto pb-1 [font-family:var(--mono)] text-[10px] uppercase tracking-[0.14em] text-[rgba(35,35,39,.50)]">
                     {selectedVariant?.availableForSale ? 'Disponible' : 'Agotado'}
                   </div>
                 </div>
-
-                <div className="space-y-4">
-                  <div className="[&_form]:block [&_form]:w-full">
-                    <AddToCartButton
-                      className="inline-flex h-[54px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-8 text-[12px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!selectedVariant || !selectedVariant.availableForSale}
-                      lines={
-                        selectedVariant
-                          ? [
-                              {
-                                merchandiseId: selectedVariant.id,
-                                quantity: 1,
-                                selectedVariant,
-                              },
-                            ]
-                          : []
-                      }
-                    >
-                      {actionCopy}
-                    </AddToCartButton>
-                  </div>
-
-                  {permiteOfertas ? (
-                    <button
-                      className="home-cta-ghost inline-flex h-[54px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
-                      onClick={() => setIsOfferDialogOpen(true)}
-                      type="button"
-                    >
-                      Ofertar
-                    </button>
-                  ) : null}
-                </div>
-
-                <ProductConsultation productTitle={title} />
-
-                {hasOptions ? (
-                  <div className="mt-8 border-t border-[rgba(35,35,39,.10)] pt-6">
-                    <ProductForm
-                      productOptions={productOptions}
-                      selectedVariant={selectedVariant}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="mt-1 space-y-5 border-t border-[rgba(35,35,39,.10)] pt-3">
-                  <InfoBlock
-                    title="Incluye"
-                    items={[
-                      'Firma del artista y factura emitida desde la galería.',
-                      'Acompañamiento para coordinar envío o entrega.',
-                      'Atención directa para resolver dudas sobre la obra.',
-                    ]}
-                  />
-                  <InfoBlock
-                    title="Compra"
-                    items={[
-                      'Pago seguro desde Shopify.',
-                      'Añade la obra al carrito o contáctanos para atención personalizada.',
-                    ]}
-                  />
-                </div>
               </div>
+
+              {/* ── Compra — bloque separado con fondo sutil ── */}
+              <div className="mt-5 space-y-3 border-t border-[rgba(35,35,39,.10)] pt-5">
+                <div className="[&_form]:block [&_form]:w-full">
+                  <AddToCartButton
+                    className="inline-flex h-[52px] w-full items-center justify-center rounded-[2px] bg-[#0F0F12] px-8 text-[11px] font-medium uppercase tracking-[0.22em] text-[#F6F1EA] transition hover:bg-[#A23A76] disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={!selectedVariant || !selectedVariant.availableForSale}
+                    onClick={() => openCart('cart')}
+                    lines={
+                      selectedVariant
+                        ? [{merchandiseId: selectedVariant.id, quantity: 1, selectedVariant}]
+                        : []
+                    }
+                  >
+                    {actionCopy}
+                  </AddToCartButton>
+                </div>
+
+                {/* Botón "Ofertar" — visible solo cuando permite_ofertas === "true".
+                    Aplica igual a pinturas y esculturas; ausente = false por seguridad. */}
+                {permiteOfertas ? (
+                  <button
+                    className="home-cta-ghost inline-flex h-[52px] w-full items-center justify-center rounded-[2px] border border-[#C84D92] px-6 text-[11px] uppercase tracking-[0.18em] text-[#C84D92] transition hover:bg-[#C84D92] hover:!text-white hover:no-underline"
+                    onClick={() => setIsOfferDialogOpen(true)}
+                    type="button"
+                  >
+                    Ofertar
+                  </button>
+                ) : null}
+              </div>
+
+              {/* ── Consulta ── */}
+              <ProductConsultation productTitle={title} />
+
+              {/* ── Garantías de la galería ── */}
+              <div className="mt-6 space-y-4 border-t border-[rgba(35,35,39,.10)] pt-5">
+                <InfoBlock
+                  title="Incluye"
+                  items={[
+                    'Firma del artista y factura emitida desde la galería.',
+                    'Acompañamiento para coordinar envío o entrega personalizada.',
+                    'Atención directa para resolver dudas sobre la obra.',
+                  ]}
+                />
+                <InfoBlock
+                  title="Compra segura"
+                  items={[
+                    'Pago seguro desde Shopify.',
+                    'Añade la obra al carrito o contáctanos para atención personalizada.',
+                  ]}
+                />
+              </div>
+
             </div>
           </div>
         </div>
@@ -945,6 +953,32 @@ function getProductGallery(product: ProductData): GalleryItem[] {
     }
     return [];
   });
+}
+
+// ─── Regla de ofertas ────────────────────────────────────────────────────────
+
+/**
+ * Determina si se debe mostrar el botón "Ofertar" para un producto.
+ *
+ * Regla (aplica igual a pinturas y esculturas):
+ *   - El metafield custom.permite_ofertas debe contener exactamente el string "true".
+ *   - Cualquier otro valor ("false", vacío, nulo, inválido) → ocultar el botón.
+ *   - No existe valor por defecto permisivo: la ausencia del metafield se trata
+ *     como false por seguridad.
+ */
+function resolvePermiteOfertas(value: string | null | undefined): boolean {
+  return value === 'true';
+}
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
+
+// Tags que no deben mostrarse públicamente en la ficha de producto.
+const HIDDEN_TAGS = new Set(['catálogo', 'catalogo', 'Cobre', 'cobre']);
+
+function getDisplayTag(tags?: readonly string[] | null): string | null {
+  if (!tags?.length) return null;
+  const visible = tags.find((t) => !HIDDEN_TAGS.has(t));
+  return visible ?? null;
 }
 
 function getPrimaryTag(tags?: readonly string[] | null) {
