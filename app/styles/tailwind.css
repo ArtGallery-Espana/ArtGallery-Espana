@@ -2257,7 +2257,41 @@
 
 
 /* =============================================================================
- * 7. CAPA DE UTILIDADES
+ * 7. ANIMACIONES GLOBALES
+ * ========================================================================== */
+
+/* Cross-dissolve de galería en el PDP: dos imágenes superpuestas — la anterior
+ * se desvanece mientras la nueva emerge. Velocidad deliberadamente lenta para
+ * evocar el ritmo de una galería física: contemplación, no velocidad.          */
+
+@keyframes gallery-in {
+  0%   { opacity: 0; transform: scale(1.016); filter: brightness(1.08); }
+  60%  { filter: brightness(1.01); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes gallery-out {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Clases de animación de galería (usadas directamente en className del JSX) */
+.gallery-anim-in {
+  animation: gallery-in 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.gallery-anim-out {
+  animation: gallery-out 650ms ease-out forwards;
+}
+
+/* Respeta la preferencia del usuario de movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-anim-in  { animation: none; opacity: 1; }
+  .gallery-anim-out { animation: none; opacity: 0; }
+}
+
+
+/* =============================================================================
+ * 8. CAPA DE UTILIDADES
  * ========================================================================== */
 @layer utilities {
   /* Screen-reader only (visualmente oculto, accesible por A11y). */
