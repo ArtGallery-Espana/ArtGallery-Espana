@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {useFetcher} from 'react-router';
+import {HoneypotField} from '~/components/HoneypotField';
 
 const formFieldBaseClass =
   'w-full rounded-[2px] !border !border-[rgba(35,35,39,.14)] bg-white px-4 text-[14px] text-[#111111] outline-none transition placeholder:text-[rgba(35,35,39,.42)] focus:!border-[#C84D92]';
@@ -120,6 +121,7 @@ export function ProductOfferForm({
           <input name="product_title" type="hidden" value={productTitle} />
           <input name="variant_title" type="hidden" value={variantTitle ?? ''} />
           <input name="currency" type="hidden" value={currency} />
+          <HoneypotField />
 
           <FormField
             autoComplete="name"

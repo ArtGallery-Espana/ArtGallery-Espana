@@ -13,6 +13,12 @@ import {
   type ContactFieldErrors,
   type ContactFormValues,
 } from '~/lib/contact.server';
+import {
+  EMAIL_FORM_LIMIT,
+  getClientIp,
+  isHoneypotFilled,
+  rateLimit,
+} from '~/lib/spam-guard';
 
 export type ContactActionData = {
   status: 'success' | 'error';
@@ -36,6 +42,25 @@ export async function action({
     return data<ContactActionData>(
       {status: 'error', message: 'Acción no soportada.'},
       {status: 400},
+    );
+  }
+
+  // Anti-spam (ver ~/lib/spam-guard). Honeypot: "éxito" silencioso para no dar
+  // pistas al bot. Rate-limit por IP contra ráfagas.
+  if (isHoneypotFilled(formData)) {
+    return data<ContactActionData>({
+      status: 'success',
+      message: 'Recibimos tu mensaje. Te responderemos pronto desde el estudio.',
+    });
+  }
+  if (!rateLimit(`contact:${getClientIp(request)}`, EMAIL_FORM_LIMIT)) {
+    return data<ContactActionData>(
+      {
+        status: 'error',
+        message:
+          'Has enviado varios mensajes seguidos. Espera unos minutos e inténtalo de nuevo.',
+      },
+      {status: 429},
     );
   }
 
