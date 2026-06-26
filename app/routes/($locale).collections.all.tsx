@@ -109,6 +109,25 @@ function normalizeText(value: string): string {
     .replace(/[úùü]/g, 'u');
 }
 
+// Filtro "Grupo": se arma con las etiquetas (tags) reales de los productos
+// (AVES, PERSONAJES, ANIMALES TERRESTRES…). Cualquier etiqueta nueva que el
+// dueño añada en el Admin aparece sola como píldora, sin tocar código.
+//
+// Se excluyen las etiquetas que ya tienen otro uso para que no contaminen el
+// filtro ni dupliquen el de "Tipo": las keywords de pintura/escultura y las
+// internas (catálogo, cobre). ¿Apareció una etiqueta que NO quieres como
+// filtro? Añádela normalizada a este Set.
+const GRUPO_EXCLUDED_TAGS = new Set(
+  [...PINTURA_KEYWORDS, ...ESCULTURA_KEYWORDS, 'catalogo', 'catálogo'].map(
+    normalizeText,
+  ),
+);
+
+function isGrupoTag(tag: string): boolean {
+  const norm = normalizeText(tag.trim());
+  return norm.length > 0 && !GRUPO_EXCLUDED_TAGS.has(norm);
+}
+
 function getGroupRank(p: RawProduct): number {
   const haystack = normalizeText(
     [
@@ -270,6 +289,7 @@ export default function CatalogPage() {
   const {products, dateLabel} = useLoaderData<typeof loader>();
 
   const [selectedTipo, setSelectedTipo] = useState<TipoBucket>('todas');
+  const [selectedGrupo, setSelectedGrupo] = useState('todas');
   const [selectedTamano, setSelectedTamano] = useState('todas');
   const [selectedPrecio, setSelectedPrecio] = useState<PriceBucket>('todos');
   const [sort, setSort] = useState('Recientes');
@@ -294,17 +314,38 @@ export default function CatalogPage() {
     return unique.sort((a, b) => order.indexOf(a) - order.indexOf(b));
   }, [enriched]);
 
+  // Grupos disponibles = etiquetas temáticas presentes en el catálogo.
+  // Clave por texto normalizado (para no duplicar "AVES"/"Aves"); el label
+  // muestra la primera variante encontrada (el pill la pone en mayúsculas).
+  const grupos = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const p of enriched) {
+      for (const tag of p.tags ?? []) {
+        if (!isGrupoTag(tag)) continue;
+        const norm = normalizeText(tag.trim());
+        if (!seen.has(norm)) seen.set(norm, tag.trim());
+      }
+    }
+    return [...seen.entries()]
+      .map(([key, label]) => ({key, label}))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [enriched]);
+
   const filtered = useMemo(() => {
     let result = enriched;
     if (selectedTipo === 'pintura') result = result.filter((p) => p.grupo === 0);
     if (selectedTipo === 'escultura') result = result.filter((p) => p.grupo === 1);
+    if (selectedGrupo !== 'todas')
+      result = result.filter((p) =>
+        (p.tags ?? []).some((t) => normalizeText(t.trim()) === selectedGrupo),
+      );
     if (selectedTamano !== 'todas')
       result = result.filter((p) => p.tamano === selectedTamano);
     result = result.filter((p) =>
       matchesPriceBucket(p.priceVal, selectedPrecio),
     );
     return result;
-  }, [enriched, selectedTipo, selectedTamano, selectedPrecio]);
+  }, [enriched, selectedTipo, selectedGrupo, selectedTamano, selectedPrecio]);
 
   const sorted = useMemo(() => {
     const copy = [...filtered];
@@ -326,10 +367,14 @@ export default function CatalogPage() {
   }, [filtered, sort]);
 
   const hasFilters =
-    selectedTipo !== 'todas' || selectedTamano !== 'todas' || selectedPrecio !== 'todos';
+    selectedTipo !== 'todas' ||
+    selectedGrupo !== 'todas' ||
+    selectedTamano !== 'todas' ||
+    selectedPrecio !== 'todos';
 
   function clearFilters() {
     setSelectedTipo('todas');
+    setSelectedGrupo('todas');
     setSelectedTamano('todas');
     setSelectedPrecio('todos');
   }
@@ -421,6 +466,28 @@ export default function CatalogPage() {
                 />
               ))}
             </FilterGroup>
+
+            {/* Filtro: Grupo — etiquetas temáticas (AVES, PERSONAJES…). Se arma
+                solo desde las tags reales; aparece únicamente si hay alguna. */}
+            {grupos.length > 0 && (
+              <FilterGroup title="Grupo">
+                <FilterPill
+                  label="Todas"
+                  active={selectedGrupo === 'todas'}
+                  onClick={() => setSelectedGrupo('todas')}
+                />
+                {grupos.map(({key, label}) => (
+                  <FilterPill
+                    key={key}
+                    label={label}
+                    active={selectedGrupo === key}
+                    onClick={() =>
+                      setSelectedGrupo(selectedGrupo === key ? 'todas' : key)
+                    }
+                  />
+                ))}
+              </FilterGroup>
+            )}
 
             {/* Filtro: Tamaño — solo aparece cuando hay productos con dimensiones */}
             {tamanos.length > 0 && (
